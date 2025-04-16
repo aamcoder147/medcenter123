@@ -258,6 +258,10 @@ def home():
         site_reviews=site_reviews # ** Pass SITE reviews to template
     )
 
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
 # --- NEW: Submit Site Review Route ---
 @app.route('/submit-site-review', methods=['POST'])
 def submit_site_review():
