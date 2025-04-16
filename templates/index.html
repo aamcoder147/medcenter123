@@ -1266,9 +1266,11 @@
     <!-- Navbar Start -->
     <nav class="navbar" id="navbar">
         <!-- Logo -->
+        <div>
         <a href="/" class="logo">
             <i class="fas fa-heart-pulse"></i> CareConnect
         </a>
+        </div>
         <!-- Navigation Actions (Buttons) -->
         <div class="nav-actions">
              <button class="btn btn-secondary" onclick="window.location.href='/doctor-login'">For Providers</button>
@@ -1285,7 +1287,7 @@
              <div class="typing-effect-container"> <span id="text"></span> </div>
 
              <!-- Search Area moved INSIDE Hero -->
-             <div class="search-area-container reveal-on-scroll">
+
                 <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
                 <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
                     <!-- Province -->
