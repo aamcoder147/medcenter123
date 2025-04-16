@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-site-verification" content="tFNt_2zqsJ76qLHo48PFiR8DXPPFn_clQWzeIVIMPeg" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareConnect - Book Your Clinic Appointment Seamlessly</title>
@@ -241,7 +240,7 @@
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 12px var(--shadow-color-medium); }
         .btn:active { transform: translateY(0px); box-shadow: 0 2px 4px var(--shadow-color); }
         .btn-primary { background-color: var(--accent-primary); color: var(--text-light); border-color: var(--accent-primary); margin: 0; }
-        .btn-primary.search-btn { grid-column: 1 / -1; width: 100%; justify-content: center; margin-top: 0.5rem; }
+        /* Removed specific grid placement for .search-btn here, handled below */
         .btn-primary:hover { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
         .btn-secondary { background-color: var(--bg-secondary); color: var(--accent-primary); border-color: var(--border-color); box-shadow: none; }
         .btn-secondary:hover { background-color: var(--bg-accent-very-light); border-color: var(--accent-primary-light); color: var(--accent-primary-dark); }
@@ -251,7 +250,8 @@
 
         /* --- Hero Section --- */
         .hero-section {
-            background: linear-gradient(135deg, var(--bg-accent-very-light) 0%, var(--bg-primary) 70%); /* Gradient background */
+            /* Removed fixed background gradient to simplify mobile rendering slightly, can be added back */
+            background-color: var(--bg-primary); /* Fallback solid color */
             padding: 6rem 5% 5rem; /* Top, L/R, Bottom padding */
             text-align: center;
             border-bottom: 1px solid var(--border-color);
@@ -330,22 +330,14 @@
         }
         .input-group { /* Container for icon + input/select */
             position: relative;
-            width: fit-content; /* Let grid control width */
-            margin: 2rem;
-            padding: 0;
+            width: 100%; /* Take full width of grid column */
         }
-        .search-button-container { display: flex; justify-content: center; width: 100%; margin-top: 0.5rem; }
-        .input-group { position: relative; width: auto; margin: 0; }
         .input-group i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-medium); font-size: 1em; transition: color var(--transition-speed) var(--transition-ease); pointer-events: none; }
-        select, input[type="text"] { width: 100%; padding: 0.9rem 0.9rem 0.9rem 2.8rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-dark); font-size: 1rem; transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease); height: 48px; }
-        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234b5563' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M7.646 11.854a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8 10.793 4.354 7.146a.5.5 0 1 0-.708.708l4 4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; padding-right: 3rem; }
-        select:focus, input[type="text"]:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); }
-        .input-group:focus-within i { color: var(--accent-primary); }
         select, input[type="text"] { /* General input/select styling */
             width: 100%;
             padding: 0.9rem 0.9rem 0.9rem 2.8rem; /* Left padding for icon */
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 8px; /* Consistent rounding */
             background: var(--bg-primary);
             color: var(--text-dark);
             font-size: 1rem;
@@ -368,6 +360,22 @@
             color: var(--accent-primary);
         }
         /* Search Button Container */
+        .search-button-container {
+            display: flex; /* Using flex for better control */
+            justify-content: center; /* Center button by default */
+            width: 100%;
+            margin-top: 1rem; /* Adjusted margin */
+            gap: 1rem; /* Add gap if multiple buttons appear later */
+        }
+        /* Style for the primary search button specifically */
+        .search-button-container .btn.search-btn {
+            flex-basis: 220px; /* Suggest a base width */
+            flex-grow: 0; /* Don't grow by default */
+            width: auto; /* Override potential 100% width */
+            padding: 0.8rem 2rem; /* Slightly larger padding */
+            font-size: 1.05rem; /* Slightly larger font */
+        }
+
 
         /* --- How It Works Section --- */
         .how-it-works-grid, /* Used when nested */
@@ -485,6 +493,11 @@
             width: 100%;
             margin-top: 0.8rem;
             padding-bottom: 0.2rem;
+        }
+        /* Specific PLC details button */
+        .plc-details-btn {
+            width: calc(100% - 1rem); /* Slightly less than full width for padding */
+            margin: 0 auto; /* Center the button */
         }
 
         /* Card Hover Effects */
@@ -777,6 +790,11 @@
              color: var(--accent-warm); /* Filled star color */
              transform: scale(1.15);
          }
+        /* Review Submit Button */
+        #site-review-form button[type="submit"] {
+            background-color: var(--accent-primary-dark); /* Use dark accent for emphasis */
+            width: 100%; /* Make button full width */
+        }
 
 
         /* --- Doctors Grid (Search Results) --- */
@@ -862,6 +880,12 @@
         .doctor-info .rating-display .stars .fas.fa-star-half-alt { color: var(--accent-warm); }
         .doctor-info .rating-display .stars .far.fa-star { color: var(--border-color-strong); }
         .doctor-info .rating-display .review-count { /* Review count text */
+            color: var(--text-medium);
+            font-size: 0.9rem;
+        }
+        /* Style for 'No reviews yet' message */
+        .doctor-info .rating-display .no-reviews {
+            font-style: italic;
             color: var(--text-medium);
             font-size: 0.9rem;
         }
@@ -1085,69 +1109,96 @@
           100% { opacity: 0; transform: translateX(100%); } /* Slide out, fade */
         }
 
+
         /* --- Responsive Design --- */
 
-        /* Medium Devices (Tablets, smaller desktops) */
+        /* Medium Devices (Tablets, smaller desktops) - max-width: 1024px */
         @media (max-width: 1024px) {
             .hero-title { font-size: 2.5rem; }
-            .container { width: 95%; } /* Slightly wider container */
+            .hero-section { padding: 5rem 5% 4rem; } /* Adjust padding */
+            .container { width: 95%; padding: 0 0.8rem; } /* Slightly wider container, less padding */
             .section-padding { padding: 4rem 0; } /* Reduce section padding */
+            .section-padding-sm { padding: 2.5rem 0; }
             /* Adjust grid columns for featured cards */
             .featured-specialties-grid,
             .featured-facility-types-grid,
             .featured-plcs-grid {
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 1.5rem; /* Reduce gap */
             }
             .search-area-container { max-width: 90%; padding: 2rem 1.5rem; }
             .search-form { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } /* Allow inputs more space */
             .site-reviews-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-            .search-button-container .btn { flex-basis: 180px; } /* Set base width for search buttons */
+            /* Adjust search button container if needed */
+            .search-button-container .btn.search-btn { flex-basis: 200px; } /* Slightly smaller base */
+            .doctors-grid { gap: 2rem; } /* Slightly reduce gap */
         }
 
-        /* Small Devices (Landscape phones, large portrait phones) */
+        /* Small Devices (Landscape phones, large portrait phones) - max-width: 768px */
         @media (max-width: 768px) {
             .hero-title { font-size: 2.1rem; }
-            .hero-subtitle { font-size: 1.1rem; }
-            .section-title { font-size: 1.8rem; }
+            .hero-subtitle { font-size: 1.1rem; max-width: 90%; }
+            .hero-section { padding: 4rem 5% 3rem; } /* Further reduce padding */
+            .section-title { font-size: 1.8rem; margin-bottom: 2.5rem;}
+            .section-subtitle { font-size: 1rem; margin-top: -1.5rem; margin-bottom: 2.5rem; }
             .section-padding { padding: 3rem 0; } /* Further reduce padding */
+            .section-padding-sm { padding: 2rem 0; }
             .btn { padding: 0.65rem 1.3rem; font-size: 0.9rem; } /* Slightly smaller buttons */
             .nav-actions { gap: 0.6rem; } /* Reduce gap between nav buttons */
             .doctors-grid { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.8rem;}
             .footer-content { gap: 2.5rem; }
-            .flash-messages { top: 80px; width: clamp(280px, 95%, 380px);} /* Adjust flash message position/size */
+            .flash-messages { top: 75px; width: clamp(280px, 95%, 380px);} /* Adjust flash message position/size */
             /* Adjust grid columns for featured cards */
             .featured-specialties-grid,
             .featured-facility-types-grid,
             .featured-plcs-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Smaller min size */
+                gap: 1.2rem;
             }
+             /* Reduce PLC card min height */
+             .plc-card, .specialty-card, .facility-type-card { min-height: 190px; }
+             .plc-photo { height: 90px; } /* Reduce photo height */
+
             .search-area-container { padding: 1.8rem 1rem; backdrop-filter: blur(2px); } /* Reduce blur */
-            .search-form { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } /* Give inputs more space */
+            .search-form { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; } /* Give inputs more space */
             .site-reviews-grid { grid-template-columns: 1fr; } /* Stack reviews */
             .search-button-container { gap: 0.8rem; }
-             /* Make search buttons take available space */
-             .search-button-container .btn { flex-basis: auto; flex-grow: 1;}
-             .search-button-container .btn.btn-primary { min-width: 150px; }
-             .search-button-container .btn.btn-secondary { min-width: 120px; }
+             /* Make search buttons take available space within flex container */
+             .search-button-container .btn.search-btn { flex-basis: auto; flex-grow: 1; max-width: 300px; } /* Allow growth but cap */
+             #site-review-form-section .form-container { padding: 2.5rem 1.5rem; } /* Adjust review form padding */
+             .trust-factors-grid { grid-template-columns: 1fr; } /* Stack trust factors */
         }
 
-        /* Extra Small Devices (Portrait phones) */
+        /* Extra Small Devices (Portrait phones) - max-width: 480px */
         @media (max-width: 480px) {
-            .hero-title { font-size: 1.9rem; }
+            .hero-title { font-size: 1.9rem; line-height: 1.4; }
             .hero-subtitle { font-size: 1rem; }
-            /* Hide secondary nav button on smallest screens */
+            .hero-section { padding: 3rem 5% 2.5rem; } /* Even less padding */
+             /* Hide secondary nav button on smallest screens */
             .nav-actions .btn-secondary { display: none; }
+            .logo { font-size: 1.6rem; } /* Slightly smaller logo */
+            .logo i { font-size: 1.4rem; }
+
             /* Stack items in these grids */
             .how-it-works-grid,
             .how-it-works-grid-standalone,
-            .trust-factors-grid,
+            /* .trust-factors-grid already stacked */
             .stats-grid,
             .doctors-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem; /* Consistent smaller gap */
             }
-            .footer-content { text-align: center; } /* Center footer content */
+            .stat-number { font-size: 2.4rem; } /* Smaller stat numbers */
+            .doctor-card { border-radius: 10px; } /* Slightly less rounding */
+            .doctor-photo-container { height: 180px; } /* Smaller photo height */
+
+            .footer-content { text-align: center; grid-template-columns: 1fr; gap: 2rem;} /* Stack and center footer content */
             .footer-section h3::after { left: 50%; transform: translateX(-50%); } /* Center title underline */
             .social-links { justify-content: center; } /* Center social links */
+            .footer-links { align-items: center; } /* Center footer links */
+            .footer-links a { justify-content: center; } /* Center icon+text */
+            .footer-links a:hover { padding-left: 0; transform: none; } /* Disable hover indent/move */
+
             /* Show 2 columns for featured cards */
             .featured-specialties-grid,
             .featured-facility-types-grid,
@@ -1155,22 +1206,45 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 1rem;
             }
+             /* Reduce PLC card min height further */
+             .plc-card, .specialty-card, .facility-type-card { min-height: 170px; }
+             .plc-photo { height: 80px; } /* Reduce photo height */
+             .specialty-card .icon, .facility-type-card .icon, .plc-card .icon { font-size: 2rem; } /* Smaller icons */
+             .specialty-card h4, .facility-type-card h4, .plc-card h4 { font-size: 0.9rem; } /* Smaller titles */
+             .btn-small { padding: 0.3rem 0.7rem; font-size: 0.8rem; } /* Smaller small buttons */
+
             .search-area-container {
                 margin-top: 2rem;
-                padding: 1.5rem 1rem;
+                padding: 1.5rem 0.8rem; /* Less padding */
                 background-color: rgba(255, 255, 255, 0.9); /* Less transparency */
                 backdrop-filter: none; /* Remove blur on smallest screens */
+                border-radius: 8px; /* Less rounding */
             }
-            .search-form { grid-template-columns: 1fr; } /* Stack search inputs */
-            .search-button-container .btn { width: 100%; } /* Make search buttons full width */
+            .search-form { grid-template-columns: 1fr; gap: 1rem; } /* Stack search inputs */
+            select, input[type="text"] { font-size: 0.95rem; height: 44px; padding-left: 2.5rem; } /* Slightly smaller inputs */
+            .input-group i { left: 0.8rem; } /* Adjust icon position */
+            select { padding-right: 2.5rem; background-position: right 0.8rem center; } /* Adjust select arrow */
+
+            /* Make search button full width */
+            .search-button-container .btn.search-btn {
+                width: 100%;
+                max-width: none; /* Remove max-width */
+                padding: 0.7rem 1rem; /* Adjust padding */
+                font-size: 1rem; /* Adjust font size */
+            }
+
             /* Adjust padding for review form */
-            #site-review-form-section .form-container { padding: 2rem 1.5rem; }
+            #site-review-form-section .form-container { padding: 2rem 1rem; border-radius: 8px; }
             #site-review-form-section h3 {font-size: 1.5rem;} /* Adjust heading */
+            #site-review-form-section .rating-input label { font-size: 1.8rem; } /* Slightly smaller stars */
+
+            .section-padding { padding: 2.5rem 0; } /* Final padding reduction */
+            .section-padding-sm { padding: 1.5rem 0; }
+            .flash-messages { width: 90%; left: 5%; right: 5%; top: 70px; } /* Center flash messages */
         }
 
     </style>
 </head>
-    <meta name="google-site-verification" content="tFNt_2zqsJ76qLHo48PFiR8DXPPFn_clQWzeIVIMPeg" />
 <body>
 
     <!-- Flash Messages Container -->
@@ -1208,7 +1282,8 @@
              <p class="hero-subtitle">Access a network of trusted doctors and specialists near you. Your health journey starts here.</p>
              <div class="typing-effect-container"> <span id="text"></span> </div>
 
-
+             <!-- Search Area moved INSIDE Hero -->
+             <div class="search-area-container reveal-on-scroll">
                 <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
                 <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
                     <!-- Province -->
@@ -1271,7 +1346,10 @@
                     <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false)"> {# Added event=null, isInitial=false #}
                         <i class="fas fa-search"></i> Find Care
                     </button>
-                </div>
+                     <!-- Optional: Clear Filters Button -->
+                     <!-- <button type="button" id="clearFiltersBtn" class="btn btn-secondary" onclick="clearAllFilters()">
+                         <i class="fas fa-times"></i> Clear
+                     </button> -->
                 </div>
             </div> {# End search-area-container #}
         </div> <!-- Closing tag for hero container -->
@@ -1282,9 +1360,6 @@
 
     <!-- Featured Facility Types Section Start -->
     <section class="featured-facility-types-section section-padding-sm">
-        
-
-            
         <div class="container">
              <h2 class="section-title reveal-on-scroll">Explore Facility Types</h2>
              <!-- Grid for Facility Type Cards -->
@@ -1326,7 +1401,6 @@
 
     <!-- Featured PLCs (Places/Clinics) Section Start -->
     <section class="featured-plcs-section section-padding-sm">
-        
         <div class="container">
             <h2 class="section-title reveal-on-scroll">Explore Clinics & Centers</h2>
             <!-- Grid for PLC Cards -->
@@ -1396,7 +1470,6 @@
 
     <!-- How It Works Section Start -->
     <section class="how-it-works-section section-padding">
-        
         <div class="container">
             <h2 class="section-title reveal-on-scroll">Booking in 3 Simple Steps</h2>
              <p class="section-subtitle reveal-on-scroll">Finding healthcare is easier than ever.</p>
@@ -1551,7 +1624,7 @@
 
     <!-- Site Review FORM Section Start -->
     <!-- Allows users to submit feedback about the platform -->
-    <section id="site-review-form-section">
+    <section class="section-padding" id="site-review-form-section">
         <div class="container">
             <!-- Form Container -->
             <div class="form-container reveal-on-scroll">
@@ -1585,7 +1658,7 @@
                     </div>
 
                      <!-- Submit Button -->
-                     <button type="submit" class="btn btn-primary btn-block" style="background-color: var(--accent-primary-dark); width: 100%;">
+                     <button type="submit" class="btn btn-primary">
                          <i class="fas fa-paper-plane"></i> Submit Feedback
                      </button>
                  </form>
@@ -1654,7 +1727,7 @@
     </footer>
     <!-- Footer End -->
 
-    <!-- JavaScript Start -->
+    <!-- JavaScript Start (Unchanged from original) -->
     <script>
         /**
          * CareConnect Frontend Script
