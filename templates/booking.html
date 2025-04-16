@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Dr. {{ doctor.name | default('N/A') }}</title>
+    <!-- Fonts from Index -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- FingerprintJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js" defer></script>
+
+    <style>
+        /* --- Adopted :root from index.html --- */
+        :root {
+            /* --- Refined Clinical Palette --- */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb; /* Very light grey - Main body background */
+            --bg-accent-light: #e0f2f2;
+            --bg-accent-very-light: #f0fafa;
+
+            --border-color: #e5e7eb; /* Softer grey border */
+            --border-color-strong: #d1d5db;
+            --border-color-focus: var(--accent-primary); /* Use primary color for focus */
+
+            --text-dark: #1f2937;
+            --text-medium: #4b5563;
+            --text-light: #ffffff;
+
+            /* Primary Accent (Calm Blue/Teal) */
+            --accent-primary: #007A7A;
+            --accent-primary-dark: #005F5F;
+            --accent-primary-light: #4DB6AC;
+
+            /* Secondary / Warm Accent */
+            --accent-warm: #F2A900;      /* Gold for stars */
+            --accent-warm-dark: #D99700; /* Darker gold */
+
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+
+            --shadow-color: rgba(0, 76, 76, 0.08);
+            --shadow-color-medium: rgba(0, 76, 76, 0.12);
+            --shadow-color-strong: rgba(0, 76, 76, 0.18);
+
+            /* --- Timings & Transitions --- */
+            --transition-speed: 0.3s;
+            --transition-ease: ease-in-out;
+
+            /* --- Adjusted variables for booking context --- */
+            --accent-selected: var(--accent-primary-dark); /* Darker for selection */
+            --accent-selected-text: var(--text-light);
+            --accent-disabled-bg: #e5e7eb; /* Softer disabled bg */
+            --accent-disabled-text: #9ca3af; /* Softer disabled text */
+            --accent-disabled-border: #d1d5db;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-secondary); color: var(--text-dark);
+            font-family: 'Open Sans', sans-serif; line-height: 1.7; overflow-x: hidden;
+             -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-size: 16px;
+        }
+
+        /* --- Page Header --- */
+        .page-top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 5%; background: var(--bg-primary); position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid var(--border-color); box-shadow: 0 3px 8px var(--shadow-color);
+        }
+        .page-top-bar h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-dark); font-family: 'Lato', sans-serif; margin: 0; line-height: 1.3; }
+        .page-top-bar h1 span { color: var(--accent-primary); }
+        .back-button { /* Adopted button style */
+             padding: 0.7rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-align: center;
+             transition: all var(--transition-speed) var(--transition-ease); border: 1px solid var(--border-color); text-decoration: none;
+             display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; line-height: 1.2;
+             background-color: var(--bg-secondary); color: var(--accent-primary); box-shadow: none;
+        }
+        .back-button:hover { background-color: var(--bg-accent-very-light); border-color: var(--accent-primary-light); color: var(--accent-primary-dark); transform: translateY(-1px); box-shadow: 0 2px 4px var(--shadow-color); }
+        .back-button i { font-size: 0.9em; margin-right: 0.2rem; }
+
+        /* --- Main Content Area --- */
+        main { width: 90%; max-width: 1280px; margin: 2.5rem auto; padding: 0 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2.5rem; align-items: start; }
+
+        /* --- General Section Styling --- */
+        .info-section, .form-section-wrapper, .reviews-section { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; box-shadow: 0 4px 10px var(--shadow-color); margin-bottom: 2rem; }
+
+        /* --- Consistent Headings --- */
+        h2, h3 { font-family: 'Lato', sans-serif; color: var(--text-dark); margin-bottom: 1.2rem; font-weight: 700; position: relative; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border-color); }
+        h2::after, h3::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 50px; height: 3px; background-color: var(--accent-primary); border-radius: 1.5px; }
+        h2 { font-size: 1.7rem; } h3 { font-size: 1.4rem; }
+
+        /* --- Doctor Info Section --- */
+        .doctor-profile-header { display: flex; gap: 1.8rem; align-items: center; margin-bottom: 1.8rem; flex-wrap: wrap; }
+        .doctor-photo-large-container { width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 4px solid var(--bg-primary); box-shadow: 0 4px 12px rgba(0, 76, 76, 0.15); flex-shrink: 0; }
+        .doctor-photo-large { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .doctor-name-spec h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0.3rem; font-size: 1.8rem; }
+        .doctor-name-spec h2::after { display: none; }
+        .doctor-name-spec p.specialization { color: var(--accent-primary); font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; }
+
+         /* Doctor Details & Rating Summary */
+         .doctor-details { margin-top: 0.5rem; }
+         .doctor-details p, .doctor-details ul li { color: var(--text-medium); font-size: 0.98rem; margin-bottom: 0.8rem; display: flex; align-items: center; }
+         .doctor-details ul { list-style: none; padding-left: 0; }
+         .doctor-details ul li i, .doctor-details p i { margin-right: 0.8rem; color: var(--accent-primary-light); width: 1.4em; text-align: center; flex-shrink: 0; font-size: 1.1em; }
+
+         /* Rating Summary Styles */
+         .rating-summary { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; margin-bottom: 1rem; }
+         .rating-summary .stars { display: flex; gap: 2px; font-size: 1.1em; }
+         .rating-summary .rating-text { font-size: 0.95rem; color: var(--text-medium); }
+
+        /* --- STAR COLOR RULES --- */
+        /* Ensure the parent div doesn't force a color on child icons */
+        .rating-summary .stars,
+        .review-rating .stars {
+             /* No specific color needed here, rules below handle icons */
+        }
+
+        /* Gold stars (Filled and Half) in both Summary and Review List */
+        .rating-summary .stars i.fas.fa-star,
+        .rating-summary .stars i.fas.fa-star-half-alt,
+        section.reviews-section div.review-rating.stars i.fas.fa-star,         /* High Specificity */
+        section.reviews-section div.review-rating.stars i.fas.fa-star-half-alt { /* High Specificity */
+            color: var(--accent-warm) !important; /* GOLD COLOR - Important added */
+        }
+
+        /* Grey stars (Empty) in both Summary and Review List */
+        .rating-summary .stars i.far.fa-star,
+        section.reviews-section div.review-rating.stars i.far.fa-star {          /* High Specificity */
+            color: var(--border-color-strong) !important; /* GREY COLOR - Important added */
+        }
+
+         /* Star Rating Input Hover/Checked Color */
+        .rating-input input[type="radio"]:checked ~ label,
+        .rating-input label:hover,
+        .rating-input label:hover ~ label {
+            color: var(--accent-warm); /* Gold on hover/check */
+         }
+         /* Other doctor detail icons */
+         .doctor-details i.fa-map-marker-alt, .doctor-details i.fa-clinic-medical { color: var(--accent-primary); }
+
+
+        /* --- Booking Form Styles --- */
+        .form-section-wrapper h3 { display: flex; align-items: center; gap: 0.8rem; }
+        .form-section-wrapper h3 i { color: var(--accent-primary); font-size: 1.1em; margin-top: -2px; }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.3rem; }
+        label { font-weight: 600; color: var(--text-dark); font-size: 1rem; margin-bottom: 0.4rem; }
+        input[type="text"], input[type="tel"], textarea, select { width: 100%; padding: 0.9rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-dark); font-size: 1rem; transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease); }
+        input[type="text"]:focus, input[type="tel"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); }
+        textarea { min-height: 100px; resize: vertical; }
+
+        /* --- Date/Time Selection --- */
+        .selection-container { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.2rem; min-height: 80px; margin-top: 0.5rem; }
+        .date-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.8rem; }
+        .time-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 0.7rem; }
+        .slot-card { padding: 0.8rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-primary); color: var(--text-dark); font-weight: 600; text-align: center; cursor: pointer; transition: all var(--transition-speed) var(--transition-ease); font-size: 0.95rem; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 55px; line-height: 1.4; box-shadow: 0 2px 4px var(--shadow-color); }
+        .slot-card:hover { border-color: var(--accent-primary-light); background-color: var(--bg-primary); transform: translateY(-3px); box-shadow: 0 5px 12px var(--shadow-color-medium); color: var(--accent-primary-dark); }
+        .slot-card.selected { background-color: var(--accent-selected); color: var(--accent-selected-text); border-color: var(--accent-selected); font-weight: 700; box-shadow: 0 3px 8px rgba(0, 76, 76, 0.2); transform: translateY(-1px); }
+        .slot-card.selected .day-name { color: rgba(255, 255, 255, 0.85); }
+        .slot-card.disabled { background-color: var(--accent-disabled-bg); color: var(--accent-disabled-text); cursor: not-allowed; border-color: var(--accent-disabled-border); opacity: 0.7; box-shadow: none; transform: none; pointer-events: none; }
+        .slot-card .day-number { font-size: 1.3rem; font-weight: 700; display: block; line-height: 1.1; }
+        .slot-card .day-name { font-size: 0.75rem; text-transform: uppercase; color: var(--text-medium); display: block; margin-top: 3px; font-weight: 400; }
+        .slots-message { grid-column: 1 / -1; text-align: center; padding: 1.5rem 1rem; color: var(--text-medium); font-style: italic; font-size: 0.95rem; }
+        .slots-message i { margin-right: 10px; color: var(--accent-primary); }
+        .slots-message.error { color: var(--error); font-style: normal; font-weight: 600;}
+        .slots-message.error i { color: var(--error); }
+
+        /* --- Buttons --- */
+        .btn { padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; text-align: center; transition: all var(--transition-speed) var(--transition-ease); border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; line-height: 1.2; box-shadow: 0 2px 4px var(--shadow-color); }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 12px var(--shadow-color-medium); }
+        .btn:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 2px 4px var(--shadow-color); }
+        .btn:disabled { background-color: var(--accent-disabled-bg); border-color: var(--accent-disabled-border); color: var(--accent-disabled-text); cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
+        .btn-primary { background-color: var(--accent-primary); color: var(--text-light); border-color: var(--accent-primary); font-size: 1rem; padding: 0.8rem 1.8rem; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
+        .btn-secondary { background-color: transparent; color: var(--accent-primary); border-color: var(--accent-primary); box-shadow: none; }
+        .btn-secondary:hover:not(:disabled) { background-color: var(--bg-accent-very-light); border-color: var(--accent-primary); color: var(--accent-primary-dark); }
+        .btn-secondary i { margin-right: 6px; }
+        .btn-block { width: 100%; margin-top: 1.5rem; }
+
+        /* Separator */
+        hr { border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+
+        /* --- Reviews Display & Form --- */
+        .reviews-section { margin-top: 0; } /* Remove potential double margin */
+        .review-list { list-style: none; padding: 0; margin: 0; max-height: 450px; /* Adjust max height */ overflow-y: auto; /* Enable scroll */ border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1.5rem; }
+        .review-item { border-bottom: 1px dashed var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+        .review-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem; }
+        .reviewer-info strong { font-weight: 600; color: var(--text-dark); }
+        .reviewer-info span { font-size: 0.85rem; color: var(--text-medium); margin-left: 0.5rem; white-space: nowrap;}
+         .review-rating .stars { font-size: 1em; display: flex; gap: 2px; } /* Star colors handled globally by explicit rule above */
+         .review-comment { color: var(--text-medium); line-height: 1.6; margin-top: 0.5rem; word-wrap: break-word; } /* Break long words */
+         .no-reviews { text-align: center; color: var(--text-medium); padding: 1.5rem 1rem; font-style: italic; background-color: var(--bg-secondary); border-radius: 6px; margin-top: 1rem; }
+         .no-reviews i { margin-right: 8px; }
+         /* Review Submission Form Specifics */
+         #review-form { margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;}
+         .review-form-note { background-color: var(--bg-accent-very-light); border-left: 4px solid var(--info); padding: 1rem; margin: 1rem 0 1.5rem 0; border-radius: 4px; font-size: 0.95rem; color: var(--text-medium); }
+         .review-form-note strong { color: var(--text-dark); }
+         .rating-input { display: flex; justify-content: center; align-items: center; gap: 5px; margin-bottom: 1rem; flex-direction: row-reverse; /* Makes stars fill left-to-right */ }
+         .rating-input input[type="radio"] { display: none; /* Hide actual radio */ }
+         .rating-input label { font-size: 1.8rem; color: var(--border-color-strong); cursor: pointer; transition: color 0.2s ease; }
+         /* Input rating hover/select color handled by the global rule */
+
+
+        /* --- Flash Messages --- */
+        .flash-messages { position: fixed; top: 90px; right: 20px; z-index: 1050; width: clamp(300px, 90%, 420px); }
+        .flash-message { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 6px; font-weight: 500; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; display: flex; align-items: center; gap: 1rem; background-color: var(--bg-primary); }
+        .flash-message::before { font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1.2em; }
+        .flash-message.success { border-left: 5px solid var(--success); color: #057a55; } .flash-message.success::before { content: '\f058'; color: var(--success); }
+        .flash-message.error { border-left: 5px solid var(--error); color: #b91c1c; } .flash-message.error::before { content: '\f071'; color: var(--error); }
+        .flash-message.info { border-left: 5px solid var(--info); color: #1d4ed8; } .flash-message.info::before { content: '\f05a'; color: var(--info); }
+        @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        /* --- Responsive Adjustments --- */
+         @media (max-width: 992px) {
+             main { gap: 1.8rem; }
+             .info-section, .form-section-wrapper, .reviews-section { padding: 1.5rem; }
+             .doctor-photo-large-container { width: 120px; height: 120px;}
+             h2 {font-size: 1.5rem;} h3 {font-size: 1.3rem;}
+         }
+        @media (max-width: 768px) {
+             main { grid-template-columns: 1fr; margin-top: 1.5rem; gap: 1.8rem; }
+            .page-top-bar { padding: 0.8rem 5%; }
+            .page-top-bar h1 { font-size: 1.3rem;}
+            .back-button { padding: 0.6rem 1rem; font-size: 0.85rem;}
+            h2 {font-size: 1.4rem;} h3 {font-size: 1.25rem;}
+            .doctor-profile-header { flex-direction: column; text-align: center; }
+            .doctor-photo-large-container { width: 130px; height: 130px;}
+            .form-group { margin-bottom: 1rem;}
+            .selection-container { padding: 1rem;}
+            .date-selection-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.7rem; }
+            .time-slots-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.6rem; }
+            .slot-card { font-size: 0.9rem; min-height: 50px;}
+            .btn {padding: 0.65rem 1.3rem; font-size: 0.9rem;}
+            .btn-primary {padding: 0.75rem 1.5rem;}
+            /* Make columns stack earlier for reviews/booking form */
+            .info-column, .form-column { grid-column: 1 / -1; }
+         }
+        @media (max-width: 480px) {
+            body { font-size: 15px; }
+            .page-top-bar { padding: 0.7rem 4%;}
+            .page-top-bar h1 { font-size: 1.15rem;}
+            main { padding: 0 0.5rem;}
+            .info-section, .form-section-wrapper, .reviews-section { padding: 1.2rem; }
+            .doctor-photo-large-container { width: 110px; height: 110px;}
+            .doctor-name-spec h2 { font-size: 1.5rem; }
+            .doctor-name-spec p.specialization { font-size: 1rem; }
+            .date-selection-grid, .time-slots-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+            input[type="text"], input[type="tel"], textarea, select { padding: 0.8rem; font-size: 0.95rem; }
+             .slot-card { font-size: 0.85rem; min-height: 50px; padding: 0.6rem 0.4rem;}
+             .slot-card .day-number { font-size: 1.1rem;}
+             .slot-card .day-name { font-size: 0.7rem;}
+            .flash-messages { width: clamp(280px, 95%, 95%); right: 2.5%; top: 75px;} /* Adjust flash message pos */
+            .rating-input label { font-size: 1.6rem; } /* Slightly smaller stars on mobile */
+            .review-header { flex-direction: column; align-items: flex-start; gap: 0.2rem;} /* Stack review header on mobile */
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages Div -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Header -->
+    <header class="page-top-bar">
+        <h1>Book with <span>Dr. {{ doctor.name | default('N/A') }}</span></h1>
+        {# Use url_for('home') or potentially javascript:history.back() #}
+        <a href="{{ url_for('home') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Search
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {# --- Left Column (Doctor Info + Reviews Display) --- #}
+        <div class="info-column">
+            {# --- Doctor Profile Section --- #}
+            <section class="info-section doctor-profile-section">
+                 <div class="doctor-profile-header">
+                     <div class="doctor-photo-large-container">
+                        <img src="{{ doctor.photo or 'https://via.placeholder.com/150/E0F2F2/007A7A?text=Photo' }}" class="doctor-photo-large" alt="Photo of {{ doctor.name }}">
+                     </div>
+                     <div class="doctor-name-spec">
+                        <h2>{{ doctor.name | default('N/A') }}</h2>
+                         <p class="specialization">{{ doctor.specialization | default('General Practice') }}</p>
+                        <!-- Rating Summary -->
+                         <div class="rating-summary">
+                            {% if doctor.review_count > 0 %}
+                                {# Use the get_stars helper directly #}
+                                <div class="stars" title="{{ doctor.average_rating }}/5 Stars">
+                                     {% for star_class in get_stars(doctor.average_rating) %}
+                                         {# The CSS now targets these i tags directly #}
+                                         <i class="{{ star_class }}"></i>
+                                     {% endfor %}
+                                </div>
+                                <span class="rating-text">{{ doctor.average_rating | round(1) }}/5 ({{ doctor.review_count }} review{% if doctor.review_count != 1 %}s{% endif %})</span>
+                             {% else %}
+                                <span class="rating-text"><i class="far fa-star" style="margin-right: 4px;"></i> No reviews yet</span>
+                            {% endif %}
+                        </div>
+                    </div> {# End doctor-name-spec #}
+                </div> {# End doctor-profile-header #}
+
+                 <div class="doctor-details">
+                    {% if doctor.description %}<p>{{ doctor.description }}</p>{% endif %}
+                    <ul>
+                        {% if doctor.province or doctor.governorate %}
+                             <li><i class="fas fa-map-marker-alt"></i> Located in {{ doctor.governorate | default('N/A') }}{{ ', ' if doctor.governorate and doctor.province else '' }}{{ doctor.province | default('') }}</li>
+                        {% endif %}
+                        {% if doctor.plc %}
+                            <li><i class="fas fa-clinic-medical"></i> Works at {{ doctor.plc }} ({{ doctor.facility_type | default('Clinic/Center') }})</li>
+                         {% elif doctor.facility_type %}
+                            <li><i class="fas fa-hospital"></i> Facility Type: {{ doctor.facility_type }}</li>
+                         {% endif %}
+                     </ul>
+                 </div>
+             </section> {# End doctor-profile-section #}
+
+
+           
+
+        {# --- Right Column (Booking Form) --- #}
+        <div class="form-column">
+             <section class="form-section-wrapper booking-form-wrapper">
+                 <form id="booking-form" method="POST" action="{{ url_for('confirm_booking') }}">
+                     {# Hidden fields to submit with the form #}
+                    <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                    <input type="hidden" name="doctor_name" value="{{ doctor.name }}">
+                     <input type="hidden" name="fingerprint" id="fingerprint-input"> {# FingerprintJS ID #}
+                    <input type="hidden" name="booking_date" id="selectedDateInput" required>
+                    <input type="hidden" name="booking_time" id="selectedTimeInput" required>
+
+                    <h3><i class="fas fa-calendar-check"></i> Select Appointment Date & Time</h3>
+
+                    {# Find Nearest Button #}
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <button type="button" id="findNearestBtn" class="btn btn-secondary" style="width: 100%;">
+                             <i class="fas fa-forward"></i> Find Nearest Available Slot <!-- Changed Icon -->
+                         </button>
+                         <div id="findNearestStatus" style="font-size: 0.85rem; text-align: center; margin-top: 5px; color: var(--text-medium); min-height: 1.2em;"></div> <!-- Placeholder for status msgs -->
+                    </div>
+
+                     {# Month Selection #}
+                     <div class="form-group">
+                        <label for="monthSlotsContainer">1. Select Month:</label>
+                        <div id="monthSlotsContainer" class="selection-container date-selection-grid">
+                            {# Placeholder - JS will populate #}
+                             <div class="slots-message"><i class="fas fa-spinner fa-spin"></i> Loading available months...</div>
+                        </div>
+                     </div>
+
+                     {# Day Selection - Initially hidden #}
+                    <div class="form-group" id="daySelectionGroup" style="display: none;">
+                        <label for="daySlotsContainer">2. Select Day:</label>
+                         <div id="daySlotsContainer" class="selection-container date-selection-grid">
+                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a month above first.</div>
+                         </div>
+                     </div>
+
+                     {# Time Selection - Initially hidden #}
+                    <div class="form-group" id="timeSelectionGroup" style="display: none;">
+                         <label for="timeSlotsContainer">3. Select Time Slot:</label>
+                         <div id="timeSlotsContainer" class="selection-container time-slots-grid">
+                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a day above first.</div>
+                        </div>
+                    </div>
+
+                    <hr> {# Separator before patient details #}
+
+                    <h3><i class="fas fa-user-edit"></i> Your Details for Booking</h3>
+
+                    <div class="form-group">
+                         <label for="patientName">Your Full Name:</label>
+                         <input type="text" id="patientName" name="patient_name" required autocomplete="name" placeholder="e.g. Hari Bahadur">
+                    </div>
+
+                    <div class="form-group">
+                         <label for="patientPhone">Your Phone Number:</label>
+                         <input type="tel" id="patientPhone" name="patient_phone" required pattern="[0-9]{9,15}" title="Enter 9-15 digits" autocomplete="tel" placeholder="e.g. 98XXXXXXXX">
+                    </div>
+
+                     <div class="form-group">
+                         <label for="notes">Notes for Doctor (Optional):</label>
+                         <textarea id="notes" name="notes" placeholder="e.g., Reason for visit, previous conditions..." maxlength="500"></textarea> {# Added maxlength #}
+                     </div>
+
+                    {# Submit Button - Initially disabled #}
+                    <button type="submit" id="confirmButton" class="btn btn-primary btn-block" disabled>
+                         <i class="fas fa-lock"></i> Select Month, Day & Time to Book <!-- Updated Text -->
+                    </button>
+                </form>
+            </section> {# End booking-form-wrapper #}
+             <!-- Reviews Section (Display + Form) -->
+             <section class="reviews-section">
+                <h3><i class="fas fa-comments" style="margin-right: 8px; color: var(--accent-primary);"></i> Patient Reviews</h3>
+
+                <!-- Display Recent Reviews -->
+                {% if reviews %}
+                     <ul class="review-list">
+                         {% for review in reviews %}
+                         <li class="review-item">
+                             <div class="review-header">
+                                <div class="reviewer-info">
+                                     {# Use title case for names? Optional #}
+                                    <strong>{{ review.reviewer_name | default('Anonymous') | title }}</strong>
+                                     {% set review_date = review.created_at | string | truncate(10, True, '') if review.created_at else 'on Unknown Date' %}
+                                     {# Nicer date formatting could be done here #}
+                                     <span> - Reviewed on {{ review_date }}</span>
+                                 </div>
+                                 <div class="review-rating stars" title="{{ review.rating }}/5 Stars">
+                                     {# Render stars using the helper - CSS targets these i tags #}
+                                     {% for star_class in get_stars(review.rating) %}
+                                         <i class="{{ star_class }}"></i>
+                                     {% endfor %}
+                                 </div>
+                             </div> {# End review-header #}
+                             {% if review.comment %}
+                                <p class="review-comment">{{ review.comment | safe }}</p> {# Use safe if comments allow basic html, otherwise no filter #}
+                             {% else %}
+                                 <p class="review-comment" style="font-style: italic; color: var(--text-medium);">(No comment provided)</p>
+                             {% endif %}
+                         </li> {# End review-item #}
+                         {% endfor %}
+                    </ul>
+                {% else %}
+                     {# Message shown if no reviews exist #}
+                    <div class="no-reviews">
+                        <i class="fas fa-comment-slash"></i> No reviews available for Dr. {{ doctor.name }} yet.
+                    </div>
+                {% endif %}
+
+                <hr style="margin: 2rem 0 1.5rem 0;"> {# Separator before form #}
+
+                 <!-- Review Submission Form -->
+                 <h3><i class="fas fa-pencil-alt" style="color: var(--accent-primary);"></i> Leave Your Review</h3>
+                <div class="review-form-note">
+                    <strong>Note:</strong> Only patients who have booked with this doctor (using the same name or phone number entered below) can submit a review. Your feedback helps others!
+                </div>
+
+                <form id="review-form" method="POST" action="{{ url_for('submit_review') }}">
+                    <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+
+                    <div class="form-group">
+                        <label for="reviewerName">Your Name (As Used During Booking):</label>
+                        <input type="text" id="reviewerName" name="reviewer_name" required autocomplete="name" placeholder="e.g. Sita Sharma">
+                    </div>
+
+                     <div class="form-group">
+                        <label for="reviewerPhone">Your Phone Number (As Used During Booking):</label>
+                         <input type="tel" id="reviewerPhone" name="reviewer_phone" required pattern="[0-9]{9,15}" title="Phone number used for booking (9-15 digits)" autocomplete="tel" placeholder="e.g. 98XXXXXXXX">
+                     </div>
+
+                    <div class="form-group">
+                         <label>Your Rating:</label>
+                        {# Star rating input - Reversed for LTR filling effect #}
+                        <div class="rating-input">
+                            <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars">★</label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label>
+                         </div>
+                     </div>
+
+                    <div class="form-group">
+                         <label for="comment">Your Comment (Optional but Recommended):</label>
+                         <textarea id="comment" name="comment" rows="4" placeholder="Share details about your experience (wait time, staff, care received...)" maxlength="1000"></textarea> {# Added maxlength #}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="background-color: var(--accent-primary-dark);">
+                        <i class="fas fa-paper-plane"></i> Submit Review
+                    </button>
+                </form>
+            </section> {# End reviews-section #}
+        </div> {# End Info Column #}
+
+         </div> {# End Form Column #}
+    </main>
+
+     <script>
+        // --- GLOBAL VARS ---
+         const doctorId = "{{ doctor.id | safe }}"; // Ensure ID is safe if passed directly
+        const doctorAvailabilitySchedule = {{ doctor.availability | tojson | safe }}; // Get schedule from backend variable
+         const today = new Date(); // Today's date object
+        today.setHours(0, 0, 0, 0); // Normalize to midnight
+        const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+         // --- DOM Elements ---
+        const monthSlotsContainer = document.getElementById('monthSlotsContainer');
+        const daySelectionGroup = document.getElementById('daySelectionGroup');
+        const daySlotsContainer = document.getElementById('daySlotsContainer');
+        const timeSelectionGroup = document.getElementById('timeSelectionGroup');
+        const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+        const selectedDateInput = document.getElementById('selectedDateInput');
+        const selectedTimeInput = document.getElementById('selectedTimeInput');
+        const confirmButton = document.getElementById('confirmButton');
+        const findNearestBtn = document.getElementById('findNearestBtn');
+        const findNearestStatus = document.getElementById('findNearestStatus');
+
+        // --- State Variables ---
+        let selectedMonthYear = null; // e.g., '2024-01'
+        let selectedDate = null;      // e.g., '2024-01-15'
+        let selectedTime = null;      // e.g., '10:00-10:20'
+        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        let isFindingNearest = false; // Prevent multiple simultaneous "find nearest" clicks
+
+        // --- Helper Functions ---
+        function clearSelectionUI(container) { container.innerHTML = ''; }
+        function displayMessage(container, message, type = 'info') {
+            const iconClass = type === 'loading' ? 'fas fa-spinner fa-spin' :
+                              type === 'error' ? 'fas fa-exclamation-triangle' : // Changed icon
+                              'fas fa-info-circle';
+            container.innerHTML = `<div class="slots-message ${type === 'error' ? 'error' : ''}"><i class="${iconClass}"></i> ${message}</div>`;
+        }
+        function updateButtonState() {
+            if (selectedMonthYear && selectedDate && selectedTime) {
+                confirmButton.disabled = false;
+                 confirmButton.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking'; // Update text/icon
+            } else {
+                confirmButton.disabled = true;
+                let buttonText = 'Select ';
+                if (!selectedMonthYear) buttonText += 'Month, Day & Time';
+                else if (!selectedDate) buttonText += 'Day & Time';
+                else if (!selectedTime) buttonText += 'Time';
+                 buttonText += ' to Book';
+                 confirmButton.innerHTML = `<i class="fas fa-lock"></i> ${buttonText}`;
+            }
+        }
+        function getDayName(date) { return weekdays[date.getDay()]; }
+        function isDoctorGenerallyAvailable(dayName) {
+            const scheduleForDay = doctorAvailabilitySchedule[dayName];
+             // Check if schedule exists, is an array, has entries, and isn't explicitly 'Unavailable'
+            return Array.isArray(scheduleForDay) && scheduleForDay.length > 0 && scheduleForDay[0].toLowerCase() !== 'unavailable';
+        }
+        // Simple time parser for HH:MM format (start of slot)
+         function parseTime(timeString) {
+             if (!timeString || typeof timeString !== 'string') return null;
+             try {
+                 const timePart = timeString.split('-')[0].trim();
+                 const match = timePart.match(/^(\d{1,2}):(\d{2})$/);
+                 if (match) {
+                    const hours = parseInt(match[1], 10); const minutes = parseInt(match[2], 10);
+                     if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) { return { hours, minutes }; }
+                 }
+             } catch (e) { console.error(`Error parsing time: ${timeString}`, e); } return null;
+         }
+
+
+        // --- Core Logic Functions ---
+
+        // Generates clickable month cards based on doctor's availability
+        function generateMonthCards() {
+            clearSelectionUI(monthSlotsContainer);
+             const monthsToShow = 6; // How many future months to display initially
+             let monthsGenerated = 0;
+             const displayedMonths = new Set(); // Prevent duplicate month display
+
+             for (let i = 0; i < monthsToShow * 31; i++) { // Check days ahead, covering months
+                 const checkDate = new Date(today);
+                 checkDate.setDate(today.getDate() + i);
+                 const dayName = getDayName(checkDate);
+
+                 if (isDoctorGenerallyAvailable(dayName)) {
+                     const monthYear = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                     if (!displayedMonths.has(monthYear) && displayedMonths.size < monthsToShow) {
+                         displayedMonths.add(monthYear);
+                         const dateForMonth = new Date(checkDate.getFullYear(), checkDate.getMonth(), 1);
+                         const monthName = dateForMonth.toLocaleDateString(navigator.language || 'en-US', { month: 'long' });
+                         const year = dateForMonth.getFullYear();
+
+                         const card = document.createElement('button');
+                         card.type = 'button'; card.classList.add('slot-card');
+                         card.dataset.monthYear = monthYear;
+                         card.innerHTML = `${monthName}<span class="day-name" style="font-size:0.75rem;">${year}</span>`;
+                         card.addEventListener('click', () => handleMonthClick(monthYear));
+                         monthSlotsContainer.appendChild(card);
+                         monthsGenerated++;
+                     }
+                 }
+                  if (displayedMonths.size >= monthsToShow) break; // Stop once enough months are found
+             }
+
+            if (monthsGenerated === 0) {
+                displayMessage(monthSlotsContainer, 'No available months found in the near future for this doctor.');
+            }
+        }
+
+
+        // Handles clicking a month card
+        function handleMonthClick(monthYear) {
+            selectedMonthYear = monthYear;
+            selectedDate = null; selectedTime = null; // Reset date/time selection
+             selectedDateInput.value = ''; selectedTimeInput.value = '';
+             // Visually select the clicked month card
+            document.querySelectorAll('#monthSlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.monthYear === monthYear); });
+            // Show day selection area, hide time, show loading for days
+             daySelectionGroup.style.display = 'block'; timeSelectionGroup.style.display = 'none';
+             clearSelectionUI(timeSlotsContainer); displayMessage(daySlotsContainer, 'Loading available days...', 'loading');
+             updateButtonState(); // Update button (will be disabled)
+             generateDayCards(monthYear); // Fetch and display days for the selected month
+        }
+
+        // Generates clickable day cards for a given month (YYYY-MM)
+        function generateDayCards(monthYear) {
+             clearSelectionUI(daySlotsContainer);
+             const [year, month] = monthYear.split('-').map(Number);
+             const daysInMonth = new Date(year, month, 0).getDate();
+             let daysGenerated = 0;
+
+             for (let day = 1; day <= daysInMonth; day++) {
+                 const currentDate = new Date(year, month - 1, day);
+                 if (currentDate <= today) continue; // Skip past dates
+
+                 const currentDateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                 const dayName = getDayName(currentDate);
+
+                 // Only create a card if the doctor is generally available on this day of the week
+                 if (isDoctorGenerallyAvailable(dayName)) {
+                     daysGenerated++;
+                     const card = document.createElement('button');
+                     card.type = 'button'; card.classList.add('slot-card');
+                     card.dataset.date = currentDateString;
+                      // Fetch available slots count here? Or just show day? Keep it simple for now.
+                     card.innerHTML = `<span class="day-number">${day}</span><span class="day-name">${dayName.substring(0, 3)}</span>`;
+                     card.addEventListener('click', () => handleDayClick(currentDateString));
+                     daySlotsContainer.appendChild(card);
+                 }
+             }
+            if (daysGenerated === 0) {
+                 displayMessage(daySlotsContainer, 'No generally available days found for this month based on the schedule.');
+            }
+        }
+
+
+        // Handles clicking a day card
+        function handleDayClick(dateString) {
+             selectedDate = dateString; selectedTime = null; // Reset time selection
+             selectedDateInput.value = dateString; selectedTimeInput.value = '';
+             // Visually select the clicked day card
+            document.querySelectorAll('#daySlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.date === dateString); });
+            // Show time selection area, show loading for times
+             timeSelectionGroup.style.display = 'block';
+             displayMessage(timeSlotsContainer, 'Loading available times...', 'loading');
+             updateButtonState(); // Update button (still disabled)
+            fetchAndDisplayTimeSlots(dateString); // Fetch actual available slots
+        }
+
+        // Fetches available slots from backend and displays them as cards
+         async function fetchAndDisplayTimeSlots(dateString, timeToSelect = null) {
+             clearSelectionUI(timeSlotsContainer);
+             if (!selectedDate) { // Should not happen if called via handleDayClick, but safety check
+                 displayMessage(timeSlotsContainer, 'Please select a day first.', 'error');
+                 return false;
+             }
+             displayMessage(timeSlotsContainer, '<i class="fas fa-spinner fa-spin"></i> Loading available times...', 'loading'); // Loading message
+
+             try {
+                 // Make API call to Flask backend
+                const response = await fetch(`/get-available-slots/${doctorId}/${dateString}`);
+                if (!response.ok) {
+                    let errorMsg = 'Failed to fetch time slots.';
+                    try {
+                        const errorData = await response.json(); errorMsg = errorData.error || errorMsg;
+                    } catch (_) {} // Ignore if response is not JSON
+                    throw new Error(`Network response error (${response.status}): ${errorMsg}`);
+                }
+                 const availableSlots = await response.json();
+
+                 clearSelectionUI(timeSlotsContainer); // Clear loading message
+
+                if (!Array.isArray(availableSlots)) { throw new Error("Invalid slot data received from server."); }
+
+                if (availableSlots.length === 0) {
+                     displayMessage(timeSlotsContainer, 'No available time slots for this date.');
+                    return false; // Indicate no slots found
+                } else {
+                     let timeActuallySelected = false;
+                     availableSlots.forEach(time => {
+                         const card = document.createElement('button');
+                         card.type = 'button'; card.classList.add('slot-card');
+                         card.dataset.time = time; card.textContent = time;
+                         card.addEventListener('click', () => handleTimeClick(time));
+
+                         // If a specific time needs to be pre-selected (e.g., from 'Find Nearest')
+                         if (timeToSelect && time === timeToSelect) {
+                             card.classList.add('selected');
+                             selectedTime = time; // Update state
+                             selectedTimeInput.value = time; // Update hidden input
+                             timeActuallySelected = true; // Mark as selected
+                         }
+                         timeSlotsContainer.appendChild(card);
+                     });
+                    updateButtonState(); // Update button now that slots are shown (or selected)
+                     return true; // Indicate success
+                 }
+             } catch (error) {
+                 console.error('Error fetching/displaying slots:', error);
+                 displayMessage(timeSlotsContainer, `Error loading times: ${error.message}`, 'error');
+                 timeSelectionGroup.style.display = 'block'; // Ensure section is visible to show error
+                 return false; // Indicate failure
+             }
+         }
+
+
+        // Handles clicking a time slot card
+        function handleTimeClick(time) {
+            selectedTime = time; selectedTimeInput.value = time;
+            // Visually select the clicked time card
+             document.querySelectorAll('#timeSlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.time === time); });
+             updateButtonState(); // Update button (should enable it)
+         }
+
+        // --- 'Find Nearest' Slot Functionality ---
+        async function findAndSelectNearestSlot() {
+            if (isFindingNearest) return; // Prevent multiple clicks
+            isFindingNearest = true;
+            findNearestBtn.disabled = true; // Disable button while searching
+             findNearestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+             findNearestStatus.textContent = 'Checking availability...'; // Initial status message
+
+            // Reset current selections
+            selectedMonthYear = null; selectedDate = null; selectedTime = null;
+            selectedDateInput.value = ''; selectedTimeInput.value = '';
+            timeSelectionGroup.style.display = 'none'; daySelectionGroup.style.display = 'none';
+             document.querySelectorAll('.slot-card.selected').forEach(c => c.classList.remove('selected'));
+             updateButtonState(); // Disable confirm button
+
+            try {
+                const response = await fetch(`/get-nearest-available/${doctorId}`);
+                if (!response.ok) {
+                     let errorMsg = 'Could not find nearest slot.';
+                     try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (_) {}
+                    throw new Error(errorMsg);
+                 }
+                 const result = await response.json();
+
+                 if (result.success && result.date && result.time) {
+                     const nearestDate = result.date; // YYYY-MM-DD
+                     const nearestTime = result.time; // HH:MM-HH:MM
+
+                     findNearestStatus.textContent = `Found: ${formatDateForDisplay(nearestDate)} at ${nearestTime}. Selecting...`;
+
+                     // --- Update State & UI to Reflect Found Slot ---
+                     selectedDate = nearestDate; selectedTime = nearestTime;
+                     selectedDateInput.value = nearestDate; selectedTimeInput.value = nearestTime;
+                     selectedMonthYear = nearestDate.substring(0, 7); // YYYY-MM
+
+                     // 1. Select Month Card (Generate if necessary)
+                     const monthCard = monthSlotsContainer.querySelector(`.slot-card[data-month-year="${selectedMonthYear}"]`);
+                    if (monthCard) {
+                         monthCard.classList.add('selected');
+                     } else {
+                        // Month not initially rendered? Regenerate and select. Less common.
+                        generateMonthCards();
+                        monthSlotsContainer.querySelector(`.slot-card[data-month-year="${selectedMonthYear}"]`)?.classList.add('selected');
+                     }
+
+                     // 2. Show Day section, Generate Day cards, and Select the specific Day
+                     daySelectionGroup.style.display = 'block';
+                     generateDayCards(selectedMonthYear); // Generate days for the found month
+                      // Need small delay for DOM update before selecting day card
+                      await new Promise(resolve => setTimeout(resolve, 50));
+                     const dayCard = daySlotsContainer.querySelector(`.slot-card[data-date="${selectedDate}"]`);
+                     if (dayCard) dayCard.classList.add('selected');
+
+                     // 3. Show Time section, Fetch slots, and Pre-select the specific Time
+                     timeSelectionGroup.style.display = 'block';
+                     // fetchAndDisplay will handle selecting the time card internally
+                     await fetchAndDisplayTimeSlots(selectedDate, selectedTime);
+
+                    updateButtonState(); // Enable confirm button
+                    findNearestStatus.textContent = `Selected: ${formatDateForDisplay(selectedDate)} at ${selectedTime}.`;
+
+                    // Optional: Scroll to the selected time slots smoothly
+                     setTimeout(() => {
+                         const timeGroup = document.getElementById('timeSelectionGroup');
+                         if(timeGroup) timeGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                     }, 200);
+
+                } else {
+                     // Backend indicated no slots found or other failure
+                    throw new Error(result.message || 'No available slots found in the near future.');
+                }
+            } catch (error) {
+                console.error("Error finding/selecting nearest slot:", error);
+                 findNearestStatus.textContent = `Error: ${error.message}`;
+                 // Display error more prominently? Maybe in the day/time slots area?
+                 displayMessage(daySlotsContainer, `Could not find nearby slot: ${error.message}`, 'error');
+                 daySelectionGroup.style.display = 'block'; // Show the error message area
+            } finally {
+                 isFindingNearest = false;
+                 findNearestBtn.disabled = false; // Re-enable button
+                 findNearestBtn.innerHTML = '<i class="fas fa-forward"></i> Find Nearest Available Slot';
+                // Clear status message after a few seconds
+                 setTimeout(() => { if (!isFindingNearest) findNearestStatus.textContent = ''; }, 5000); // Only clear if not actively searching again
+             }
+         }
+
+
+         // --- Helper to Format Date for Display ---
+         function formatDateForDisplay(dateString) {
+             try {
+                 // Use UTC time to avoid timezone interpretation issues if dateString is just YYYY-MM-DD
+                 const date = new Date(dateString + 'T00:00:00Z');
+                 return date.toLocaleDateString(navigator.language || 'en-US', {
+                     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' // Specify UTC if input is date only
+                 });
+             } catch { return dateString; } // Fallback to original string
+         }
+
+        // --- Event Listeners Setup ---
+         document.addEventListener('DOMContentLoaded', () => {
+            // Attach listener to the "Find Nearest" button
+            if(findNearestBtn) findNearestBtn.addEventListener('click', findAndSelectNearestSlot);
+
+            // Initialize page state
+            selectedMonthYear = null; selectedDate = null; selectedTime = null;
+             selectedDateInput.value = ''; selectedTimeInput.value = '';
+             daySelectionGroup.style.display = 'none'; timeSelectionGroup.style.display = 'none';
+
+             // Generate initial month view
+             generateMonthCards();
+             // Initial messages for day/time selection areas
+             displayMessage(daySlotsContainer, '<i class="fas fa-mouse-pointer"></i> Please select a month first.');
+             displayMessage(timeSlotsContainer, '<i class="fas fa-mouse-pointer"></i> Please select a day first.');
+             // Set initial button state (disabled)
+             updateButtonState();
+            // Handle flash messages display/hide
+            hideFlashMessages();
+
+             // --- FingerprintJS Logic ---
+            // Ensure FingerprintJS is loaded (using the defer script tag helps)
+            if (typeof FingerprintJS === 'undefined') {
+                 console.warn('FingerprintJS library not loaded yet or failed to load.');
+            } else {
+                FingerprintJS.load()
+                    .then(fp => fp.get())
+                    .then(result => {
+                        const fpInput = document.getElementById('fingerprint-input');
+                        if (fpInput) {
+                            fpInput.value = result.visitorId;
+                             console.log("Device Fingerprint ID set:", result.visitorId);
+                        } else { console.warn('Fingerprint input element not found.'); }
+                    })
+                     .catch(error => console.error('FingerprintJS Error:', error));
+             }
+         });
+
+         // --- Flash Message Handling ---
+        function hideFlashMessages() {
+             const flashMessages = document.querySelectorAll('.flash-message');
+             flashMessages.forEach(message => {
+                 // Ensure animation starts correctly
+                requestAnimationFrame(() => { message.style.opacity = '1'; message.style.transform = 'translateX(0)'; });
+                // Set timeout to start fade out
+                const fadeOutTimer = setTimeout(() => {
+                    message.style.opacity = '0';
+                     message.style.transform = 'translateX(100%)'; // Slide out animation
+                     // Set another timeout to remove from DOM after fade out animation
+                    const removeTimer = setTimeout(() => message.remove(), 500); // Matches animation duration
+                    // Clear this timer if message is hovered? (Optional)
+                }, 4500); // Start fade out after 4.5 seconds (total 5s animation cycle)
+
+                 // Optional: Pause removal on hover (good UX)
+                 message.addEventListener('mouseover', () => clearTimeout(fadeOutTimer));
+                 // Note: Re-initiating hide on mouseout can cause rapid blinking if user moves mouse quickly
+                 // A better approach might be to just let it fade out once mouse leaves if timer hasn't finished.
+                 // Or simply remove the hover logic if it causes issues.
+                // message.addEventListener('mouseout', () => hideFlashMessages()); // Re-initiate hide on mouse out
+            });
+        }
+    </script>
+
+</body>
+</html>

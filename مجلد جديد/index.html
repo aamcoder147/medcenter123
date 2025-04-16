@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Station - Book Your Doctor Appointment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-accent-light: #e0f7ff;
+            --border-color: #dee2e6;
+            --border-color-focus: #80bdff;
+            --text-dark: #343a40;
+            --text-medium: #6c757d;
+            --text-light: #ffffff;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --success: #28a745;
+            --error: #dc3545;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            /* Animation Timing */
+            --transition-speed: 0.3s;
+            --scroll-animation-duration: 0.6s;
+        }
+
+        html {
+            scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Open Sans', 'Lato', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scrollbar caused by animations */
+        }
+
+        /* --- Animation Keyframes --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Scroll Reveal Helper --- */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(30px); /* Initial position */
+            transition: opacity var(--scroll-animation-duration) ease-out,
+                        transform var(--scroll-animation-duration) ease-out;
+            will-change: opacity, transform; /* Optimize for animation */
+        }
+
+        .reveal-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 5%;
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: box-shadow var(--transition-speed) ease, padding var(--transition-speed) ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar.scrolled {
+            box-shadow: 0 2px 5px var(--shadow-color);
+            padding: 0.6rem 5%; /* Slightly smaller padding on scroll */
+        }
+
+        .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Lato', sans-serif;
+            transition: transform var(--transition-speed) ease;
+        }
+        .logo:hover {
+             transform: scale(1.05); /* Subtle scale on hover */
+         }
+
+        .nav-actions {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        /* Base Button Style */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.3rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: all var(--transition-speed) ease-in-out;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transform: scale(1); /* Base scale for transition */
+        }
+        .btn:hover {
+            transform: scale(1.03); /* Subtle button grow */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Add shadow on hover */
+        }
+        .btn:active {
+             transform: scale(0.98); /* Click feedback */
+         }
+
+        .btn-outline-primary {
+            border-color: var(--accent);
+            background-color: transparent;
+            color: var(--accent);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--accent);
+            color: var(--text-light);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--text-light);
+            border-color: var(--accent);
+        }
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        /* --- Hero Section --- */
+        .hero-section {
+            background-color: var(--bg-secondary);
+            padding: 4rem 5% 3rem; /* More vertical padding */
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden; /* Contain initial animations */
+        }
+
+        /* Add initial load animation to hero elements */
+        .hero-title, .hero-subtitle, .typing-effect-container, .search-container {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0; /* Start hidden */
+        }
+        .hero-subtitle { animation-delay: 0.15s; }
+        .typing-effect-container { animation-delay: 0.3s; }
+        .search-container { animation-delay: 0.45s; }
+
+
+        .hero-title {
+            font-size: 2.3rem; /* Slightly larger */
+            margin-bottom: 0.7rem;
+            color: var(--text-dark);
+            font-weight: 700;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-medium);
+            margin-bottom: 1.5rem;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .typing-effect-container {
+            min-height: 30px;
+            margin-bottom: 2.5rem; /* More space */
+            font-size: 1.1rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        #text {
+            border-right: 3px solid var(--accent);
+            padding-right: 5px;
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            vertical-align: bottom;
+            animation: blinkCursor 0.7s infinite;
+        }
+        @keyframes blinkCursor {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--accent); }
+        }
+
+        /* --- Search Container --- */
+        .search-container {
+            background: var(--bg-primary);
+            padding: 1.8rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            max-width: 900px;
+            margin: 0 auto;
+            /* Animation is now handled by hero parent */
+            border: 1px solid var(--border-color);
+            transition: box-shadow var(--transition-speed) ease;
+        }
+        .search-container:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12); /* Slightly enhance shadow */
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .input-group {
+            position: relative;
+        }
+        .input-group i {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-medium);
+            font-size: 0.9em;
+            transition: color var(--transition-speed) ease;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            background: var(--bg-primary);
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M7.646 11.854a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8 10.793 4.354 7.146a.5.5 0 1 0-.708.708l4 4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--border-color-focus);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+         /* Highlight icon on input focus */
+        select:focus + i, input[type="text"]:focus + i /* This won't work - Icon needs to be AFTER input */
+        /* Or use parent focus-within */
+        .input-group:focus-within i {
+             color: var(--accent);
+         }
+
+
+        .search-btn { grid-column: span 1; }
+        @media (max-width: 680px) {
+           .search-form { grid-template-columns: 1fr; }
+           .search-btn { width: 100%; justify-content: center; margin-top: 0.5rem; }
+        }
+
+        /* --- Doctors Grid --- */
+        .doctors-section {
+            padding: 4rem 5%; /* Increased padding */
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--bg-primary);
+        }
+
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.8rem; /* More gap */
+        }
+
+        .doctor-card {
+            background: var(--bg-primary);
+            border-radius: 0.4rem;
+            overflow: hidden;
+            /* Use the helper class for scroll animation */
+            /* transition handled by reveal-on-scroll */
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition-speed) ease, /* Add smooth transform transition for hover */
+                         box-shadow var(--transition-speed) ease,
+                         border-color var(--transition-speed) ease;
+            transform-origin: center bottom; /* Scale effect origin */
+        }
+        /* Refined Hover effect for cards */
+        .doctor-card:hover {
+             transform: translateY(-8px); /* Lift higher */
+             border-color: #b8daff;
+             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+         }
+
+
+        .doctor-photo {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            border-bottom: 1px solid var(--border-color);
+            filter: saturate(1);
+            transition: filter var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+         .doctor-card:hover .doctor-photo {
+             filter: saturate(1.1); /* Slightly saturate image on hover */
+             transform: scale(1.03); /* Zoom image slightly */
+         }
+
+        .doctor-info {
+            padding: 1.2rem; /* More padding inside card */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .doctor-info h3 {
+            color: var(--text-dark);
+            margin-bottom: 0.2rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            transition: color var(--transition-speed) ease;
+        }
+        .doctor-card:hover .doctor-info h3 {
+             color: var(--accent); /* Highlight name on hover */
+         }
+
+        .doctor-info .specialization {
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .doctor-details {
+            font-size: 0.88rem;
+            color: var(--text-medium);
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+        .doctor-details p { margin-bottom: 0.3rem; }
+        .doctor-details i {
+            margin-right: 0.5rem;
+            color: var(--text-medium);
+            width: 1.1em;
+            text-align: center;
+            transition: color var(--transition-speed) ease;
+        }
+        .doctor-card:hover .doctor-details i {
+            color: var(--accent); /* Highlight icons on hover */
+        }
+        .doctor-details i.fa-star { color: #ffc107; }
+        .doctor-card:hover .doctor-details i.fa-star { color: #f8ab00; }
+
+
+        .availability {
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            margin-top: auto;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 1rem;
+        }
+        .availability strong {
+           color: var(--text-dark);
+           font-weight: 600;
+        }
+
+        .book-btn { margin-top: 1rem; width: 100%; }
+        #noResultsMessage { color: var(--text-medium); text-align: center; padding: 3rem; font-size: 1.1rem; display: none;}
+
+
+        /* --- Footer --- */
+        .footer {
+            background: var(--bg-secondary);
+            padding: 4rem 5%;
+            margin-top: 4rem; /* More space above footer */
+            border-top: 1px solid var(--border-color);
+            color: var(--text-medium);
+            overflow: hidden; /* Contain scroll animations */
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2.5rem; /* More gap in footer */
+        }
+
+        /* Add scroll reveal to footer sections */
+        .footer-section {
+            /* Now uses reveal-on-scroll */
+        }
+
+
+        .footer-section h3 {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
+        .footer-links a {
+            color: var(--text-medium);
+            text-decoration: none;
+            transition: color var(--transition-speed) ease, padding-left var(--transition-speed) ease; /* Add padding transition */
+        }
+        .footer-links a:hover {
+            color: var(--accent);
+            padding-left: 5px; /* Indent link slightly on hover */
+            text-decoration: none; /* Keep no underline */
+        }
+
+        .social-links { display: flex; gap: 1rem; margin-top: 1rem; }
+        .social-links a {
+            font-size: 1.3rem;
+            color: var(--text-medium);
+            transition: color var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+        .social-links a:hover {
+            color: var(--accent);
+            transform: translateY(-3px) scale(1.1); /* Lift and scale icon */
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-medium);
+            font-size: 0.85rem;
+        }
+
+        /* Flash Messages (Styles remain the same, animation is fine) */
+         .flash-messages { position: fixed; top: 90px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
+         .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
+         .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+         .flash-message.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+         .flash-message.info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        /* Responsive Adjustments */
+         @media (max-width: 768px) {
+            .hero-title { font-size: 1.9rem; }
+            .btn { padding: 0.5rem 1rem; font-size: 0.85rem;}
+             /* Disable scroll reveal on smaller devices if preferred */
+             /*
+             .reveal-on-scroll {
+                 opacity: 1;
+                 transform: none;
+                 transition: none;
+             }
+             */
+        }
+         @media (max-width: 480px) {
+            .hero-title { font-size: 1.7rem; }
+         }
+
+    </style>
+</head>
+<body>
+
+    <!-- Flash messages -->
+    <div class="flash-messages">
+        <!-- ... flash message code ... -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <a href="/" style="text-decoration: none;"><div class="logo">Health Station</div></a>
+        <div class="nav-actions">
+             <button class="btn btn-outline-primary" onclick="window.location.href='/doctor-login'">Doctor Login</button>
+             <button class="btn btn-primary" onclick="window.location.href='/patient-login'">Patient Login / Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Search -->
+    <section class="hero-section" id="search-section"> <!-- Add ID for linking -->
+        <h1 class="hero-title">Find & Book Your Doctor Easily</h1>
+        <p class="hero-subtitle">Search by location, specialty, or doctor's name to find the right care for you.</p>
+
+        <div class="typing-effect-container">
+           <span id="text"></span>
+        </div>
+
+        <div class="search-container">
+             <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
+                 <div class="input-group">
+                     <i class="fas fa-map-marker-alt"></i>
+                     <select id="province">
+                        <!-- Options -->
+                        <option value="">All Provinces</option>
+                        <option value="Province 1">Province 1</option>
+                        <option value="Province 2">Province 2</option>
+                        <option value="Province 3">Province 3</option>
+                        <option value="Bagmati">Bagmati</option>
+                     </select>
+                     <!-- Icon is here in HTML, but style needs adjustment (like focus-within) or JS -->
+                 </div>
+
+                 <div class="input-group">
+                     <i class="fas fa-stethoscope"></i>
+                     <select id="specialization">
+                        <!-- Options -->
+                        <option value="">All Specialties</option>
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                     </select>
+                 </div>
+
+                 <div class="input-group">
+                     <i class="fas fa-user-md"></i>
+                     <input type="text" id="doctorName" placeholder="Doctor's Name">
+                 </div>
+
+                 <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors()">
+                     <i class="fas fa-search"></i> Search
+                 </button>
+             </form>
+        </div>
+    </section>
+
+    <!-- Doctors Results Section -->
+    <section class="doctors-section">
+        <div class="doctors-grid" id="resultsContainer">
+             <!-- Doctor cards loop (apply reveal class here) -->
+             {% for doctor in doctors %}
+             <div class="doctor-card reveal-on-scroll"> <!-- Add helper class -->
+                 <img src="{{ doctor.photo or 'https://via.placeholder.com/300x200/f8f9fa/6c757d?text=No+Photo' }}" class="doctor-photo" alt="{{ doctor.name }}">
+                 <div class="doctor-info">
+                     <h3>{{ doctor.name | default('Dr. Available') }}</h3>
+                     <p class="specialization">{{ doctor.specialization | default('General Practice') }}</p>
+                     <div class="doctor-details">
+                         <p><i class="fas fa-star"></i> Rating: {{ doctor.rate if doctor.rate is not none else 'N/A' }}</p>
+                         <p><i class="fas fa-map-marker-alt"></i> {{ doctor.province | default('Location N/A') }}</p>
+                         {% if doctor.clinic_name %}<p><i class="fas fa-clinic-medical"></i> {{ doctor.clinic_name }}</p>{% endif %}
+                     </div>
+                     <div class="availability">
+                         <p><strong>Availability:</strong> {{ doctor.availability1shortform | default('Click to view') }}</p>
+                     </div>
+                     <button class="btn btn-primary book-btn" onclick="window.location.href='/booking/{{ doctor.id }}'">Book Appointment</button>
+                 </div>
+             </div>
+             {% else %}
+                 {# This content won't show if JS runs on load and finds no doctors #}
+             {% endfor %}
+        </div>
+        <div id="noResultsMessage">
+            <p>No doctors found matching your criteria. Please adjust your search filters.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <!-- Add reveal-on-scroll to each footer section -->
+            <div class="footer-section reveal-on-scroll">
+                 <h3>Health Station</h3>
+                 <p style="font-size: 0.9rem;">Connecting you with trusted healthcare professionals. Book your appointment today.</p>
+            </div>
+            <div class="footer-section reveal-on-scroll">
+                <h3>Quick Links</h3>
+                <div class="footer-links">
+                    <a href="/">Home</a>
+                    <a href="#search-section">Find Doctors</a> <!-- Link to hero search -->
+                    <a href="/patient-login">Patient Portal</a>
+                    <a href="/doctor-login">Doctor Portal</a>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+             <div class="footer-section reveal-on-scroll">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+             <div class="footer-section reveal-on-scroll">
+                 <h3>Legal</h3>
+                 <div class="footer-links">
+                     <a href="#">Privacy Policy</a>
+                     <a href="#">Terms of Service</a>
+                 </div>
+             </div>
+        </div>
+        <div class="copyright">
+            © <span id="copyright-year"></span> Health Station. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        // --- Navbar Scroll Effect ---
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            // Adjust scroll threshold slightly if needed with padding change
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // --- Copyright Year ---
+        document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+        // --- Doctor Search/Filter Logic (Unchanged) ---
+        const allDoctors = JSON.parse('{{ doctors | tojson | safe }}');
+        function searchDoctors() {
+             // ... existing search logic ...
+            const province = document.getElementById('province').value;
+            const specialization = document.getElementById('specialization').value;
+            const nameQuery = document.getElementById('doctorName').value.toLowerCase().trim();
+            const resultsContainer = document.getElementById('resultsContainer');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+
+            const filteredDoctors = allDoctors.filter(doctor => {
+                const doctorProvince = doctor.province || '';
+                const doctorSpecialization = doctor.specialization || '';
+                const doctorName = doctor.name || '';
+                const provinceMatch = !province || doctorProvince === province;
+                const specMatch = !specialization || doctorSpecialization === specialization;
+                const nameMatch = !nameQuery || doctorName.toLowerCase().includes(nameQuery);
+                return provinceMatch && specMatch && nameMatch;
+            });
+            // Pass the container for reveal-on-scroll setup
+            displayResults(filteredDoctors, resultsContainer, noResultsMessage);
+        }
+
+        function displayResults(doctors, container, noResultsEl) {
+            container.innerHTML = ''; // Clear previous results
+
+            if (doctors.length === 0) {
+                noResultsEl.style.display = 'block';
+            } else {
+                noResultsEl.style.display = 'none';
+                doctors.forEach((doctor, index) => { // Add index for stagger
+                    const card = document.createElement('div');
+                    card.className = 'doctor-card reveal-on-scroll'; // Add reveal class here too!
+                    const photoUrl = doctor.photo || 'https://via.placeholder.com/300x200/f8f9fa/6c757d?text=No+Photo';
+                    const rating = doctor.rate !== undefined && doctor.rate !== null ? doctor.rate : 'N/A';
+                    const province = doctor.province || 'Location N/A';
+                    const availability = doctor.availability1shortform || 'Click to view';
+                    const name = doctor.name || 'Dr. Available';
+                    const specialization = doctor.specialization || 'General Practice';
+
+                    card.innerHTML = `
+                        <img src="${photoUrl}" class="doctor-photo" alt="${name}">
+                        <div class="doctor-info">
+                            <h3>${name}</h3>
+                            <p class="specialization">${specialization}</p>
+                            <div class="doctor-details">
+                               <p><i class="fas fa-star"></i> Rating: ${rating}</p>
+                               <p><i class="fas fa-map-marker-alt"></i> ${province}</p>
+                               ${doctor.clinic_name ? `<p><i class="fas fa-clinic-medical"></i> ${doctor.clinic_name}</p>` : ''}
+                            </div>
+                            <div class="availability">
+                                <p><strong>Availability:</strong> ${availability}</p>
+                            </div>
+                            <button class="btn btn-primary book-btn" onclick="window.location.href='/booking/${doctor.id}'">Book Appointment</button>
+                        </div>
+                    `;
+                     // Add staggered delay directly via JS for dynamic content
+                     card.style.transitionDelay = `${index * 0.08}s`; // Stagger effect
+                    container.appendChild(card);
+                });
+
+                // IMPORTANT: After adding dynamic elements, re-initialize the observer for them
+                 setupScrollObserver();
+            }
+        }
+
+
+        // --- Typing Effect (Unchanged) ---
+        const textElement = document.getElementById("text");
+        const textsToType = [
+             "Book appointments in minutes.",
+             "Find trusted specialists near you.",
+             "Check real-time availability.",
+             "Your health is our priority."
+         ];
+         let textIndex = 0;
+         let charIndex = 0;
+         let isDeleting = false;
+         const typingSpeed = 100;
+         const deletingSpeed = 50;
+         const pauseBeforeDelete = 1800;
+         const pauseBeforeType = 500;
+         function type() { /* ... existing typing logic ... */
+             if (!textElement) return;
+             const currentText = textsToType[textIndex];
+             let typeDelay;
+             if (!isDeleting) {
+                 textElement.textContent = currentText.slice(0, charIndex + 1); charIndex++;
+                 if (charIndex === currentText.length) { isDeleting = true; typeDelay = pauseBeforeDelete; }
+                 else { typeDelay = typingSpeed; }
+             } else {
+                 textElement.textContent = currentText.slice(0, charIndex - 1); charIndex--;
+                 if (charIndex === 0) { isDeleting = false; textIndex = (textIndex + 1) % textsToType.length; typeDelay = pauseBeforeType; }
+                 else { typeDelay = deletingSpeed; }
+             }
+             setTimeout(type, typeDelay);
+        }
+
+        // --- Intersection Observer for Scroll Effects ---
+        let observer; // Declare observer globally to reuse/disconnect if needed
+
+        function setupScrollObserver() {
+             // Disconnect previous observer if exists (important for re-filtering)
+             if (observer) {
+                 observer.disconnect();
+             }
+
+            const scrollElements = document.querySelectorAll(".reveal-on-scroll");
+
+            const observerOptions = {
+                root: null, // relative to the viewport
+                rootMargin: '0px',
+                threshold: 0.1 // Trigger when 10% of the element is visible
+            };
+
+            const observerCallback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target); // Stop observing once visible
+                    }
+                     // Optional: else { entry.target.classList.remove("is-visible"); } // Re-animate if scrolling up
+                });
+            };
+
+            observer = new IntersectionObserver(observerCallback, observerOptions);
+
+            scrollElements.forEach((el, index) => {
+                // Apply staggered delay for non-card elements if needed, or rely on card logic
+                if (!el.classList.contains('doctor-card')) {
+                    // Check if it's a footer section for staggering
+                     if (el.classList.contains('footer-section')) {
+                        el.style.transitionDelay = `${index * 0.1}s`;
+                     }
+                }
+                observer.observe(el);
+            });
+        }
+
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+             displayResults(allDoctors, document.getElementById('resultsContainer'), document.getElementById('noResultsMessage'));
+             if (textElement) { setTimeout(type, pauseBeforeType + 500); } // Slightly delay typing start
+             setupScrollObserver(); // Initial observer setup for elements loaded with the page (footer etc.)
+        });
+
+    </script>
+</body>
+</html>

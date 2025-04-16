@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Book Appointment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Clinic Style Palette */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border-color: #dee2e6;
+            --border-color-focus: #80bdff;
+            --text-dark: #343a40;
+            --text-medium: #6c757d;
+            --text-light: #ffffff;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --accent-selected: #004085; /* Darker blue for selected */
+            --accent-disabled: #a0cfff; /* Lighter blue for disabled look */
+            --success: #28a745;
+            --error: #dc3545;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.2s; /* Faster transition */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-secondary);
+            color: var(--text-dark);
+            font-family: 'Open Sans', 'Lato', sans-serif;
+            padding: 2rem;
+            line-height: 1.6; /* Added base line-height */
+        }
+
+        .booking-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-header h1 { color: var(--accent); font-family: 'Lato', sans-serif; font-size: 1.8rem; }
+
+        .doctor-details-section { display: flex; gap: 1.5rem; margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: 0.4rem; border: 1px solid var(--border-color); align-items: flex-start; /* Align items top */ }
+        .doctor-photo { width: 150px; height: 150px; object-fit: cover; border-radius: 0.4rem; border: 3px solid var(--accent); flex-shrink: 0; }
+        .doctor-text-info h2 { color: var(--text-dark); font-weight: 700; margin-bottom: 0.3rem; font-size: 1.4rem; }
+        .doctor-text-info .specialization { color: var(--accent); font-weight: 600; margin-bottom: 0.6rem; font-size: 1rem; }
+        .doctor-text-info p { color: var(--text-medium); font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+        .booking-form-section h2 { font-size: 1.5rem; color: var(--accent); margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+        .booking-form { display: grid; gap: 1.5rem; /* Increased gap slightly */ }
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; /* Increased gap */ }
+        label { font-weight: 600; color: var(--text-dark); font-size: 0.9rem; }
+        input[type="text"], input[type="tel"], /* Changed type to tel */ input[type="date"], textarea /* Added textarea */ { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.3rem; background: var(--bg-primary); color: var(--text-dark); font-size: 0.95rem; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
+        input[type="text"]:focus, input[type="tel"]:focus, input[type="date"]:focus, textarea:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+        textarea { min-height: 80px; resize: vertical; /* Allow vertical resize */ }
+
+        /* Time Slot Card Styles - NEW */
+        .time-slots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive grid */
+            gap: 0.8rem;
+            margin-top: 0.5rem; /* Space above cards */
+            padding: 0.5rem;
+            background-color: var(--bg-secondary); /* Light bg for contrast */
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            min-height: 50px; /* Ensure container has some height */
+        }
+        .slot-card {
+            padding: 0.7rem 0.5rem; /* Adjusted padding */
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            background-color: var(--bg-primary);
+            color: var(--text-dark);
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem; /* Slightly smaller text */
+        }
+        .slot-card:hover {
+            border-color: var(--accent);
+            background-color: #e7f3ff; /* Light blue hover */
+            transform: translateY(-2px);
+        }
+        .slot-card.selected {
+            background-color: var(--accent-selected);
+            color: var(--text-light);
+            border-color: var(--accent-selected);
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .slot-card.disabled { /* Style for when fetching/no slots */
+            background-color: #e9ecef;
+            color: var(--text-medium);
+            cursor: not-allowed;
+            border-color: var(--border-color);
+        }
+        .slots-message { /* Message for loading/no slots */
+            grid-column: 1 / -1; /* Span full width */
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+        /* Base Button Style */
+        .btn { padding: 0.8rem 1.5rem; /* Slightly more padding */ border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 1rem; text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .btn:disabled { background-color: var(--accent-disabled); border-color: var(--accent-disabled); cursor: not-allowed; }
+        .btn-primary { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
+        .btn-primary:hover:not(:disabled) { background-color: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-block { width: 100%; }
+        .btn-outline-primary { background-color: transparent; color: var(--accent); border-color: var(--accent); }
+        .btn-outline-primary:hover { background-color: var(--accent); color: var(--text-light); }
+
+        /* Flash Messages */
+        .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
+        .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
+        .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .flash-message.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .flash-message.info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .booking-container { padding: 1.5rem; margin: 1rem auto; }
+            .doctor-details-section { flex-direction: column; align-items: center; text-align: center; }
+            .doctor-photo { width: 120px; height: 120px; margin-bottom: 1rem; }
+            .page-header h1 { font-size: 1.6rem;}
+            .booking-form-section h2 { font-size: 1.3rem;}
+            .time-slots-container { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* Smaller cards on mobile */ gap: 0.5rem; }
+            .slot-card { padding: 0.6rem 0.4rem; font-size: 0.85rem; }
+        }
+    </style>
+    </head>
+<body>
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="booking-container">
+        <div class="page-header">
+             <h1>Book Your Appointment</h1>
+        </div>
+
+        <div class="doctor-details-section">
+            <img src="{{ doctor.photo or 'https://via.placeholder.com/150/dee2e6/6c757d?text=Photo' }}" class="doctor-photo" alt="{{ doctor.name }}">
+            <div class="doctor-text-info">
+                <h2>Dr. {{ doctor.name | default('N/A') }}</h2>
+                <p class="specialization">{{ doctor.specialization | default('General Practice') }}</p>
+                <p>{{ doctor.province | default('Location N/A') }}</p>
+                <p>{{ doctor.description | default('No description available.') }}</p>
+            </div>
+        </div>
+
+        <div class="booking-form-section">
+            <h2>Fill in Your Details</h2>
+            <form id="booking-form" class="booking-form" method="POST" action="{{ url_for('confirm_booking') }}"> <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                <input type="hidden" name="doctor_name" value="{{ doctor.name }}">
+                <input type="hidden" name="fingerprint" id="fingerprint-input">
+                <input type="hidden" name="booking_time" id="selectedTimeInput" required>
+
+                <div class="form-group">
+                    <label for="bookingDate">Select Date:</label>
+                    <input type="date" id="bookingDate" name="booking_date" required min="{{ today }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="timeSlotsContainer">Available Time Slots:</label>
+                    <div id="timeSlotsContainer" class="time-slots-container">
+                        <div class="slots-message">Please select a date to see available times.</div>
+                    </div>
+                    </div>
+
+                <div class="form-group">
+                    <label for="patientName">Full Name:</label>
+                    <input type="text" id="patientName" name="patient_name" required autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="patientPhone">Phone Number:</label>
+                    <input type="tel" id="patientPhone" name="patient_phone" required pattern="[0-9]{9,15}" title="Please enter a valid phone number (9-15 digits)" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes (Optional):</label>
+                    <textarea id="notes" name="notes" placeholder="Any specific information for the doctor?"></textarea>
+                </div>
+
+                <button type="submit" id="confirmButton" class="btn btn-primary btn-block" disabled>Select Date & Time</button>
+            </form>
+             <div style="text-align: center; margin-top: 1.5rem;">
+                 <a href="{{ url_for('home') }}" class="btn btn-outline-primary"> Back to Home
+                 </a>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dateInput = document.getElementById('bookingDate');
+        const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+        const selectedTimeInput = document.getElementById('selectedTimeInput');
+        const confirmButton = document.getElementById('confirmButton');
+        const doctorId = "{{ doctor.id }}"; // Get doctor ID from template
+
+        // Set min date
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+
+        // --- FUNCTION TO FETCH AND DISPLAY SLOTS ---
+        async function updateTimeSlots() {
+            const selectedDate = dateInput.value;
+            selectedTimeInput.value = ''; // Reset selected time
+            confirmButton.disabled = true; // Disable button until time selected
+            confirmButton.textContent = 'Select Date & Time'; // Reset button text
+            timeSlotsContainer.innerHTML = '<div class="slots-message">Loading available slots...</div>'; // Show loading message
+
+            if (!selectedDate) {
+                timeSlotsContainer.innerHTML = '<div class="slots-message">Please select a date to see available times.</div>';
+                return;
+            }
+
+            try {
+                // Fetch available slots from the new endpoint
+                const response = await fetch(`/get-available-slots/${doctorId}/${selectedDate}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const availableSlots = await response.json();
+
+                timeSlotsContainer.innerHTML = ''; // Clear previous content
+
+                if (availableSlots.length === 0) {
+                    timeSlotsContainer.innerHTML = '<div class="slots-message">No available slots for this date.</div>';
+                } else {
+                    availableSlots.forEach(time => {
+                        const slotButton = document.createElement('button');
+                        slotButton.type = 'button'; // Important: prevent form submission
+                        slotButton.classList.add('slot-card');
+                        slotButton.textContent = time;
+                        slotButton.dataset.time = time; // Store time in data attribute
+
+                        slotButton.addEventListener('click', () => {
+                            // Remove 'selected' class from all buttons
+                            document.querySelectorAll('.slot-card.selected').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            // Add 'selected' class to the clicked button
+                            slotButton.classList.add('selected');
+                            // Update the hidden input value
+                            selectedTimeInput.value = time;
+                            // Enable confirm button
+                            confirmButton.disabled = false;
+                            confirmButton.textContent = 'Confirm Booking';
+                        });
+
+                        timeSlotsContainer.appendChild(slotButton);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching available slots:', error);
+                timeSlotsContainer.innerHTML = '<div class="slots-message" style="color: var(--error);">Error loading slots. Please try again.</div>';
+            }
+        }
+
+        // --- Flash Message Handling ---
+        function hideFlashMessages() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                // Start fade out after 4 seconds
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    // Remove from DOM after transition ends (500ms)
+                    setTimeout(() => message.remove(), 500);
+                }, 4000);
+            });
+        }
+
+        // --- Event Listeners ---
+        dateInput.addEventListener('change', updateTimeSlots);
+
+        // --- Initial Load ---
+        window.onload = () => {
+             hideFlashMessages();
+             // Don't call updateTimeSlots initially
+         };
+
+        // --- FingerprintJS Logic (unchanged) ---
+        // Ensure this runs after the rest of the DOM is potentially ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof FingerprintJS === 'undefined') {
+                 console.warn('FingerprintJS library not loaded.');
+                 return;
+            }
+            FingerprintJS.load().then(fp => fp.get()).then(result => {
+                const fingerprint = result.visitorId;
+                const fpInput = document.getElementById('fingerprint-input');
+                 if (fpInput) {
+                     fpInput.value = fingerprint;
+                 } else {
+                    console.warn('Fingerprint input field not found.');
+                 }
+            }).catch(error => {
+                console.error('Error getting fingerprint:', error);
+            });
+        });
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js" defer></script> </body>
+</html>

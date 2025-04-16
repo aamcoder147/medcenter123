@@ -1,0 +1,3916 @@
+app.py:
+
+# Filename: app.py
+# ****** MODIFIED CODE ******
+from flask import (
+    Flask, render_template, json, request, redirect, url_for,
+    send_from_directory, flash, jsonify, make_response
+)
+import sqlite3
+from flask_login import LoginManager, UserMixin, current_user # Assuming you might use login later
+import os
+from datetime import datetime, timedelta, date
+import uuid
+from collections import defaultdict # Helpful for aggregation
+
+app = Flask(__name__, static_folder='static')
+
+# Required for flash messages and sessions (if using Flask-Login)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_default_secret_key_123') # Use environment variable or secure key
+
+# --- Login Manager Setup (Keep if using authentication) ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+# login_manager.login_view = 'login' # Example: redirect to login page if needed
+
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Replace with your actual user loading logic if using authentication
+    # For now, returns a placeholder user if an ID is provided
+    if user_id:
+         return User(user_id)
+    return None # Important for anonymous users
+
+# --- Database Initialization ---
+def get_db():
+    db_folder = 'database'
+    db_path = os.path.join(db_folder, 'bookings.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row # Return dict-like rows for easier access
+    return conn
+
+def init_db():
+    db_folder = 'database'
+    db_path = os.path.join(db_folder, 'bookings.db')
+    if not os.path.exists(db_folder):
+        os.makedirs(db_folder)
+
+    # Use get_db() to ensure row_factory is set if needed elsewhere too
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    print("Initializing database...")
+
+    # Create Bookings Table (Keep status, keep type for potential future use but don't query for dashboard)
+    c.execute('''CREATE TABLE IF NOT EXISTS bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  doctor_id INTEGER NOT NULL,
+                  doctor_name TEXT,
+                  patient_name TEXT NOT NULL,
+                  patient_phone TEXT,
+                  booking_date TEXT NOT NULL,
+                  booking_time TEXT NOT NULL,
+                  notes TEXT,
+                  appointment_type TEXT DEFAULT 'Consultation', -- Keeping column, but won't be used in dashboard charts
+                  status TEXT DEFAULT 'Pending',               -- Status: Pending, Completed, Cancelled
+                  ip_address TEXT,
+                  cookie_id TEXT,
+                  fingerprint TEXT,
+                  user_id INTEGER, -- Consider relationship if using login
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                 )''')
+    print("Bookings table checked/created.")
+
+    # --- Check and Add Columns if they don't exist ---
+    table_info = c.execute("PRAGMA table_info(bookings)").fetchall()
+    column_names = [col[1] for col in table_info]
+
+    if 'appointment_type' not in column_names:
+        print("Adding 'appointment_type' column...")
+        c.execute("ALTER TABLE bookings ADD COLUMN appointment_type TEXT DEFAULT 'Consultation'")
+        print("'appointment_type' column added.")
+
+    if 'status' not in column_names:
+        print("Adding 'status' column...")
+        c.execute("ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'Pending'")
+        print("'status' column added.")
+    # --- End Column Check ---
+
+    conn.commit()
+    conn.close()
+    print("Database initialization complete.")
+
+init_db() # Run initialization
+
+# Load doctors data (Keep using JSON for now)
+doctors_data_path = 'doctors.json'
+try:
+    with open(doctors_data_path) as f:
+        doctors_data = json.load(f)
+except FileNotFoundError:
+    print(f"Error: {doctors_data_path} not found. Please create it.")
+    doctors_data = {'doctors': []} # Provide a default empty structure
+
+# --- Standard Routes (Home, Booking Page, Confirmation etc.) ---
+
+@app.route('/')
+def home():
+    return render_template('index.html', doctors=doctors_data.get('doctors', []))
+
+
+@app.route('/booking/<int:doctor_id>')
+def booking_page(doctor_id):
+    try:
+        doctor = next((d for d in doctors_data.get('doctors', []) if d['id'] == doctor_id), None)
+        if not doctor:
+             flash('Doctor not found.', 'error')
+             return redirect(url_for('home'))
+
+        today_str = date.today().strftime('%Y-%m-%d')
+        # *** NEW: Pass doctor's availability schedule to the template ***
+        doctor_availability_json = json.dumps(doctor.get('availability', {})) # Convert dict to JSON string
+
+        response = make_response(render_template(
+            'booking.html',
+            doctor=doctor,
+            doctor_id=doctor_id,
+            today=today_str,
+            # *** NEW: Pass the JSON string ***
+            doctor_availability_schedule=doctor_availability_json
+        ))
+
+        if not request.cookies.get('device_id'):
+            device_id = str(uuid.uuid4())
+            response.set_cookie('device_id', device_id, max_age=30*24*60*60, httponly=True, samesite='Lax')
+
+        return response
+
+    except Exception as e:
+        print(f"Error in booking_page for doctor {doctor_id}: {e}")
+        flash('An error occurred. Please try again later.', 'error')
+        return redirect(url_for('home'))
+
+# --- NEW ROUTE to fetch available slots ---
+# --- NEW ROUTE to fetch available slots ---
+
+@app.route('/get-available-slots/<int:doctor_id>/<string:date_str>')
+def get_available_slots(doctor_id, date_str):
+    try:
+        # Validate date format
+        booking_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        day_name = booking_date.strftime('%A') # Get 'Monday', 'Tuesday' etc.
+
+        # Find doctor and their general availability for that day
+        doctor = next((d for d in doctors_data.get('doctors', []) if d['id'] == doctor_id), None)
+        if not doctor:
+            return jsonify({'error': 'Doctor not found'}), 404
+
+        doctor_availability = doctor.get('availability', {})
+        general_slots_raw = doctor_availability.get(day_name, []) # Get raw slots
+
+        # *** FIX: Explicitly filter out "Unavailable" strings ***
+        general_slots = [slot for slot in general_slots_raw if isinstance(slot, str) and slot.lower() != "unavailable"]
+
+        # If after filtering, there are no general slots, return empty
+        if not general_slots:
+             return jsonify([])
+
+        # Query DB for booked slots for this doctor on this date
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''SELECT booking_time FROM bookings
+                     WHERE doctor_id = ? AND booking_date = ? AND status != 'Cancelled' ''',
+                  (doctor_id, date_str))
+        booked_slots_rows = c.fetchall()
+        conn.close()
+
+        booked_times = {row['booking_time'] for row in booked_slots_rows}
+
+        # Filter general slots to get available ones
+        available_slots = [slot for slot in general_slots if slot not in booked_times]
+
+        return jsonify(available_slots)
+
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+    except Exception as e:
+        print(f"Error in get_available_slots for doctor {doctor_id}, date {date_str}: {e}")
+        return jsonify({'error': 'An internal error occurred'}), 500
+
+@app.route('/confirm-booking', methods=['POST'])
+def confirm_booking():
+    # Get form data
+    doctor_id = request.form['doctor_id']
+    doctor_name = request.form['doctor_name']
+    patient_name = request.form['patient_name']
+    patient_phone = request.form['patient_phone']
+    booking_date = request.form['booking_date']
+    booking_time = request.form['booking_time']
+    selected_day = datetime.strptime(booking_date, '%Y-%m-%d').strftime('%A')
+    
+    # Find the doctor
+    doctor = next(d for d in doctors_data['doctors'] if d['id'] == int(doctor_id))
+    
+    # Validate booking rules
+    conn = sqlite3.connect('database/bookings.db')
+    c = conn.cursor()
+    
+    # Rule 1: Check if the booking date is in the past
+    today = datetime.today().strftime('%Y-%m-%d')
+    if booking_date < today:
+        flash('⛔ You cannot book on a date before today.', 'error')
+        return redirect(url_for('booking_page', doctor_id=doctor_id))
+    
+        # Check if the doctor is unavailable on the selected day
+    if "Unavilable" in doctor['availability'].get(selected_day, []):
+        flash('⛔ الطبيب غير متوفر في هذا اليوم.', 'error')
+        return redirect(url_for('booking_page', doctor_id=doctor_id))
+    
+    # Rule 2: Check if the same name has booked the same doctor within 5 days
+    c.execute('''SELECT * FROM bookings 
+                 WHERE patient_name = ? AND doctor_id = ? 
+                 AND DATE(booking_date) >= DATE(?, '-5 days')''',
+              (patient_name, doctor_id, booking_date))
+    if c.fetchone():
+        flash('⛔ You can only book the same doctor once every 5 days.', 'error')
+        return redirect(url_for('booking_page', doctor_id=doctor_id))
+    
+    # Rule 10: Check if the time slot is already booked
+    c.execute('''SELECT * FROM bookings 
+                 WHERE doctor_id = ? AND booking_date = ? AND booking_time = ?''',
+              (doctor_id, booking_date, booking_time))
+    if c.fetchone():
+        flash('⛔ This time slot is already booked. Please choose another time.', 'error')
+        return redirect(url_for('booking_page', doctor_id=doctor_id))
+    
+    # Rule 11: Check if the same name or phone has a booking on the same day
+    c.execute('''SELECT * FROM bookings 
+                 WHERE (patient_name = ? OR patient_phone = ?) AND booking_date = ?''',
+              (patient_name, patient_phone, booking_date))
+    if c.fetchone():
+        flash('⛔ You already have a booking on this day. Only one booking per day is allowed.', 'error')
+
+    
+    # Save to database
+        c.execute('''INSERT INTO bookings 
+                 (doctor_id, doctor_name, patient_name, patient_phone, booking_date, booking_time)
+                 VALUES (?, ?, ?, ?, ?, ?)''',
+              (doctor_id, doctor_name, patient_name, patient_phone, booking_date, booking_time))
+    conn.commit()
+
+    c.execute('''INSERT INTO bookings 
+                 (doctor_id, doctor_name, patient_name, patient_phone, booking_date, booking_time)
+                 VALUES (?, ?, ?, ?, ?, ?)''',
+              (doctor_id, doctor_name, patient_name, patient_phone, booking_date, booking_time))
+    conn.commit()
+    
+    # Get the last inserted booking ID
+    booking_id = c.lastrowid
+    conn.close()
+    
+    # Redirect to confirmation page with booking ID
+    return redirect(url_for('confirmation', 
+                          booking_id=booking_id,
+                          doctor_name=doctor_name,
+                          patient_name=patient_name,
+                          booking_date=booking_date,
+                          booking_time=booking_time))
+
+@app.route('/confirmation')
+def confirmation():
+    booking_id = request.args.get('booking_id')
+    if not booking_id:
+        return redirect(url_for('home'))
+    
+    return render_template('confirmation.html',
+                         booking_id=booking_id,
+                         doctor_name=request.args.get('doctor_name'),
+                         patient_name=request.args.get('patient_name'),
+                         booking_date=request.args.get('booking_date'),
+                         booking_time=request.args.get('booking_time'))
+
+# ****** ADD THIS NEW ROUTE BELOW get_available_slots ******
+
+@app.route('/get-doctor-availability/<int:doctor_id>')
+def get_doctor_availability(doctor_id):
+    """
+    Provides general future availability based on the doctor's JSON schedule.
+    Returns data structured for month/day card generation.
+    Format: {'YYYY-MM': [day1, day2,...], ...}
+    """
+    try:
+        doctor = next((d for d in doctors_data.get('doctors', []) if d['id'] == doctor_id), None)
+        if not doctor:
+            return jsonify({'error': 'Doctor not found'}), 404
+
+        doctor_schedule = doctor.get('availability', {})
+        if not doctor_schedule:
+             return jsonify({}) # No schedule defined for this doctor
+
+        availability_data = defaultdict(list)
+        today = date.today()
+        # Look ahead for a reasonable period, e.g., 120 days (around 4 months)
+        # Adjust this range as needed
+        end_date = today + timedelta(days=120)
+        current_date = today
+
+        while current_date <= end_date:
+            day_name = current_date.strftime('%A') # 'Monday', 'Tuesday', etc.
+            general_slots_raw = doctor_schedule.get(day_name, [])
+
+            # Check if the doctor has *any* defined slots for this day of the week,
+            # excluding 'Unavailable'.
+            has_general_slots = any(
+                isinstance(slot, str) and slot.strip() and slot.lower() != "unavailable"
+                for slot in general_slots_raw
+            )
+
+            if has_general_slots:
+                month_str = current_date.strftime('%Y-%m')
+                day_num = current_date.day
+                availability_data[month_str].append(day_num)
+
+            current_date += timedelta(days=1)
+
+        # Convert defaultdict to regular dict for JSON response
+        return jsonify(dict(availability_data))
+
+    except Exception as e:
+        print(f"Error in get_doctor_availability for doctor {doctor_id}: {e}")
+        return jsonify({'error': 'An internal error occurred fetching availability'}), 500
+
+# ****** END OF NEW ROUTE ******
+
+
+@app.route('/delete-booking/<int:booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('SELECT 1 FROM bookings WHERE id = ?', (booking_id,))
+    exists = c.fetchone()
+
+    if exists:
+        # Instead of deleting, mark as Cancelled
+        c.execute("UPDATE bookings SET status = 'Cancelled' WHERE id = ?", (booking_id,))
+        conn.commit()
+        flash('✅ Booking successfully cancelled.', 'success')
+    else:
+        flash('⛔ Booking not found.', 'error')
+
+    conn.close()
+
+    source = request.form.get('source', 'home')
+    patient_identifier = request.form.get('patient_identifier')
+    doctor_id = request.form.get('doctor_id') # Get doctor_id if source is doctor dash
+
+    if source == 'confirmation' or source == 'home':
+        return redirect(url_for('home'))
+    elif source == 'patient_dashboard' and patient_identifier:
+         return redirect(url_for('patient_dashboard', patient_identifier=patient_identifier))
+    elif source == 'doctor_dashboard' and doctor_id:
+        # Make sure doctor_id is valid before redirecting
+        try:
+            valid_doctor_id = int(doctor_id)
+            return redirect(url_for('doctor_dashboard', doctor_id=valid_doctor_id))
+        except (ValueError, TypeError):
+             return redirect(url_for('doctor_login')) # Fallback if invalid ID passed
+    else:
+        return redirect(url_for('home'))
+
+
+# --- Doctor Login and Dashboard ---
+
+@app.route('/doctor-login', methods=['GET', 'POST'])
+def doctor_login():
+    if request.method == 'POST':
+        doctor_name = request.form.get('doctorName', '').strip()
+        doctor_id_str = request.form.get('doctorId', '').strip()
+
+        if not doctor_name or not doctor_id_str or not doctor_id_str.isdigit():
+             flash('⛔ Please enter both Doctor Name and a valid ID.', 'error')
+             return redirect(url_for('doctor_login'))
+
+        doctor_id = int(doctor_id_str)
+        doctor = next((d for d in doctors_data.get('doctors', []) if d['name'] == doctor_name and d['id'] == doctor_id), None)
+
+        if doctor:
+            print(f"Doctor login successful: ID {doctor_id}, Name {doctor_name}")
+            return redirect(url_for('doctor_dashboard', doctor_id=doctor_id))
+        else:
+            flash('⛔ Invalid doctor name or ID.', 'error')
+            print(f"Doctor login failed: ID {doctor_id_str}, Name {doctor_name}")
+            return redirect(url_for('doctor_login'))
+
+    return render_template('doctor_login.html')
+
+
+@app.route('/doctor-dashboard/<int:doctor_id>')
+def doctor_dashboard(doctor_id):
+    conn = get_db()
+    c = conn.cursor()
+
+    # Fetch bookings for the doctor - EXPLICITLY list needed columns
+    c.execute('''SELECT id, doctor_id, doctor_name, patient_name, patient_phone,
+                        booking_date, booking_time, notes, status
+                 FROM bookings
+                 WHERE doctor_id = ? AND status != 'Cancelled'
+                 ORDER BY booking_date ASC, booking_time ASC''', (doctor_id,))
+    bookings_rows = c.fetchall() # Fetches list of Row objects
+    conn.close()
+
+    # --- Data Processing for Stats & Daily Chart ONLY ---
+    stats = {
+        'today_count': 0,
+        'week_count': 0,
+        'pending_count': 0,
+        'unique_patients_this_month': 0
+    }
+    appointments_per_day_data = defaultdict(int) # { 'YYYY-MM-DD': count }
+    unique_patients_set = set()
+
+    today_date = date.today()
+    today_str = today_date.strftime('%Y-%m-%d')
+    one_week_later = today_date + timedelta(days=7)
+    current_month_str = today_date.strftime('%Y-%m')
+
+    # Access rows by column name
+    for booking in bookings_rows:
+        try:
+            # Convert Row to dict for easier processing if preferred, or access via booking['col_name']
+            booking_dict = dict(booking)
+            booking_date_obj = datetime.strptime(booking_dict['booking_date'], '%Y-%m-%d').date()
+            booking_date_str_loop = booking_dict['booking_date'] # Use a different variable name inside loop
+            booking_status = booking_dict['status']
+
+            # Process only future/today's pending bookings for stats/charts
+            if booking_date_obj >= today_date and booking_status == 'Pending':
+
+                # --- Stats ---
+                if booking_date_str_loop == today_str:
+                    stats['today_count'] += 1
+                if today_date <= booking_date_obj < one_week_later:
+                    stats['week_count'] += 1
+                stats['pending_count'] += 1
+
+                # --- Daily Chart Data ---
+                if today_date <= booking_date_obj < one_week_later:
+                     appointments_per_day_data[booking_date_str_loop] += 1
+
+                # --- Unique Patients (This Month, Future/Today Pending) ---
+                if booking_date_str_loop.startswith(current_month_str):
+                     patient_identifier = booking_dict['patient_name'] or booking_dict.get('patient_phone')
+                     if patient_identifier:
+                         unique_patients_set.add(patient_identifier)
+
+        except (ValueError, KeyError, TypeError) as e: # Catch potential errors
+            print(f"Warning: Skipping booking due to processing error: {dict(booking)} - Error: {e}")
+            continue
+
+
+    stats['unique_patients_this_month'] = len(unique_patients_set)
+
+    # --- Prepare chart data for Daily Chart ONLY ---
+    chart_labels_daily = []
+    chart_data_daily = []
+    for i in range(7):
+        d = today_date + timedelta(days=i)
+        d_str = d.strftime('%Y-%m-%d')
+        chart_labels_daily.append(d.strftime('%a, %b %d')) # e.g., "Mon, Oct 26"
+        chart_data_daily.append(appointments_per_day_data[d_str])
+
+    # --- Organize Bookings for Display ---
+    bookings_by_month = defaultdict(lambda: defaultdict(list))
+    for booking in bookings_rows:
+        try:
+            booking_dict = dict(booking) # Convert to dict
+            booking_date_dt = datetime.strptime(booking_dict['booking_date'], '%Y-%m-%d')
+            month_year = booking_date_dt.strftime('%B %Y')
+            day = booking_date_dt.strftime('%Y-%m-%d')
+            bookings_by_month[month_year][day].append(booking_dict) # Append the dict
+        except (ValueError, KeyError, TypeError) as e:
+             print(f"Warning: Skipping booking in display grouping: {dict(booking)} - Error: {e}")
+             continue
+
+    # Convert defaultdicts to regular dicts for JSON serialization if needed by template/JS later
+    # Although Jinja2 handles defaultdicts fine.
+    final_bookings_by_month = {my: dict(days) for my, days in bookings_by_month.items()}
+
+    return render_template(
+        'doctor_dashboard.html',
+        doctor_id=doctor_id,
+        bookings_by_month=final_bookings_by_month, # Pass the converted dict
+        stats=stats,
+        # Pass ONLY the daily chart config
+        chart_config_daily={
+            'labels': chart_labels_daily,
+            'data': chart_data_daily
+        }
+    )
+
+# Endpoint to handle note updates
+@app.route('/update-all-notes', methods=['POST'])
+def update_all_notes():
+    if not request.is_json:
+        return jsonify({'success': False, 'message': 'Invalid request format, expected JSON.'}), 400
+    data = request.get_json()
+    updates = data.get('updates', [])
+    if not isinstance(updates, list):
+         return jsonify({'success': False, 'message': 'Invalid data format, "updates" should be a list.'}), 400
+
+    conn = None
+    try:
+        conn = get_db() # Use central function
+        c = conn.cursor()
+        updated_count = 0
+        for update in updates:
+            booking_id = update.get('bookingId')
+            notes = update.get('notes')
+            if isinstance(booking_id, (int, str)) and str(booking_id).isdigit() and isinstance(notes, str):
+                c.execute('''UPDATE bookings SET notes = ? WHERE id = ?''', (notes.strip(), int(booking_id)))
+                if c.rowcount > 0: updated_count += 1
+            else: print(f"Warning: Skipping invalid update data: {update}")
+        conn.commit()
+        print(f"Updated notes for {updated_count} bookings.")
+        return jsonify({'success': True, 'message': f'{updated_count} notes updated successfully!'})
+    except sqlite3.Error as db_err:
+        print(f"Database error updating notes: {db_err}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': f'Database error: {db_err}'}), 500
+    except Exception as e:
+        print(f"Error processing /update-all-notes: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': f'An internal error occurred: {e}'}), 500
+    finally:
+        if conn: conn.close()
+
+
+# Endpoint to mark booking as complete
+@app.route('/mark-complete/<int:booking_id>', methods=['POST'])
+def mark_complete(booking_id):
+    conn = None
+    try:
+        conn = get_db() # Use central function
+        c = conn.cursor()
+        # Ensure we only update 'Pending' bookings to 'Completed'
+        c.execute("UPDATE bookings SET status = 'Completed' WHERE id = ? AND status = 'Pending'", (booking_id,))
+        conn.commit()
+        if c.rowcount > 0:
+            print(f"Marked booking {booking_id} as completed.")
+            return jsonify({'success': True, 'message': 'Booking marked as completed.'})
+        else:
+             # Check if already completed or not found/not pending
+             c.execute("SELECT status FROM bookings WHERE id = ?", (booking_id,))
+             result = c.fetchone()
+             if result and result['status'] == 'Completed': # Access by column name
+                  message = 'Booking already marked as completed.'
+             elif result:
+                  message = f'Booking status is {result["status"]}, cannot mark as completed.'
+             else:
+                  message = 'Booking not found.'
+             print(f"Failed to mark booking {booking_id} as completed: {message}")
+             return jsonify({'success': False, 'message': message}), 400 # Use 400 Bad Request for logic errors
+
+    except sqlite3.Error as db_err:
+        print(f"Database error marking booking {booking_id} complete: {db_err}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': f'Database error: {db_err}'}), 500
+    except Exception as e:
+        print(f"Error processing /mark-complete/{booking_id}: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': f'An internal error occurred: {e}'}), 500
+    finally:
+        if conn: conn.close()
+
+
+# --- Patient Login and Dashboard ---
+
+@app.route('/patient-login', methods=['GET', 'POST'])
+def patient_login():
+    if request.method == 'POST':
+        patient_identifier = request.form.get('patientIdentifier', '').strip()
+        if not patient_identifier:
+            flash('⛔ Please enter your name or phone number.', 'error')
+            return redirect(url_for('patient_login'))
+
+        conn = get_db() # Use central function
+        c = conn.cursor()
+        c.execute('''SELECT 1 FROM bookings
+                     WHERE (patient_name = ? OR patient_phone = ?) AND status != 'Cancelled' LIMIT 1''',
+                  (patient_identifier, patient_identifier))
+        booking_exists = c.fetchone()
+        conn.close()
+
+        if booking_exists:
+            return redirect(url_for('patient_dashboard', patient_identifier=patient_identifier))
+        else:
+            flash('⛔ No active bookings found for this name or phone number.', 'error')
+            return redirect(url_for('patient_login'))
+
+    return render_template('patient_login.html')
+
+
+@app.route('/patient-dashboard/<path:patient_identifier>')
+def patient_dashboard(patient_identifier):
+    if not patient_identifier:
+         return redirect(url_for('patient_login'))
+
+    conn = get_db() # Use central function
+    c = conn.cursor()
+    # Explicitly select columns needed for patient dashboard
+    c.execute('''SELECT id, doctor_name, patient_name, booking_date, booking_time, status, notes
+                 FROM bookings
+                 WHERE (patient_name = ? OR patient_phone = ?) AND status != 'Cancelled'
+                 ORDER BY booking_date DESC, booking_time DESC''',
+              (patient_identifier, patient_identifier))
+    bookings_rows = c.fetchall()
+    conn.close()
+
+    # Convert rows to dicts and add deletable flag
+    bookings = []
+    current_dt_obj = datetime.now()
+
+    for row in bookings_rows:
+        booking_dict = dict(row) # Convert row to dict
+        is_deletable = False # Default to false
+
+        # *** FIX: Perform date/time comparison here ***
+        try:
+            # Combine date and the START of the time slot for comparison
+            time_part = booking_dict['booking_time'].split('-')[0].strip() # Handle ranges like "9:00-9:20" -> "9:00"
+            # Try common time formats (add more if needed based on your doctors.json variations)
+            possible_formats = ["%Y-%m-%d %H:%M", "%Y-%m-%d %I:%M%p", "%Y-%m-%d %I:%M %p"] # e.g., 14:30, 2:30PM, 2:30 PM
+            booking_dt_obj = None
+            for fmt in possible_formats:
+                try:
+                    # Combine date and parsed time part
+                    full_datetime_str = f"{booking_dict['booking_date']} {time_part}"
+                    booking_dt_obj = datetime.strptime(full_datetime_str, fmt)
+                    break # Stop trying formats if successful
+                except ValueError:
+                    continue # Try the next format
+
+            if booking_dt_obj and booking_dt_obj > current_dt_obj:
+                # Only allow deletion if the appointment start time is in the future
+                is_deletable = True
+
+        except Exception as e:
+             print(f"Warning: Could not parse datetime for booking ID {booking_dict.get('id', 'N/A')}: Date='{booking_dict.get('booking_date')}', Time='{booking_dict.get('booking_time')}' - Error: {e}")
+             # Keep is_deletable as False if parsing fails
+
+        booking_dict['is_deletable'] = is_deletable
+        bookings.append(booking_dict)
+
+    return render_template('patient_dashboard.html',
+                         bookings=bookings, # Pass the list of dictionaries with the flag
+                         # current_datetime=current_datetime, # No longer strictly needed in template for comparison
+                         patient_identifier=patient_identifier)
+
+# --- Run Application ---
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5003))
+    # Set debug=False in production
+    # Use host='0.0.0.0' to make accessible on local network
+    app.run(debug=True, host='0.0.0.0', port=port)
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+doctors.json:
+
+{
+    "doctors": [
+        {
+            "id": 1,
+            "name": "Dr.1",
+            "availability1shortform": "Monday-Thursday: 7:00-8:00, Friday-Sunday: 8:00-9:00",
+            "province": "1",
+            "rate":"3.5",
+            "plc":"hos",
+            "specialization": "Dermatology",
+            "photo": "/static/doctors/doctor1.jpg",
+            "description": "Expert in cosmetic and medical dermatology with 8 years of practice.",
+            "availability": {
+                "Monday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Tuesday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Wednesday": ["7:00-7:20am", "7:20-7:40", "7:40-8:00"],
+                "Saturday": ["8:00-8:20", "8:20-8:40", "8:40-9:00am", "9:00-9:20", "9:20-9:40", "9:40-10:00", "10:00-10:20", "10:20-10:40", "10:40-11:00"],
+                "Sunday": ["8:00-8:20", "8:20-8:40", "8:40-9:00"]
+            }
+            
+        },
+        {
+            "id": 2,
+            "name": "DR.2",
+            "availability1shortform": "Monday-Thursday: 7:00-8:00, Friday-Sunday: 8:00-9:00",
+            "rate":"3.5",
+            "province": "2",
+            "specialization": "Cardiology",
+            "photo": "/static/doctors/doctor3.jpg",
+            "description": "Expert in cosmetic and medical dermatology with 8 years of practice.",
+            "availability": {
+                "Monday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Tuesday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Wednesday": ["7:00-7:20am", "7:20-7:40", "7:40-8:00"],
+                "Thursday": ["Unavilable"],
+                "Friday": ["Unavilable"],
+                "Saturday": ["8:00-8:20", "8:20-8:40", "8:40-9:00am", "9:00-9:20", "9:20-9:40", "9:40-10:00", "10:00-10:20", "10:20-10:40", "10:40-11:00"],
+                "Sunday": ["8:00-8:20", "8:20-8:40", "8:40-9:00"]
+            }
+            
+        },
+        {
+            "id": 3,
+            "name": "DR.3",
+            "availability1shortform": "Monday-Thursday: 7:00-8:00, Friday-Sunday: 8:00-9:00",
+            "rate":"3.5",
+            "province": "3",
+            "specialization": "Cardiology",
+            "photo": "/static/doctors/doctor4.jpg",
+            "description": "Expert in cosmetic and medical dermatology with 8 years of practice.",
+            "availability": {
+                "Monday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Tuesday": ["7:00-7:20", "7:20-7:40", "7:40-8:00"],
+                "Wednesday": ["7:00-7:20am", "7:20-7:40", "7:40-8:00"],
+                "Thursday": ["Unavilable"],
+                "Friday": ["Unavilable"],
+                "Saturday": ["8:00-8:20", "8:20-8:40", "8:40-9:00am", "9:00-9:20", "9:20-9:40", "9:40-10:00", "10:00-10:20", "10:20-10:40", "10:40-11:00"],
+                "Sunday": ["8:00-8:20", "8:20-8:40", "8:40-9:00"]
+            }
+            
+        },
+        {
+            "id": 4,
+            "name": "DR.4",
+            "rate":"3.5",
+            "specialization": "Cardiology",
+            "province": "4",
+            "availability1shortform": "Monday-Thursday: 9:00-10:30, Friday-Sunday: 11:00-12:30",
+            "photo": "/static/doctors/doctor2.jpg",
+            "description": "Board-certified cardiologist with 10+ years experience.",
+            "availability": {
+                "Monday": ["7:10-7:30", "9:30-10:00", "10:00-10:30"],
+                "Tuesday": ["9:00-9:30", "9:30-10:00", "10:00-10:30"],
+                "Wednesday": ["Unavilable"],
+                "Thursday": ["Unavilable"],
+                "Friday": ["11:00-11:30", "11:30-12:00", "12:00-12:30"],
+                "Saturday": ["11:00-11:30", "11:30-12:00", "12:00-12:30"],
+                "Sunday": ["11:00-11:30", "11:30-12:00", "12:00-12:30"]
+            }
+        }
+    ]
+}
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+index.html:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareConnect - Book Your Clinic Appointment Seamlessly</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"> <!-- Updated Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* --- Refined Clinical Palette --- */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb; /* Very light grey */
+            --bg-accent-light: #e0f2f2; /* Lighter shade of primary */
+            --bg-accent-very-light: #f0fafa; /* Even lighter */
+
+            --border-color: #e5e7eb; /* Softer grey border */
+            --border-color-strong: #d1d5db;
+
+            --text-dark: #1f2937; /* Darker, less harsh than pure black */
+            --text-medium: #4b5563; /* Medium grey */
+            --text-light: #ffffff;
+
+            /* Primary Accent (Calm Blue/Teal) */
+            --accent-primary: #007A7A; /* Main Teal/Blue */
+            --accent-primary-dark: #005F5F; /* Darker for hover */
+            --accent-primary-light: #4DB6AC; /* Lighter variant */
+
+            /* Secondary / Warm Accent (for stars, highlights) */
+            --accent-warm: #F2A900; /* Gold/Orange */
+            --accent-warm-dark: #D99700;
+
+            --success: #10b981; /* Emerald Green */
+            --error: #ef4444; /* Red */
+            --info: #3b82f6;  /* Blue */
+
+            --shadow-color: rgba(0, 76, 76, 0.08); /* Primary color based shadow */
+            --shadow-color-medium: rgba(0, 76, 76, 0.12);
+            --shadow-color-strong: rgba(0, 76, 76, 0.18);
+
+            /* --- Timings & Transitions --- */
+            --transition-speed: 0.3s;
+            --transition-ease: ease-in-out;
+            --scroll-animation-duration: 0.6s; /* Slightly longer for smoother reveals */
+            --stagger-delay: 0.1s; /* Base delay for staggered items */
+        }
+
+        html { scroll-behavior: smooth; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-dark);
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.7; /* Slightly increased line-height */
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- General Utilities --- */
+        .container {
+            width: 90%;
+            max-width: 1280px; /* Increased max width */
+            margin: 0 auto;
+            padding: 0 1rem; /* Padding for smaller screens */
+        }
+
+        /* Section Padding */
+        .section-padding { padding: 5rem 0; }
+        .section-padding-sm { padding: 3rem 0; }
+
+        /* Section Titles */
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-family: 'Lato', sans-serif;
+            position: relative;
+            padding-bottom: 0.8rem;
+        }
+        .section-title::after { /* Underline accent */
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 4px;
+            background-color: var(--accent-primary);
+            border-radius: 2px;
+        }
+        .section-subtitle {
+             text-align: center;
+             color: var(--text-medium);
+             max-width: 600px;
+             margin: -2rem auto 3rem auto; /* Position under title */
+             font-size: 1.05rem;
+         }
+
+        /* --- Animation Keyframes --- */
+        @keyframes fadeInUp { /* Standard Fade In Up */
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInLeft { /* Standard Fade In Left */
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeInRight { /* Standard Fade In Right */
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes zoomIn { /* For Icons/Emphasis */
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse { /* Subtle pulse for attention */
+            0% { box-shadow: 0 0 0 0 rgba(0, 122, 122, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 122, 122, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 122, 122, 0); }
+        }
+
+        /* --- Scroll Reveal Helper --- */
+        .reveal-on-scroll {
+            opacity: 0;
+            will-change: opacity, transform;
+            /* Default animation, can be overridden by more specific classes */
+            animation-fill-mode: forwards;
+            /* Ensure animation timing comes from observer calculation */
+        }
+        .reveal-on-scroll.is-visible {
+            animation-name: fadeInUp; /* Default reveal */
+            animation-duration: var(--scroll-animation-duration);
+            animation-timing-function: ease-out;
+        }
+        /* Specific directional reveals */
+        .reveal-left.is-visible { animation-name: fadeInLeft; }
+        .reveal-right.is-visible { animation-name: fadeInRight; }
+        .reveal-zoom.is-visible { animation-name: zoomIn; }
+
+        /* --- Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: var(--bg-primary);
+            position: sticky; top: 0; z-index: 1000;
+            transition: box-shadow var(--transition-speed) var(--transition-ease),
+                        padding var(--transition-speed) var(--transition-ease);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .navbar.scrolled {
+            box-shadow: 0 3px 8px var(--shadow-color-medium);
+            padding: 0.8rem 5%;
+        }
+        .logo {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Lato', sans-serif;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: transform var(--transition-speed) var(--transition-ease);
+        }
+        .logo i { font-size: 1.7rem; }
+        .logo:hover { transform: scale(1.03); }
+        .nav-actions { display: flex; gap: 0.9rem; align-items: center; }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 0.7rem 1.5rem; border-radius: 6px; /* Softer radius */
+            cursor: pointer; font-weight: 600; font-size: 0.95rem;
+            text-align: center; transition: all var(--transition-speed) var(--transition-ease);
+            border: 1px solid transparent; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center; /* Center content */
+            gap: 0.6rem; line-height: 1.2; /* Ensure text aligns well */
+            box-shadow: 0 2px 4px var(--shadow-color); /* Subtle base shadow */
+        }
+        .btn:hover {
+            transform: translateY(-2px); /* Lift */
+            box-shadow: 0 5px 12px var(--shadow-color-medium); /* Enhanced shadow */
+        }
+        .btn:active {
+             transform: translateY(0px);
+             box-shadow: 0 2px 4px var(--shadow-color);
+         }
+        .btn-primary {
+            background-color: var(--accent-primary); color: var(--text-light);
+            border-color: var(--accent-primary);
+        }
+        .btn-primary:hover { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
+        /* Secondary style button */
+        .btn-secondary {
+            background-color: var(--bg-secondary); color: var(--accent-primary);
+            border-color: var(--border-color); box-shadow: none; /* No shadow for secondary */
+        }
+        .btn-secondary:hover { background-color: var(--bg-accent-very-light); border-color: var(--accent-primary-light); color: var(--accent-primary-dark);}
+        /* Link style button */
+        .btn-link {
+            background: none; border: none; box-shadow: none;
+            color: var(--accent-primary); padding: 0; font-weight: 600;
+        }
+        .btn-link:hover { color: var(--accent-primary-dark); text-decoration: underline;}
+
+        /* --- Hero Section --- */
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-accent-very-light) 0%, var(--bg-primary) 70%);
+            padding: 6rem 5% 5rem; /* More top padding */
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        /* Initial load animation */
+        .hero-title, .hero-subtitle, .typing-effect-container, .search-container-wrapper {
+            opacity: 0; animation: fadeInUp 0.8s ease-out 0.2s forwards;
+        }
+        .hero-subtitle { animation-delay: 0.35s; }
+        .typing-effect-container { animation-delay: 0.5s; }
+        .search-container-wrapper { animation-delay: 0.65s; }
+
+        .hero-title {
+            font-size: 2.8rem; /* Larger title */
+            margin-bottom: 1rem; color: var(--text-dark);
+            font-weight: 700; font-family: 'Lato', sans-serif;
+            line-height: 1.3;
+        }
+        .hero-title span { color: var(--accent-primary); } /* Highlight */
+
+        .hero-subtitle {
+            font-size: 1.2rem; color: var(--text-medium);
+            margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto;
+        }
+        .typing-effect-container {
+             min-height: 32px; margin-bottom: 3rem;
+             font-size: 1.2rem; color: var(--accent-primary-dark); font-weight: 600;
+         }
+        #text { border-right: 3px solid var(--accent-primary); padding-right: 6px; display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: bottom; animation: blinkCursor 0.7s infinite steps(1); }
+        @keyframes blinkCursor { 50% { border-color: transparent; } }
+
+        /* --- Search Container --- */
+        .search-container-wrapper { /* Outer wrapper for positioning/margins */
+             max-width: 1000px; margin: 0 auto;
+         }
+        .search-container {
+            background: var(--bg-primary);
+            padding: 2rem 2.5rem; /* More padding */
+            border-radius: 8px; /* Softer radius */
+            box-shadow: 0 6px 20px var(--shadow-color-medium);
+            border: 1px solid var(--border-color);
+            transition: box-shadow var(--transition-speed) var(--transition-ease);
+        }
+        .search-container:hover { box-shadow: 0 10px 30px var(--shadow-color-strong); }
+
+        .search-form {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1.5rem; align-items: center;
+        }
+        .input-group { position: relative; }
+        .input-group i {
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+            color: var(--text-medium); font-size: 1em;
+            transition: color var(--transition-speed) var(--transition-ease); pointer-events: none;
+        }
+        select, input[type="text"] {
+            width: 100%; padding: 0.9rem 0.9rem 0.9rem 2.8rem; /* Adjust padding */
+            border: 1px solid var(--border-color); border-radius: 6px;
+            background: var(--bg-primary); color: var(--text-dark); font-size: 1rem;
+            transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+        }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234b5563' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M7.646 11.854a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8 10.793 4.354 7.146a.5.5 0 1 0-.708.708l4 4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; padding-right: 3rem; }
+
+        select:focus, input[type="text"]:focus {
+            outline: none; border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); /* Subtle focus ring */
+        }
+        .input-group:focus-within i { color: var(--accent-primary); }
+        .search-btn { padding: 0.9rem 1.8rem; /* Match input height */ }
+        @media (max-width: 768px) {
+           .search-form { grid-template-columns: 1fr; }
+           .search-btn { width: 100%; justify-content: center; margin-top: 0.5rem; }
+        }
+
+        /* ======================== */
+        /* ===== NEW SECTIONS ===== */
+        /* ======================== */
+
+        /* --- How It Works Section --- */
+        .how-it-works-section { background-color: var(--bg-secondary); }
+        .how-it-works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2.5rem;
+            text-align: center;
+        }
+        .how-it-works-step { padding: 1.5rem; transition: transform 0.3s ease; }
+        /* Apply stagger via JS */
+        .how-it-works-step .icon {
+            font-size: 3rem; color: var(--accent-primary);
+            margin-bottom: 1.5rem; display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        .how-it-works-step h3 {
+            font-size: 1.2rem; font-weight: 700; margin-bottom: 0.8rem;
+            color: var(--text-dark);
+        }
+        .how-it-works-step p { color: var(--text-medium); font-size: 0.95rem; }
+        .how-it-works-step:hover { transform: translateY(-8px); }
+        .how-it-works-step:hover .icon { transform: scale(1.1) rotate(-5deg); }
+
+        /* --- Featured Specialties Section --- */
+        .featured-specialties-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+             gap: 1.8rem;
+         }
+         .specialty-card {
+             background: var(--bg-primary); border: 1px solid var(--border-color);
+             border-radius: 8px; padding: 2rem 1.5rem; text-align: center;
+             transition: all var(--transition-speed) var(--transition-ease);
+             box-shadow: 0 3px 6px var(--shadow-color);
+             display: flex; flex-direction: column; align-items: center;
+         }
+         .specialty-card .icon {
+             font-size: 2.5rem; color: var(--accent-primary-light); margin-bottom: 1rem;
+             transition: all 0.3s ease;
+         }
+         .specialty-card h4 {
+             font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark);
+         }
+         .specialty-card:hover {
+             transform: translateY(-6px) scale(1.03);
+             border-color: var(--accent-primary);
+             box-shadow: 0 8px 15px var(--shadow-color-medium);
+         }
+         .specialty-card:hover .icon { color: var(--accent-primary); transform: scale(1.15); }
+
+         /* --- Why Choose Us / Trust Factors --- */
+         .trust-factors-section { background-color: var(--bg-accent-very-light); }
+         .trust-factors-grid {
+             display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+             gap: 2rem;
+         }
+         .trust-factor {
+             display: flex; align-items: flex-start; gap: 1.2rem;
+         }
+         .trust-factor .icon {
+             font-size: 1.8rem; color: var(--accent-primary);
+             flex-shrink: 0; margin-top: 0.2rem; /* Align icon slightly better */
+         }
+         .trust-factor h4 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.4rem; }
+         .trust-factor p { color: var(--text-medium); font-size: 0.95rem; }
+
+         /* --- Stats Section (Animated Counters) --- */
+         .stats-section {
+             background: var(--accent-primary); /* Use accent background */
+             color: var(--text-light);
+         }
+         .stats-grid {
+             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+             gap: 2rem; text-align: center;
+         }
+         .stat-item .icon { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.8;}
+         .stat-item .stat-number {
+             font-size: 2.5rem; font-weight: 700;
+             font-family: 'Lato', sans-serif; margin-bottom: 0.3rem;
+         }
+         .stat-item .stat-label { font-size: 1rem; font-weight: 600; opacity: 0.9; }
+
+
+         /* --- Testimonials Section --- */
+        .testimonials-section { background-color: var(--bg-secondary); }
+        .testimonials-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+        .testimonial-card {
+            background: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 2rem; position: relative;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .testimonial-card:hover { transform: translateY(-6px); box-shadow: 0 8px 20px var(--shadow-color-medium); }
+        .testimonial-card::before { /* Quote icon */
+             content: '\f10d'; /* Font Awesome quote-left */
+             font-family: 'Font Awesome 6 Free'; font-weight: 900;
+             font-size: 2.5rem; color: var(--accent-primary-light);
+             opacity: 0.2; position: absolute; top: 1rem; left: 1.5rem;
+         }
+         .testimonial-text { font-style: italic; color: var(--text-medium); margin-bottom: 1.5rem; position: relative; z-index: 1; }
+         .testimonial-author { display: flex; align-items: center; gap: 1rem; }
+         .testimonial-author img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+         .author-info h5 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.1rem; }
+         .author-info span { font-size: 0.9rem; color: var(--text-medium); }
+
+
+        /* ======================== */
+        /* ===== DOCTORS GRID ===== */
+        /* ======================== */
+        .doctors-section { /* Ensure this section has padding if no other wrappers do */
+             padding: 5rem 0; /* Ensure padding */
+         }
+
+        .doctors-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); /* Slightly wider */
+            gap: 2.5rem; /* Increased gap */
+        }
+        .doctor-card {
+            width: 350px;
+            align-self: center;
+            height: 500px;
+            background: var(--bg-primary); border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column;
+            transition: transform var(--transition-speed) var(--transition-ease),
+                        box-shadow var(--transition-speed) var(--transition-ease),
+                        border-color var(--transition-speed) var(--transition-ease);
+            box-shadow: 0 4px 10px var(--shadow-color); /* Base shadow */
+        }
+        .doctor-card:hover {
+             transform: translateY(-8px);
+             border-color: var(--accent-primary);
+             box-shadow: 0 12px 25px var(--shadow-color-strong);
+        }
+
+        .doctor-photo-container { width: 100%; height: 220px; overflow: hidden; }
+        .doctor-photo {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            border-bottom: 1px solid var(--border-color);
+            filter: saturate(1); transition: filter 0.4s ease, transform 0.4s ease;
+        }
+        .doctor-card:hover .doctor-photo { filter: saturate(1.1); transform: scale(1.06); }
+
+        .doctor-info {
+            padding: 1.5rem; /* Increased padding */ flex-grow: 1;
+            display: flex; flex-direction: column;
+        }
+        .doctor-info h3 {
+            color: var(--text-dark); margin-bottom: 0.3rem; font-size: 1.3rem;
+            font-weight: 700; transition: color var(--transition-speed) var(--transition-ease);
+        }
+        .doctor-card:hover .doctor-info h3 { color: var(--accent-primary); }
+        .doctor-info .specialization {
+            color: var(--accent-primary); font-weight: 600; margin-bottom: 1rem; /* More space */
+            font-size: 1rem;
+        }
+        .doctor-details {
+            font-size: 0.95rem; color: var(--text-medium); margin-bottom: 1.2rem;
+            line-height: 1.6; flex-grow: 1; /* Allow details to push content down */
+        }
+        .doctor-details p { margin-bottom: 0.5rem; display: flex; align-items: center; }
+        .doctor-details i {
+            margin-right: 0.7rem; color: var(--accent-primary-light); /* Lighter icon color */
+            width: 1.3em; text-align: center; transition: color var(--transition-speed) var(--transition-ease); flex-shrink: 0;
+        }
+        .doctor-card:hover .doctor-details i { color: var(--accent-primary); } /* Highlight icons */
+        .doctor-details i.fa-star { color: var(--accent-warm); } /* Warm accent for stars */
+        .doctor-card:hover .doctor-details i.fa-star { color: var(--accent-warm-dark); }
+
+        .availability {
+            font-size: 0.9rem; color: var(--text-medium); margin-top: 1rem; /* Separated from details */
+            padding: 0.8rem 1rem; border-radius: 6px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-accent-very-light);
+        }
+         .availability strong { color: var(--text-dark); font-weight: 600; margin-right: 0.5rem; }
+
+        .book-btn {
+             margin-top: 1.5rem; width: 100%; font-size: 1rem;
+             padding: 0.8rem 1rem;
+             /* animation: pulse 2s infinite ease-in-out 1s; */ /* Optional subtle pulse */
+         }
+
+        #noResultsMessage { color: var(--text-medium); text-align: center; padding: 5rem 1rem; font-size: 1.15rem; display: none;}
+        #noResultsMessage i { display: block; font-size: 3.5rem; margin-bottom: 1.5rem; color: var(--border-color-strong); }
+
+        /* --- Footer --- */
+        .footer {
+            background: var(--text-dark); /* Dark footer */
+            color: #a0aec0; /* Lighter gray text */
+            padding: 5rem 5% 2rem; /* More top padding, less bottom */
+            margin-top: 5rem; border-top: 4px solid var(--accent-primary);
+        }
+        .footer-content {
+            max-width: 1280px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 3rem; margin-bottom: 4rem;
+        }
+        /* Footer section styles */
+        .footer-section h3 {
+            color: var(--text-light); margin-bottom: 1.5rem;
+            font-size: 1.2rem; font-weight: 700;
+            position: relative; padding-bottom: 0.5rem;
+        }
+         .footer-section h3::after { /* Underline accent */
+            content: ''; position: absolute; bottom: 0; left: 0;
+            width: 40px; height: 2px; background-color: var(--accent-primary);
+        }
+         .footer-section p { font-size: 0.95rem; line-height: 1.7; margin-bottom: 1rem;}
+        .footer-links { display: flex; flex-direction: column; gap: 0.8rem; }
+        .footer-links a {
+            color: #cbd5e0; /* Slightly brighter link color */ text-decoration: none;
+            transition: color var(--transition-speed) var(--transition-ease), padding-left var(--transition-speed) var(--transition-ease);
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .footer-links a i { font-size: 0.8em; opacity: 0.7; }
+        .footer-links a:hover {
+            color: var(--text-light); padding-left: 6px;
+            text-decoration: none;
+        }
+         .footer-links a:hover i { opacity: 1;}
+
+        .social-links { display: flex; gap: 1.2rem; margin-top: 1.5rem; }
+        .social-links a {
+            font-size: 1.5rem; color: #cbd5e0;
+            transition: color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease);
+        }
+        .social-links a:hover { color: var(--accent-primary-light); transform: translateY(-3px); }
+        .copyright {
+            text-align: center; padding-top: 2rem;
+            border-top: 1px solid #4a5568; /* Darker border */
+            color: #a0aec0; font-size: 0.9rem;
+        }
+
+        /* Flash Messages (Styling adapted to new palette) */
+         .flash-messages { position: fixed; top: 90px; right: 20px; z-index: 1050; width: clamp(300px, 90%, 420px); }
+         .flash-message { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 6px; font-weight: 500; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; display: flex; align-items: center; gap: 1rem; background-color: var(--bg-primary); }
+         .flash-message::before { font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1.2em; }
+
+         .flash-message.success { border-left: 5px solid var(--success); color: #057a55; } /* Adjusted text color */
+         .flash-message.success::before { content: '\f058'; color: var(--success); } /* check-circle */
+         .flash-message.error { border-left: 5px solid var(--error); color: #b91c1c; }
+         .flash-message.error::before { content: '\f071'; color: var(--error); } /* exclamation-triangle */
+         .flash-message.info { border-left: 5px solid var(--info); color: #1d4ed8; }
+         .flash-message.info::before { content: '\f05a'; color: var(--info); } /* info-circle */
+
+         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 1024px) {
+             .hero-title { font-size: 2.5rem; }
+             .container { width: 95%; }
+             .section-padding { padding: 4rem 0; }
+        }
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.1rem; }
+            .hero-subtitle { font-size: 1.1rem; }
+            .section-title { font-size: 1.8rem; }
+            .section-padding { padding: 3rem 0; }
+            .btn { padding: 0.65rem 1.3rem; font-size: 0.9rem; }
+             .nav-actions { gap: 0.6rem; }
+             .doctors-grid { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.8rem;}
+             .footer-content { gap: 2.5rem; }
+             .flash-messages { top: 80px; width: clamp(280px, 95%, 380px);}
+        }
+         @media (max-width: 480px) {
+            .hero-title { font-size: 1.9rem; }
+            .hero-subtitle { font-size: 1rem; }
+            .search-container { padding: 1.5rem; }
+             .nav-actions .btn-secondary { display: none; } /* Hide less critical button */
+             .how-it-works-grid, .featured-specialties-grid, .trust-factors-grid, .stats-grid, .testimonials-grid, .doctors-grid { grid-template-columns: 1fr; /* Stack grids */ }
+             .footer-content { text-align: center; } /* Center footer content on mobile */
+             .footer-section h3::after { left: 50%; transform: translateX(-50%); }
+             .social-links { justify-content: center;}
+         }
+
+    </style>
+</head>
+<body>
+
+    <!-- Flash messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <a href="/" class="logo">
+             <i class="fas fa-heart-pulse"></i> <!-- Updated Icon -->
+             CareConnect
+        </a>
+        <div class="nav-actions">
+             <button class="btn btn-secondary" onclick="window.location.href='/doctor-login'">For Providers</button>
+             <button class="btn btn-primary" onclick="window.location.href='/patient-login'">Login / Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Search -->
+    <section class="hero-section" id="search-section">
+        <div class="container">
+             <h1 class="hero-title">Find & Book <span>Clinic Appointments</span>, Effortlessly.</h1>
+             <p class="hero-subtitle">Access a network of trusted doctors and specialists near you. Your health journey starts here.</p>
+
+             <div class="typing-effect-container">
+               <span id="text"></span> <!-- Text updated in JS -->
+            </div>
+
+            <div class="search-container-wrapper">
+                 <div class="search-container">
+                     <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
+                         <div class="input-group">
+                             <i class="fas fa-map-location-dot"></i> <!-- Location Icon -->
+                             <select id="province" aria-label="Select Province">
+                                <option value="">All Provinces</option>
+                                <option value="Bagmati">Bagmati</option>
+                                <option value="Gandaki">Gandaki</option>
+                                <option value="Lumbini">Lumbini</option>
+                                <option value="Province 1">Province 1</option>
+                                <!-- Add more options as needed -->
+                             </select>
+                         </div>
+
+                         <div class="input-group">
+                             <i class="fas fa-stethoscope"></i>
+                             <select id="specialization" aria-label="Select Specialization">
+                                <option value="">All Specialties</option>
+                                <option value="Cardiology">Cardiology</option>
+                                <option value="Dermatology">Dermatology</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Orthopedics">Orthopedics</option>
+                                <option value="General Physician">General Physician</option>
+                                <option value="Neurology">Neurology</option>
+                                <!-- Add more options -->
+                             </select>
+                         </div>
+
+                         <div class="input-group">
+                             <i class="fas fa-user-doctor"></i> <!-- Doctor Icon -->
+                             <input type="text" id="doctorName" placeholder="Doctor, Clinic Name..." aria-label="Doctor or Clinic Name">
+                         </div>
+
+                         <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors()">
+                             <i class="fas fa-search"></i> Find Care
+                         </button>
+                     </form>
+                 </div>
+            </div>
+         </div>
+    </section>
+
+        <!-- Doctors Results Section -->
+        <section class="doctors-section section-padding" id="doctors-results"> <!-- Added ID -->
+            <div class="container">
+                 <!-- Title appears only when results are shown potentially -->
+                <h2 class="section-title" id="resultsTitle" style="display: none;">Available Doctors</h2>
+    
+                <div class="doctors-grid" id="resultsContainer">
+                    <!-- Doctor cards will be injected here -->
+                </div>
+                <div id="noResultsMessage">
+                    <i class="fas fa-inbox"></i> <!-- Empty inbox icon -->
+                    <p>We couldn't find any doctors matching your current search criteria.<br>Please try adjusting the filters above.</p>
+                 </div>
+             </div>
+        </section>
+
+     <!-- How It Works Section -->
+    <section class="how-it-works-section section-padding">
+        <div class="container">
+            <h2 class="section-title reveal-on-scroll">Booking in 3 Simple Steps</h2>
+             <p class="section-subtitle reveal-on-scroll">Finding the right healthcare provider is easier than ever.</p>
+            <div class="how-it-works-grid">
+                <!-- Step 1 -->
+                <div class="how-it-works-step reveal-on-scroll">
+                    <i class="fas fa-search-location icon"></i>
+                    <h3>1. Search</h3>
+                    <p>Enter your location, desired specialty, or doctor's name.</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="how-it-works-step reveal-on-scroll">
+                     <i class="fas fa-calendar-check icon"></i>
+                     <h3>2. Select & Book</h3>
+                    <p>Choose a suitable time slot and book your appointment instantly.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="how-it-works-step reveal-on-scroll">
+                     <i class="fas fa-notes-medical icon"></i>
+                    <h3>3. Visit Clinic</h3>
+                    <p>Attend your scheduled appointment and focus on your health.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+     <!-- Featured Specialties -->
+    <section class="featured-specialties-section section-padding">
+        <div class="container">
+             <h2 class="section-title reveal-on-scroll">Explore Top Specialties</h2>
+             <p class="section-subtitle reveal-on-scroll">Find experts across various medical fields.</p>
+             <div class="featured-specialties-grid">
+                 <!-- Example Cards - Add more relevant ones -->
+                <div class="specialty-card reveal-on-scroll">
+                    <i class="fas fa-heartbeat icon"></i><h4>Cardiology</h4>
+                 </div>
+                 <div class="specialty-card reveal-on-scroll">
+                     <i class="fas fa-user-md icon"></i><h4>General Physician</h4>
+                 </div>
+                 <div class="specialty-card reveal-on-scroll">
+                     <i class="fas fa-tooth icon"></i><h4>Dentistry</h4>
+                 </div>
+                <div class="specialty-card reveal-on-scroll">
+                    <i class="fas fa-allergies icon"></i><h4>Dermatology</h4>
+                </div>
+                 <div class="specialty-card reveal-on-scroll">
+                    <i class="fas fa-bone icon"></i><h4>Orthopedics</h4>
+                </div>
+                <div class="specialty-card reveal-on-scroll">
+                    <i class="fas fa-baby icon"></i><h4>Pediatrics</h4>
+                </div>
+            </div>
+             <div style="text-align: center; margin-top: 3rem;" class="reveal-on-scroll">
+                <button class="btn btn-secondary" onclick="document.getElementById('specialization').focus()">View All Specialties</button>
+             </div>
+         </div>
+     </section>
+
+     <!-- Trust Factors Section -->
+    <section class="trust-factors-section section-padding">
+        <div class="container">
+            <h2 class="section-title reveal-on-scroll">Why Choose CareConnect?</h2>
+            <div class="trust-factors-grid">
+                 <div class="trust-factor reveal-on-scroll reveal-left">
+                    <i class="fas fa-user-shield icon"></i>
+                    <div>
+                        <h4>Verified Professionals</h4>
+                        <p>Connect with licensed and experienced doctors and specialists.</p>
+                    </div>
+                 </div>
+                 <div class="trust-factor reveal-on-scroll reveal-right">
+                    <i class="fas fa-calendar-alt icon"></i>
+                     <div>
+                        <h4>Easy Online Booking</h4>
+                        <p>Schedule appointments 24/7 at your convenience, hassle-free.</p>
+                     </div>
+                </div>
+                <div class="trust-factor reveal-on-scroll reveal-left">
+                     <i class="fas fa-clock icon"></i>
+                     <div>
+                         <h4>Real-Time Availability</h4>
+                         <p>See actual open slots and book instantly without back-and-forth calls.</p>
+                    </div>
+                </div>
+                <div class="trust-factor reveal-on-scroll reveal-right">
+                    <i class="fas fa-headset icon"></i>
+                     <div>
+                        <h4>Dedicated Support</h4>
+                         <p>Our team is here to assist you with any booking queries.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+     <!-- Stats Section -->
+     <section class="stats-section section-padding-sm">
+         <div class="container">
+             <div class="stats-grid">
+                <div class="stat-item reveal-on-scroll reveal-zoom">
+                     <i class="fas fa-user-doctor icon"></i>
+                     <div class="stat-number" data-target="{{ doctors|length or 100 }}">0</div> <!-- Default/fallback needed -->
+                     <div class="stat-label">Verified Doctors</div>
+                </div>
+                <div class="stat-item reveal-on-scroll reveal-zoom">
+                    <i class="fas fa-stethoscope icon"></i>
+                     <div class="stat-number" data-target="25">0</div> <!-- Placeholder -->
+                     <div class="stat-label">Specialties Available</div>
+                 </div>
+                 <div class="stat-item reveal-on-scroll reveal-zoom">
+                     <i class="fas fa-smile icon"></i>
+                     <div class="stat-number" data-target="5000">0</div> <!-- Placeholder -->
+                     <div class="stat-label">Happy Patients Served</div>
+                 </div>
+                 <div class="stat-item reveal-on-scroll reveal-zoom">
+                    <i class="fas fa-calendar-check icon"></i>
+                     <div class="stat-number" data-target="10000">0</div> <!-- Placeholder -->
+                    <div class="stat-label">Appointments Booked</div>
+                 </div>
+            </div>
+        </div>
+    </section>
+
+     <!-- Testimonials Section -->
+     <section class="testimonials-section section-padding">
+         <div class="container">
+            <h2 class="section-title reveal-on-scroll">What Our Patients Say</h2>
+            <p class="section-subtitle reveal-on-scroll">Real stories from people who found care through CareConnect.</p>
+             <div class="testimonials-grid">
+                 <!-- Testimonial 1 (Example) -->
+                <div class="testimonial-card reveal-on-scroll">
+                    <p class="testimonial-text">"Booking an appointment was so simple and fast! Found a great dermatologist near my home without any phone calls. Highly recommend!"</p>
+                     <div class="testimonial-author">
+                         <img src="https://via.placeholder.com/100/007A7A/FFFFFF?text=AS" alt="Avatar A S"> <!-- Placeholder Image -->
+                         <div class="author-info">
+                             <h5>Anjali S.</h5>
+                            <span>Kathmandu, Bagmati</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial 2 (Example) -->
+                 <div class="testimonial-card reveal-on-scroll">
+                     <p class="testimonial-text">"CareConnect made it easy to find a pediatrician for my daughter with good ratings and available slots that fit our schedule. Saved me a lot of time."</p>
+                     <div class="testimonial-author">
+                         <img src="https://via.placeholder.com/100/F2A900/FFFFFF?text=RB" alt="Avatar R B"> <!-- Placeholder Image -->
+                         <div class="author-info">
+                             <h5>Ramesh B.</h5>
+                             <span>Pokhara, Gandaki</span>
+                         </div>
+                    </div>
+                </div>
+                <!-- Testimonial 3 (Example) -->
+                 <div class="testimonial-card reveal-on-scroll">
+                     <p class="testimonial-text">"As someone new to the city, finding a reliable general physician felt daunting. This platform was a lifesaver. Clear information and easy booking."</p>
+                    <div class="testimonial-author">
+                        <img src="https://via.placeholder.com/100/4DB6AC/FFFFFF?text=PD" alt="Avatar P D"> <!-- Placeholder Image -->
+                        <div class="author-info">
+                            <h5>Priya D.</h5>
+                            <span>Biratnagar, Province 1</span>
+                        </div>
+                     </div>
+                 </div>
+                 <!-- Add more testimonials -->
+             </div>
+         </div>
+     </section>
+
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+             <div class="footer-content">
+                 <div class="footer-section reveal-on-scroll">
+                    <h3><i class="fas fa-heart-pulse"></i> CareConnect</h3>
+                    <p>Simplifying access to healthcare. Find and book trusted doctors near you, anytime, anywhere.</p>
+                     <!-- Contact Info -->
+                    <p><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> +977-1-XXXXXX</p>
+                    <p><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i> support@careconnect.com</p>
+                 </div>
+                 <div class="footer-section reveal-on-scroll">
+                    <h3>Quick Links</h3>
+                    <div class="footer-links">
+                        <a href="/"><i class="fas fa-home"></i> Home</a>
+                        <a href="#search-section"><i class="fas fa-search"></i> Find a Doctor</a>
+                         <a href="/patient-login"><i class="fas fa-user-circle"></i> Patient Portal</a>
+                         <a href="#"><i class="fas fa-question-circle"></i> FAQs & Help</a>
+                         <a href="#"><i class="fas fa-info-circle"></i> About Us</a>
+                        <a href="#"><i class="fas fa-blog"></i> Health Blog</a>
+                    </div>
+                </div>
+                <div class="footer-section reveal-on-scroll">
+                    <h3>For Providers</h3>
+                    <div class="footer-links">
+                        <a href="/doctor-login"><i class="fas fa-clinic-medical"></i> Provider Login</a>
+                        <a href="#"><i class="fas fa-notes-medical"></i> List Your Practice</a>
+                         <a href="#"><i class="fas fa-cogs"></i> Features for Clinics</a>
+                        <a href="#"><i class="fas fa-hands-helping"></i> Partnership</a>
+                    </div>
+                 </div>
+                <div class="footer-section reveal-on-scroll">
+                     <h3>Follow & Connect</h3>
+                     <p>Stay updated with health tips and news:</p>
+                     <div class="social-links">
+                         <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                         <a href="#" aria-label="Twitter" title="Twitter"><i class="fab fa-x-twitter"></i></a>
+                        <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                         <a href="#" aria-label="LinkedIn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                    <h3 style="margin-top: 1.5rem;">Legal</h3>
+                    <div class="footer-links">
+                        <a href="#"><i class="fas fa-user-shield"></i> Privacy Policy</a>
+                        <a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a>
+                    </div>
+                 </div>
+            </div>
+        </div>
+        <div class="copyright">
+            © <span id="copyright-year"></span> CareConnect Booking Platform. All Rights Reserved.
+         </div>
+    </footer>
+
+    <script>
+        // --- Constants ---
+         const SCROLL_THRESHOLD = 50; // Pixels to scroll before navbar changes
+         const STAGGER_BASE_DELAY = 100; // Milliseconds for staggering animations
+         const COUNTER_ANIMATION_DURATION = 2000; // Milliseconds for counter animation
+
+        // --- Navbar Scroll Effect ---
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > SCROLL_THRESHOLD) {
+                 navbar.classList.add('scrolled');
+            } else {
+                 navbar.classList.remove('scrolled');
+            }
+        });
+
+        // --- Copyright Year ---
+        document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+        // --- Doctor Search/Filter Logic ---
+        const allDoctorsData = JSON.parse('{{ doctors | tojson | safe }}' || '[]');
+         const resultsContainer = document.getElementById('resultsContainer');
+         const noResultsMessage = document.getElementById('noResultsMessage');
+         const resultsTitle = document.getElementById('resultsTitle'); // Get results title element
+
+        function searchDoctors() {
+            const province = document.getElementById('province').value;
+            const specialization = document.getElementById('specialization').value;
+            const nameQuery = document.getElementById('doctorName').value.toLowerCase().trim();
+
+             console.log("Searching with:", { province, specialization, nameQuery });
+
+            const filteredDoctors = allDoctorsData.filter(doctor => {
+                 const doctorProvince = doctor.province || '';
+                const doctorSpecialization = doctor.specialization || '';
+                 const doctorName = (doctor.name || '').toLowerCase();
+                 const clinicName = (doctor.clinic_name || '').toLowerCase();
+
+                 const provinceMatch = !province || doctorProvince === province;
+                const specMatch = !specialization || doctorSpecialization === specialization;
+                const nameMatch = !nameQuery || doctorName.includes(nameQuery) || clinicName.includes(nameQuery);
+
+                return provinceMatch && specMatch && nameMatch;
+            });
+
+             console.log("Found doctors:", filteredDoctors.length);
+             displayResults(filteredDoctors);
+
+            // Scroll to results section after search (optional)
+            // const resultsSection = document.getElementById('doctors-results');
+            // if (resultsSection) {
+            //      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // }
+         }
+
+        function displayResults(doctors) {
+             resultsContainer.innerHTML = ''; // Clear previous results
+
+            if (!doctors || doctors.length === 0) {
+                 noResultsMessage.style.display = 'block';
+                resultsContainer.style.display = 'none'; // Hide the grid
+                 resultsTitle.style.display = 'none'; // Hide title if no results
+             } else {
+                 noResultsMessage.style.display = 'none';
+                resultsContainer.style.display = 'grid'; // Show grid
+                resultsTitle.style.display = 'block'; // Show title
+
+                doctors.forEach((doctor, index) => {
+                    const card = document.createElement('div');
+                     // Base class + reveal class
+                    card.className = 'doctor-card reveal-on-scroll';
+                    // Stagger the animation delay
+                     card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
+
+                    const photoUrl = doctor.photo || 'https://via.placeholder.com/310x220/e0f2f2/007A7A?text=No+Photo'; // Updated placeholder
+                     const rating = doctor.rate !== undefined && doctor.rate !== null ? parseFloat(doctor.rate).toFixed(1) : 'N/A';
+                    const province = doctor.province || 'Location N/A';
+                    const availability = doctor.availability1shortform || 'View Profile for Details';
+                    const name = doctor.name || 'Dr. Available';
+                    const specialization = doctor.specialization || 'General Practice';
+                     const clinicName = doctor.clinic_name || null;
+
+                     card.innerHTML = `
+                        <div class="doctor-photo-container">
+                            <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy">
+                         </div>
+                         <div class="doctor-info">
+                            <h3>${name}</h3>
+                             <p class="specialization">${specialization}</p>
+                            <div class="doctor-details">
+                               <p><i class="fas fa-star"></i> Rating: ${rating}</p>
+                               <p><i class="fas fa-map-marker-alt"></i> ${province}</p>
+                               ${clinicName ? `<p><i class="fas fa-clinic-medical"></i> ${clinicName}</p>` : ''}
+                           </div>
+                            <div class="availability">
+                               <p><strong>Availability:</strong> ${availability}</p>
+                            </div>
+                           <button class="btn btn-primary book-btn" onclick="window.location.href='/booking/${doctor.id}'">
+                                <i class="far fa-calendar-check"></i> Book Now
+                            </button>
+                         </div>
+                     `;
+                    resultsContainer.appendChild(card);
+                 });
+            }
+             // IMPORTANT: Always re-run the observer setup after modifying the DOM
+             setupScrollObserver();
+        }
+
+        // --- Typing Effect ---
+         const textElement = document.getElementById("text");
+         const textsToType = [
+            "Need a specialist appointment?",
+             "Book your check-up online today.",
+            "Access verified doctors easily.",
+            "Your health, scheduled simply."
+         ];
+         let textIndex = 0;
+         let charIndex = 0;
+         let isDeleting = false;
+         const typeSpeed = 80;
+         const deleteSpeed = 40;
+         const pauseBeforeDelete = 2200;
+         const pauseBeforeType = 300;
+
+        function type() {
+             if (!textElement) return;
+            const currentText = textsToType[textIndex];
+             let typeDelay;
+             textElement.style.animation = 'none'; // Pause blink during typing/deleting
+
+             if (!isDeleting) {
+                 textElement.textContent = currentText.slice(0, charIndex + 1);
+                 charIndex++;
+                 if (charIndex === currentText.length) {
+                    isDeleting = true;
+                    typeDelay = pauseBeforeDelete;
+                } else {
+                     typeDelay = typeSpeed;
+                 }
+            } else {
+                 textElement.textContent = currentText.slice(0, charIndex - 1);
+                 charIndex--;
+                 if (charIndex === 0) {
+                     isDeleting = false;
+                    textIndex = (textIndex + 1) % textsToType.length;
+                     typeDelay = pauseBeforeType;
+                 } else {
+                    typeDelay = deleteSpeed;
+                 }
+            }
+             textElement.offsetHeight; // Trigger reflow to restart animation if needed
+             textElement.style.animation = `blinkCursor 0.7s infinite steps(1)`;
+            setTimeout(type, typeDelay);
+         }
+
+        // --- Intersection Observer for Scroll Animations ---
+        let observer;
+
+         function setupScrollObserver() {
+            // Disconnect previous observer if exists
+            if (observer) observer.disconnect();
+
+            const scrollElements = document.querySelectorAll(".reveal-on-scroll");
+            if (scrollElements.length === 0) return;
+
+             const observerOptions = {
+                root: null,
+                 rootMargin: '0px',
+                 threshold: 0.1 // Trigger when 10% is visible (adjust as needed)
+             };
+
+            // Staggering calculation for sibling elements
+             let siblingGroupDelay = 0;
+             let lastParentNode = null;
+
+             const observerCallback = (entries, obs) => {
+                 entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const targetElement = entry.target;
+
+                        // Calculate stagger delay based on siblings within the same parent
+                         const parentNode = targetElement.parentNode;
+                         if (parentNode === lastParentNode) {
+                             siblingGroupDelay += STAGGER_BASE_DELAY;
+                         } else {
+                            siblingGroupDelay = 0; // Reset for new parent group
+                            lastParentNode = parentNode;
+                        }
+
+                        // Apply delay only if not explicitly set on the element already (e.g., from doctor cards)
+                        if (!targetElement.style.animationDelay) {
+                             targetElement.style.animationDelay = `${siblingGroupDelay}ms`;
+                        }
+
+                         targetElement.classList.add("is-visible");
+
+                        // Animated Counter Logic
+                         if (targetElement.classList.contains('stat-number') && !targetElement.dataset.animated) {
+                             animateCounter(targetElement);
+                            targetElement.dataset.animated = true; // Mark as animated
+                        }
+
+                        // Optional: Stop observing after first reveal
+                        obs.unobserve(targetElement);
+                    }
+                    // Optional: Add logic to remove 'is-visible' if scrolling up (requires not unobserving)
+                    // else { entry.target.classList.remove("is-visible"); }
+                 });
+             };
+
+             observer = new IntersectionObserver(observerCallback, observerOptions);
+             scrollElements.forEach(el => observer.observe(el));
+         }
+
+
+         // --- Animated Counter Function ---
+         function animateCounter(element) {
+            const target = parseInt(element.dataset.target, 10);
+            const duration = COUNTER_ANIMATION_DURATION;
+            let start = null;
+
+            function step(timestamp) {
+                if (!start) start = timestamp;
+                 const progress = Math.min((timestamp - start) / duration, 1);
+                 element.textContent = Math.floor(progress * target).toLocaleString(); // Format with commas
+                if (progress < 1) {
+                     window.requestAnimationFrame(step);
+                 } else {
+                    // Ensure final number is exact target, formatted
+                     element.textContent = target.toLocaleString();
+                }
+            }
+            window.requestAnimationFrame(step);
+         }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Display initial doctors (might be empty)
+            displayResults(allDoctorsData);
+
+            // Start typing effect
+            if (textElement) setTimeout(type, pauseBeforeType + 500);
+
+            // Setup observer for elements present on load + any dynamically added
+            setupScrollObserver();
+         });
+
+    </script>
+
+</body>
+</html>
+
+'''''''''''''''''''''''''''''''''''''''''''''
+
+booking.html:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Dr. {{ doctor.name }}</title>
+    <!-- Fonts from Index -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome from Index -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- Adopted :root from index.html --- */
+        :root {
+            /* --- Refined Clinical Palette --- */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb; /* Very light grey - Main body background */
+            --bg-accent-light: #e0f2f2;
+            --bg-accent-very-light: #f0fafa;
+
+            --border-color: #e5e7eb; /* Softer grey border */
+            --border-color-strong: #d1d5db;
+            --border-color-focus: var(--accent-primary); /* Use primary color for focus */
+
+            --text-dark: #1f2937;
+            --text-medium: #4b5563;
+            --text-light: #ffffff;
+
+            /* Primary Accent (Calm Blue/Teal) */
+            --accent-primary: #007A7A;
+            --accent-primary-dark: #005F5F;
+            --accent-primary-light: #4DB6AC;
+
+            /* Secondary / Warm Accent (Optional: maybe for stars if kept) */
+            --accent-warm: #F2A900;
+            --accent-warm-dark: #D99700;
+
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+
+            --shadow-color: rgba(0, 76, 76, 0.08);
+            --shadow-color-medium: rgba(0, 76, 76, 0.12);
+            --shadow-color-strong: rgba(0, 76, 76, 0.18);
+
+            /* --- Timings & Transitions --- */
+            --transition-speed: 0.3s;
+            --transition-ease: ease-in-out;
+
+            /* --- Adjusted variables for booking context --- */
+            --accent-selected: var(--accent-primary-dark); /* Darker for selection */
+            --accent-selected-text: var(--text-light);
+            --accent-disabled-bg: #e5e7eb; /* Softer disabled bg */
+            --accent-disabled-text: #9ca3af; /* Softer disabled text */
+            --accent-disabled-border: #d1d5db;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            /* Consistent Body Styles */
+            background-color: var(--bg-secondary);
+            color: var(--text-dark);
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-size: 16px;
+        }
+
+        /* --- Page Header (Styled like Navbar from Index) --- */
+        .page-top-bar {
+            /* Mimic navbar appearance */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%; /* Match index navbar padding */
+            background: var(--bg-primary);
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 3px 8px var(--shadow-color); /* Consistent shadow */
+            transition: all var(--transition-speed) var(--transition-ease);
+        }
+
+        .page-top-bar h1 {
+             /* Consistent H1 feel */
+             font-size: 1.6rem; /* Adjusted size for context */
+             font-weight: 700;
+             color: var(--text-dark);
+             font-family: 'Lato', sans-serif;
+             margin: 0;
+             line-height: 1.3;
+        }
+        .page-top-bar h1 span { /* Optional: highlight doctor name */
+             color: var(--accent-primary);
+        }
+
+         /* Back Button (Use index button style) */
+        .back-button {
+             /* Adopt btn-secondary style */
+            padding: 0.7rem 1.2rem; /* Slightly adjust if needed */
+            border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            text-align: center; transition: all var(--transition-speed) var(--transition-ease);
+            border: 1px solid transparent; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.6rem; line-height: 1.2;
+
+            background-color: var(--bg-secondary);
+            color: var(--accent-primary);
+            border-color: var(--border-color);
+            box-shadow: none; /* No shadow for secondary */
+        }
+        .back-button:hover {
+             background-color: var(--bg-accent-very-light);
+             border-color: var(--accent-primary-light);
+             color: var(--accent-primary-dark);
+             transform: translateY(-1px); /* Subtle lift */
+             box-shadow: 0 2px 4px var(--shadow-color);
+        }
+         .back-button i {
+             font-size: 0.9em; /* Adjust icon size slightly if needed */
+             margin-right: 0.2rem; /* Tweak spacing */
+         }
+
+        /* --- Main Content Area (Adapted layout) --- */
+        main {
+            width: 90%; /* Use percentage width like index */
+            max-width: 1280px; /* Match index max-width */
+            margin: 2.5rem auto; /* Add some top/bottom margin */
+            padding: 0 1rem; /* Horizontal padding like index container */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); /* Keep responsive grid, adjust minmax */
+            gap: 2.5rem; /* Match index gap */
+            align-items: start;
+        }
+
+        /* --- General Section Styling (Adapted from index cards) --- */
+        .info-section, .form-section-wrapper {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px; /* Softer radius */
+            padding: 2rem; /* Increased padding */
+            box-shadow: 0 4px 10px var(--shadow-color); /* Base shadow from index */
+            margin-bottom: 2rem; /* Maintain spacing */
+            transition: transform var(--transition-speed) var(--transition-ease),
+                        box-shadow var(--transition-speed) var(--transition-ease);
+        }
+        /* Optional subtle hover lift for sections */
+        /* .info-section:hover, .form-section-wrapper:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px var(--shadow-color-medium);
+        } */
+
+        /* --- Consistent Headings --- */
+        h2, h3 {
+            font-family: 'Lato', sans-serif;
+            color: var(--text-dark); /* Use dark text as base */
+            margin-bottom: 1.2rem; /* Adjust spacing */
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+         /* Underline Accent */
+         h2::after, h3::after {
+             content: '';
+             position: absolute;
+             bottom: -1px; /* Align with bottom border */
+             left: 0;
+             width: 50px;
+             height: 3px; /* Match index style */
+             background-color: var(--accent-primary);
+             border-radius: 1.5px;
+         }
+         h2 { font-size: 1.7rem; } /* Slightly larger H2 */
+         h3 { font-size: 1.4rem; }
+
+        /* --- Doctor Info Section (Refined) --- */
+        .doctor-profile-header {
+            display: flex;
+            gap: 1.8rem;
+            align-items: center;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+        }
+        .doctor-photo-large-container { /* Wrap image */
+            width: 150px;
+            height: 150px;
+            border-radius: 50%; /* Keep circular? Or change to square? Let's keep it for distinction */
+            overflow: hidden; /* Needed if changing to square */
+            border: 4px solid var(--bg-primary); /* Match bg */
+            box-shadow: 0 4px 12px rgba(0, 76, 76, 0.15); /* Themed shadow */
+            flex-shrink: 0;
+        }
+        .doctor-photo-large {
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
+        }
+        .doctor-name-spec h2 { /* Remove border, padding, margin from original h2 styles */
+            border-bottom: none; padding-bottom: 0; margin-bottom: 0.3rem;
+            font-size: 1.8rem; /* Match index H3 size roughly */
+            color: var(--text-dark);
+        }
+        .doctor-name-spec h2::after { display: none; } /* Hide underline here */
+        .doctor-name-spec p { /* Specialization */
+            color: var(--accent-primary); /* Use primary accent */
+            font-weight: 600; font-size: 1.1rem;
+            margin-bottom: 0.5rem; /* Spacing */
+        }
+
+        .doctor-details p, .doctor-details ul li {
+            color: var(--text-medium);
+            font-size: 0.98rem; /* Match index font size */
+            margin-bottom: 0.8rem; /* Increased spacing */
+            display: flex; /* Use flex for icon alignment */
+            align-items: center;
+        }
+        .doctor-details ul { list-style: none; padding-left: 0; }
+        .doctor-details ul li i, .doctor-details p i { /* Icon styling from index */
+             margin-right: 0.8rem;
+             color: var(--accent-primary-light);
+             width: 1.4em; text-align: center; flex-shrink: 0;
+             font-size: 1.1em; /* Make icon slightly larger */
+         }
+         .doctor-details i.fa-star { color: var(--accent-warm); } /* Star color */
+
+        /* --- Clinic Location Section (Refined) --- */
+        .clinic-location h3 { margin-bottom: 1.5rem; }
+        .clinic-location a { /* Remove complex overlay */
+            display: block; text-decoration: none;
+            color: inherit; border-radius: 6px; /* Consistent radius */
+            overflow: hidden; margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: box-shadow var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease);
+        }
+        .clinic-location a:hover {
+            box-shadow: 0 6px 15px var(--shadow-color-medium); /* Hover shadow */
+            transform: translateY(-3px);
+        }
+
+        .clinic-photo {
+            width: 100%;
+            height: 220px; /* Adjust height as needed */
+            object-fit: cover;
+            display: block;
+             transition: transform var(--transition-speed) ease;
+        }
+         .clinic-location a:hover .clinic-photo {
+             transform: scale(1.03);
+         }
+
+        .clinic-details p {
+            margin-bottom: 0.6rem; font-size: 0.98rem;
+            color: var(--text-medium);
+            display: flex; align-items: center; /* Align text nicely */
+         }
+        .clinic-details p strong { font-weight: 600; color: var(--text-dark); margin-right: 0.5rem; }
+        .clinic-details .map-instruction {
+             font-size: 0.85rem; color: var(--text-medium);
+             text-align: center; margin-top: 1rem; font-style: italic;
+             display: block;
+             opacity: 0.8;
+         }
+
+        /* --- Booking Form Styles (Adopted from Index) --- */
+        .form-section-wrapper h3 { /* Heading for "Select Date & Time", "Your Details" */
+             display: flex; align-items: center; gap: 0.8rem; /* Add space for icon */
+         }
+         .form-section-wrapper h3 i {
+             color: var(--accent-primary);
+             font-size: 1.1em; /* Adjust icon size */
+             margin-top: -2px; /* Fine-tune alignment */
+         }
+
+
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.3rem; } /* More margin bottom */
+        label { font-weight: 600; color: var(--text-dark); font-size: 1rem; margin-bottom: 0.4rem; }
+
+        /* Use .input-group if adding icons later */
+        .input-group { position: relative; }
+        /* Add icon style from index if used: .input-group i { ... } */
+
+        input[type="text"], input[type="tel"], textarea, select /* Include select if needed */ {
+             /* Match index input styles */
+            width: 100%;
+            padding: 0.9rem 1rem; /* Consistent padding */
+            border: 1px solid var(--border-color);
+            border-radius: 6px; /* Softer radius */
+            background: var(--bg-primary); color: var(--text-dark); font-size: 1rem;
+            transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease);
+         }
+        /* Add left padding if using icons: padding-left: 2.8rem; */
+
+        input[type="text"]:focus, input[type="tel"]:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--border-color-focus); /* Use primary accent */
+            box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); /* Subtle focus ring like index */
+         }
+        textarea { min-height: 100px; resize: vertical; }
+
+        /* --- Date/Time Selection (Major Restyle Needed) --- */
+        .selection-container {
+            background-color: var(--bg-secondary); /* Lighter background */
+            border: 1px solid var(--border-color); /* Use standard border */
+            border-radius: 6px; /* Softer radius */
+            padding: 1.2rem; /* More padding */
+            min-height: 80px; /* Adjust min height */
+            margin-top: 0.5rem;
+        }
+        /* Keep grid definitions */
+        .date-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.8rem; }
+        .time-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 0.7rem; }
+
+        /* Reworked Slot Card (Critical) */
+        .slot-card {
+            padding: 0.8rem 0.6rem;
+            border: 1px solid var(--border-color); /* Standard border */
+            border-radius: 6px; /* Consistent radius */
+            background-color: var(--bg-primary); /* Card background */
+            color: var(--text-dark);
+            font-weight: 600; text-align: center; cursor: pointer;
+            transition: all var(--transition-speed) var(--transition-ease);
+            font-size: 0.95rem;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 55px; /* Adjusted height */
+            line-height: 1.4;
+             box-shadow: 0 2px 4px var(--shadow-color); /* Subtle shadow */
+        }
+        .slot-card:hover {
+             /* Index hover effect: lift, shadow, primary border */
+            border-color: var(--accent-primary-light); /* Lighter primary on hover */
+            background-color: var(--bg-primary); /* Keep background or lighten slightly? */
+            transform: translateY(-3px); /* Lift effect */
+            box-shadow: 0 5px 12px var(--shadow-color-medium); /* Enhanced shadow */
+            color: var(--accent-primary-dark); /* Darker text on hover */
+        }
+        .slot-card.selected {
+            /* Use index primary button colors for selected state */
+             background-color: var(--accent-selected); /* Dark primary */
+             color: var(--accent-selected-text); /* Light text */
+             border-color: var(--accent-selected);
+             font-weight: 700;
+             box-shadow: 0 3px 8px rgba(0, 76, 76, 0.2); /* Slightly stronger shadow */
+             transform: translateY(-1px); /* Reduce lift slightly when selected */
+        }
+         .slot-card.selected .day-name { /* Ensure day name readable when selected */
+             color: rgba(255, 255, 255, 0.85);
+         }
+        .slot-card.disabled {
+            /* Refined disabled state */
+            background-color: var(--accent-disabled-bg);
+            color: var(--accent-disabled-text);
+            cursor: not-allowed;
+            border-color: var(--accent-disabled-border);
+             opacity: 0.7;
+            box-shadow: none; /* No shadow when disabled */
+            transform: none; /* No transform when disabled */
+            pointer-events: none;
+        }
+        /* Date Slot Specific Styles */
+        .slot-card .day-number { font-size: 1.3rem; font-weight: 700; display: block; line-height: 1.1; }
+        .slot-card .day-name {
+            font-size: 0.75rem; text-transform: uppercase;
+            color: var(--text-medium); display: block; margin-top: 3px;
+            font-weight: 400; /* Lighter weight for day name */
+        }
+
+        .slots-message { /* Consistent message style */
+            grid-column: 1 / -1; text-align: center; padding: 1.5rem 1rem;
+            color: var(--text-medium); font-style: italic; font-size: 0.95rem;
+         }
+         .slots-message i { margin-right: 10px; color: var(--accent-primary); } /* Use primary color for icons */
+         /* Style for error messages */
+        .slots-message.error { color: var(--error); font-style: normal; font-weight: 600;}
+        .slots-message.error i { color: var(--error); }
+
+
+        /* Buttons (Adopt from Index) */
+        .btn {
+            padding: 0.7rem 1.5rem; border-radius: 6px; /* Match index */
+            cursor: pointer; font-weight: 600; font-size: 0.95rem;
+            text-align: center; transition: all var(--transition-speed) var(--transition-ease);
+            border: 1px solid transparent; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.6rem; line-height: 1.2;
+            box-shadow: 0 2px 4px var(--shadow-color); /* Match index */
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px); /* Lift */
+            box-shadow: 0 5px 12px var(--shadow-color-medium); /* Enhanced shadow */
+        }
+        .btn:active:not(:disabled) {
+             transform: translateY(0px);
+             box-shadow: 0 2px 4px var(--shadow-color);
+        }
+         .btn:disabled {
+             background-color: var(--accent-disabled-bg);
+             border-color: var(--accent-disabled-border);
+             color: var(--accent-disabled-text);
+             cursor: not-allowed;
+             opacity: 0.7;
+             box-shadow: none;
+             transform: none;
+        }
+
+        .btn-primary { /* Match index primary */
+            background-color: var(--accent-primary); color: var(--text-light);
+            border-color: var(--accent-primary);
+            font-size: 1rem; /* Maybe slightly larger for main action */
+            padding: 0.8rem 1.8rem; /* Match index primary */
+        }
+        .btn-primary:hover:not(:disabled) { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
+
+        .btn-block { width: 100%; margin-top: 1.5rem; } /* Ensure button is block level */
+
+        /* Separator */
+        hr { border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; } /* Match border color */
+
+
+        /* --- Flash Messages (Adopt from Index) --- */
+        .flash-messages { position: fixed; top: 90px; /* Adjust if header height changed */ right: 20px; z-index: 1050; width: clamp(300px, 90%, 420px); }
+         .flash-message { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 6px; font-weight: 500; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; display: flex; align-items: center; gap: 1rem; background-color: var(--bg-primary); }
+         .flash-message::before { font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1.2em; }
+         .flash-message.success { border-left: 5px solid var(--success); color: #057a55; }
+         .flash-message.success::before { content: '\f058'; color: var(--success); }
+         .flash-message.error { border-left: 5px solid var(--error); color: #b91c1c; }
+         .flash-message.error::before { content: '\f071'; color: var(--error); }
+         .flash-message.info { border-left: 5px solid var(--info); color: #1d4ed8; }
+         .flash-message.info::before { content: '\f05a'; color: var(--info); }
+         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+
+        /* --- Responsive Adjustments (Review and Sync) --- */
+         @media (max-width: 992px) { /* Adjust breakpoint? Index uses 1024px */
+             main { gap: 1.8rem; } /* Adjust gap */
+             .info-section, .form-section-wrapper { padding: 1.5rem; }
+             .doctor-photo-large-container { width: 120px; height: 120px;} /* Adjust photo size */
+             h2 {font-size: 1.5rem;}
+             h3 {font-size: 1.3rem;}
+         }
+
+        @media (max-width: 768px) {
+             main {
+                 grid-template-columns: 1fr; /* Single column */
+                 margin-top: 1.5rem; /* Adjust margin */
+                 gap: 1.8rem;
+             }
+            .page-top-bar { padding: 0.8rem 5%; } /* Adjust padding */
+            .page-top-bar h1 { font-size: 1.3rem;}
+            .back-button { padding: 0.6rem 1rem; font-size: 0.85rem;}
+            h2 {font-size: 1.4rem;}
+            h3 {font-size: 1.25rem;}
+
+            .doctor-profile-header { flex-direction: column; text-align: center; } /* Stack photo and name */
+            .doctor-photo-large-container { width: 130px; height: 130px;}
+            .clinic-photo { height: 200px;}
+            .form-group { margin-bottom: 1rem;}
+            .selection-container { padding: 1rem;}
+            .date-selection-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.7rem; }
+            .time-slots-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.6rem; }
+            .slot-card { font-size: 0.9rem; min-height: 50px;}
+            .btn { padding: 0.65rem 1.3rem; font-size: 0.9rem;} /* Consistent button sizing */
+            .btn-primary { padding: 0.75rem 1.5rem;}
+         }
+
+        @media (max-width: 480px) {
+            body { font-size: 15px; } /* Adjust base size? */
+            .page-top-bar { padding: 0.7rem 4%;}
+            .page-top-bar h1 { font-size: 1.15rem;}
+            main { padding: 0 0.5rem;}
+            .info-section, .form-section-wrapper { padding: 1.2rem; }
+            .doctor-photo-large-container { width: 110px; height: 110px;}
+            .doctor-name-spec h2 { font-size: 1.5rem; }
+            .doctor-name-spec p { font-size: 1rem; }
+
+             /* Ensure enough columns for selection cards */
+            .date-selection-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); } /* Adjust minmax as needed */
+             /* Force 3 columns minimum might be better visually */
+             .date-selection-grid, .time-slots-grid {
+                 grid-template-columns: repeat(3, 1fr);
+                 gap: 0.5rem;
+             }
+            input[type="text"], input[type="tel"], textarea, select { padding: 0.8rem; font-size: 0.95rem; }
+             .slot-card { font-size: 0.85rem; min-height: 50px; padding: 0.6rem 0.4rem;}
+             .slot-card .day-number { font-size: 1.1rem;}
+             .slot-card .day-name { font-size: 0.7rem;}
+
+            .flash-messages { width: clamp(280px, 95%, 95%); right: 2.5%; } /* Make flash messages more responsive */
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages Div (Keep from Index) -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <!-- Add ::before styling via CSS class -->
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Header (Adapated Styling) -->
+    <header class="page-top-bar">
+        <h1>Book with <span>Dr. {{ doctor.name | default('N/A') }}</span></h1>
+        <a href="{{ url_for('home') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {# --- Left Column --- #}
+        <div class="info-column">
+            <section class="info-section doctor-profile-section">
+                <div class="doctor-profile-header">
+                     <div class="doctor-photo-large-container">
+                         <img src="{{ doctor.photo or 'https://via.placeholder.com/150/E0F2F2/007A7A?text=Photo' }}" class="doctor-photo-large" alt="{{ doctor.name }}">
+                     </div>
+                    <div class="doctor-name-spec">
+                        <h2>{{ doctor.name | default('N/A') }}</h2>
+                        <p>{{ doctor.specialization | default('General Practice') }}</p>
+                    </div>
+                </div>
+                <div class="doctor-details">
+                     {% if doctor.description %}
+                         <p>{{ doctor.description }}</p> {# This p won't have an icon unless manually added #}
+                     {% endif %}
+                     {# Wrap details in UL or P tags with icons #}
+                    <ul>
+                         {% if doctor.province %}
+                         <li><i class="fas fa-map-marker-alt"></i>{{ doctor.province }}</li>
+                         {% endif %}
+                         {% if doctor.rate %}
+                         <li><i class="fas fa-star"></i> Rating: {{ doctor.rate }} / 5</li>
+                         {% endif %}
+                         {# Example Additional Details
+                         <li><i class="fas fa-graduation-cap"></i> M.D. from Example University</li>
+                         <li><i class="fas fa-briefcase"></i> 10+ Years Experience</li>
+                         <li><i class="fas fa-language"></i> Speaks English, Nepali</li>
+                          #}
+                    </ul>
+                </div>
+            </section>
+
+            {% if doctor.google_maps_link and doctor.clinic_photo %}
+            <section class="info-section clinic-location">
+                <h3><i class="fas fa-hospital" style="margin-right: 8px; color: var(--accent-primary);"></i>Clinic Information</h3>
+                 {# Add rel="noopener noreferrer" for security #}
+                <a href="{{ doctor.google_maps_link }}" target="_blank" rel="noopener noreferrer" title="Click to view map">
+                     <img src="{{ doctor.clinic_photo or 'https://via.placeholder.com/400x220/F0FAFA/4B5563?text=Clinic+Location' }}"
+                          alt="{{ doctor.clinic_name or 'Clinic Location' }}" class="clinic-photo">
+                </a>
+                 <div class="clinic-details">
+                     {% if doctor.clinic_name %}<p><strong>Name:</strong> {{ doctor.clinic_name }}</p>{% endif %}
+                     {% if doctor.clinic_address %}<p><strong>Address:</strong> {{ doctor.clinic_address }}</p>{% endif %}
+                     <span class="map-instruction">(Click photo above to open map in new tab)</span>
+                 </div>
+            </section>
+            {% endif %}
+        </div>
+
+        {# --- Right Column --- #}
+        <div class="form-section-wrapper">
+            <form id="booking-form" method="POST" action="{{ url_for('confirm_booking') }}">
+                {# --- Hidden inputs remain unchanged --- #}
+                <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                <input type="hidden" name="doctor_name" value="{{ doctor.name }}">
+                <input type="hidden" name="fingerprint" id="fingerprint-input">
+                <input type="hidden" name="booking_date" id="selectedDateInput" required>
+                <input type="hidden" name="booking_time" id="selectedTimeInput" required>
+
+                <h3><i class="fas fa-calendar-check"></i>Select Date & Time</h3>
+
+                <div class="form-group">
+                    <label for="monthSlotsContainer">1. Select Month:</label>
+                    <div id="monthSlotsContainer" class="selection-container date-selection-grid">
+                        <div class="slots-message"><i class="fas fa-spinner fa-spin"></i> Loading months...</div>
+                    </div>
+                </div>
+    
+                <div class="form-group" id="daySelectionGroup" style="display: none;">
+                    <label for="daySlotsContainer">2. Select Day:</label>
+                    <div id="daySlotsContainer" class="selection-container date-selection-grid">
+                        <div class="slots-message">Please select a month first.</div>
+                    </div>
+                </div>
+    
+                <div class="form-group" id="timeSelectionGroup" style="display: none;">
+                    <label for="timeSlotsContainer">3. Select Time:</label>
+                    <div id="timeSlotsContainer" class="selection-container time-slots-grid">
+                        <div class="slots-message">Please select a day first.</div>
+                    </div>
+                </div>
+    
+                 <hr style="border: none; border-top: 1px solid var(--border-color-light); margin: 1.5rem 0;">
+    
+                 <h3><i class="fas fa-user" style="margin-right: 8px;"></i>Your Details</h3>
+
+                 {# --- Patient Details --- #}
+                <div class="form-group">
+                    <label for="patientName">Your Full Name:</label>
+                     {# Optional: Add .input-group and icon if desired #}
+                    <input type="text" id="patientName" name="patient_name" required autocomplete="name" placeholder="e.g. Hari Bahadur">
+                </div>
+                <div class="form-group">
+                    <label for="patientPhone">Your Phone Number:</label>
+                    <input type="tel" id="patientPhone" name="patient_phone" required pattern="[0-9]{9,15}" title="Please enter a valid phone number (9-15 digits)" autocomplete="tel" placeholder="e.g. 98XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes for Doctor (Optional):</label>
+                    <textarea id="notes" name="notes" placeholder="e.g. Reason for visit, allergies, etc."></textarea>
+                </div>
+
+                {# Main action button, using index styles #}
+                <button type="submit" id="confirmButton" class="btn btn-primary btn-block" disabled>
+                     <i class="fas fa-check-circle"></i> Select Month, Day & Time to Continue
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // --- JAVASCRIPT FOR DATE/TIME SELECTION (Keep exactly as in the previous step) ---
+        // Make sure doctor_availability_schedule is correctly parsed here.
+    
+        const doctorId = "{{ doctor.id }}";
+        const doctorAvailabilitySchedule = JSON.parse('{{ doctor_availability_schedule | safe }}' || '{}');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayString = today.toISOString().split('T')[0];
+    
+        // DOM Elements
+        const monthSlotsContainer = document.getElementById('monthSlotsContainer');
+        const daySelectionGroup = document.getElementById('daySelectionGroup');
+        const daySlotsContainer = document.getElementById('daySlotsContainer');
+        const timeSelectionGroup = document.getElementById('timeSelectionGroup');
+        const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+        const selectedDateInput = document.getElementById('selectedDateInput');
+        const selectedTimeInput = document.getElementById('selectedTimeInput');
+        const confirmButton = document.getElementById('confirmButton');
+    
+        // State Variables
+        let selectedMonthYear = null;
+        let selectedDate = null;
+        let selectedTime = null;
+        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+        // Helper Functions (Keep all helpers: clearSelection, displayMessage, updateButtonState, getDayName, isDoctorGenerallyAvailable)
+        function clearSelection(container) { container.innerHTML = ''; }
+        function displayMessage(container, message, type = 'info') {
+            const iconClass = type === 'loading' ? 'fas fa-spinner fa-spin' : type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
+            container.innerHTML = `<div class="slots-message" style="${type === 'error' ? 'color: var(--error);' : ''}"><i class="${iconClass}"></i> ${message}</div>`;
+        }
+        function updateButtonState() {
+            if (selectedMonthYear && selectedDate && selectedTime) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = '<i class="fas fa-check" style="margin-right: 8px;"></i> Confirm Booking';
+            } else {
+                confirmButton.disabled = true;
+                confirmButton.innerHTML = '<i class="fas fa-check" style="margin-right: 8px;"></i> Select Month, Day & Time';
+            }
+        }
+        function getDayName(date) { return weekdays[date.getDay()]; }
+        function isDoctorGenerallyAvailable(dayName) {
+            const scheduleForDay = doctorAvailabilitySchedule[dayName];
+            return !(!scheduleForDay || scheduleForDay.length === 0 || (scheduleForDay.length === 1 && scheduleForDay[0].toLowerCase() === 'unavailable'));
+        }
+    
+    
+        // Core Logic Functions (Keep all core functions: generateMonthCards, handleMonthClick, generateDayCards, handleDayClick, fetchAndDisplayTimeSlots, handleTimeClick)
+        function generateMonthCards() {
+            clearSelection(monthSlotsContainer);
+            const monthsToShow = 6; // Example: Show 6 months
+            for (let i = 0; i < monthsToShow; i++) {
+                const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = date.toLocaleDateString(navigator.language || 'en-US', { month: 'long' });
+                const year = date.getFullYear();
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.classList.add('slot-card');
+                card.dataset.monthYear = monthYear;
+                card.innerHTML = `${monthName}<span class="day-name" style="font-size:0.75rem;">${year}</span>`;
+                card.addEventListener('click', () => handleMonthClick(monthYear));
+                monthSlotsContainer.appendChild(card);
+            }
+        }
+    
+        function handleMonthClick(monthYear) {
+            selectedMonthYear = monthYear; selectedDate = null; selectedTime = null;
+            selectedDateInput.value = ''; selectedTimeInput.value = '';
+            document.querySelectorAll('#monthSlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.monthYear === monthYear); });
+            daySelectionGroup.style.display = 'block'; timeSelectionGroup.style.display = 'none';
+            clearSelection(timeSlotsContainer); displayMessage(daySlotsContainer, 'Loading days...', 'loading');
+            updateButtonState();
+            generateDayCards(monthYear);
+        }
+    
+         function generateDayCards(monthYear) {
+             clearSelection(daySlotsContainer);
+             const [year, month] = monthYear.split('-').map(Number);
+             const daysInMonth = new Date(year, month, 0).getDate();
+             let daysGenerated = 0;
+             for (let day = 1; day <= daysInMonth; day++) {
+                 const currentDate = new Date(year, month - 1, day);
+                 const currentDateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                 const dayName = getDayName(currentDate);
+                 if (currentDate < today || !isDoctorGenerallyAvailable(dayName)) { continue; }
+                 daysGenerated++;
+                 const card = document.createElement('button');
+                 card.type = 'button'; card.classList.add('slot-card');
+                 card.dataset.date = currentDateString;
+                 card.innerHTML = `<span class="day-number">${day}</span><span class="day-name">${dayName.substring(0, 3)}</span>`;
+                 card.addEventListener('click', () => handleDayClick(currentDateString));
+                 daySlotsContainer.appendChild(card);
+             }
+             if (daysGenerated === 0) { displayMessage(daySlotsContainer, 'No available days found for this month.'); }
+         }
+    
+        function handleDayClick(dateString) {
+             selectedDate = dateString; selectedTime = null;
+             selectedDateInput.value = dateString; selectedTimeInput.value = '';
+             document.querySelectorAll('#daySlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.date === dateString); });
+             timeSelectionGroup.style.display = 'block'; displayMessage(timeSlotsContainer, 'Loading available times...', 'loading');
+             updateButtonState();
+             fetchAndDisplayTimeSlots(dateString);
+         }
+    
+         async function fetchAndDisplayTimeSlots(dateString) {
+             clearSelection(timeSlotsContainer); if (!selectedDate) { displayMessage(timeSlotsContainer, 'Please select a day first.'); return; }
+             try {
+                 const response = await fetch(`/get-available-slots/${doctorId}/${dateString}`);
+                 if (!response.ok) { const errorData = await response.json().catch(() => ({})); throw new Error(`HTTP error ${response.status}: ${errorData.error || 'Failed to fetch slots'}`); }
+                 const availableSlots = await response.json();
+                 if (!Array.isArray(availableSlots)) { throw new Error("Invalid data format received."); }
+                 clearSelection(timeSlotsContainer);
+                 if (availableSlots.length === 0) { displayMessage(timeSlotsContainer, 'No available time slots for this date.'); }
+                 else {
+                     availableSlots.forEach(time => {
+                         const card = document.createElement('button'); card.type = 'button';
+                         card.classList.add('slot-card'); card.dataset.time = time; card.textContent = time;
+                         card.addEventListener('click', () => handleTimeClick(time));
+                         timeSlotsContainer.appendChild(card);
+                     });
+                 }
+             } catch (error) { console.error('Error fetching slots:', error); displayMessage(timeSlotsContainer, `Error: ${error.message || 'Could not load times.'}`, 'error'); timeSelectionGroup.style.display = 'block'; }
+         }
+    
+        function handleTimeClick(time) {
+            selectedTime = time; selectedTimeInput.value = time;
+            document.querySelectorAll('#timeSlotsContainer .slot-card').forEach(card => { card.classList.toggle('selected', card.dataset.time === time); });
+            updateButtonState();
+        }
+    
+    
+        // Initial Load & Event Listeners (Keep existing logic)
+         document.addEventListener('DOMContentLoaded', () => {
+             generateMonthCards(); daySelectionGroup.style.display = 'none';
+             timeSelectionGroup.style.display = 'none';
+             displayMessage(daySlotsContainer, 'Please select a month first.');
+             displayMessage(timeSlotsContainer, 'Please select a day first.');
+             updateButtonState(); hideFlashMessages();
+             if (typeof FingerprintJS !== 'undefined') { FingerprintJS.load().then(fp => fp.get()).then(result => { const fpInput = document.getElementById('fingerprint-input'); if (fpInput) { fpInput.value = result.visitorId; } }).catch(error => console.error('Fingerprint error:', error)); } else { console.warn('FingerprintJS not loaded.');}
+         });
+    
+        // Flash Message Handling (Keep existing logic)
+        function hideFlashMessages() { const flashMessages = document.querySelectorAll('.flash-message'); flashMessages.forEach(message => { requestAnimationFrame(() => { message.style.opacity = '1'; message.style.transform = 'translateX(0)'; }); setTimeout(() => { message.style.opacity = '0'; message.style.transform = 'translateX(100%)'; setTimeout(() => message.remove(), 500); }, 4500); }); }
+    
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js" defer></script>
+
+</body>
+</html>
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+confirmation.html:
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Confirmation</title>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0ea5e9;
+            --text: #e6e6e6;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #0d0f18);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    
+        .booking-container {
+            background: var(--secondary);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow);
+            padding: 2rem 3rem;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+    
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    
+        h1 {
+            text-align: center;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+    
+        .booking-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+    
+        .booking-form h2 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+    
+        p {
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+    
+        p strong {
+            color: var(--accent);
+        }
+    
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            color: white;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+            width: 100%;
+        }
+    
+        button:hover {
+            background: #0ba4d1;
+            transform: translateY(-2px);
+        }
+    
+        button:active {
+            transform: translateY(0);
+        }
+    
+        @media (max-width: 600px) {
+            .booking-container {
+                padding: 1.5rem 1rem;
+            }
+        }
+
+        .confirmation-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #16213e;
+            border-radius: 1.5rem;
+            color: #e6e6e6;
+            text-align: center;
+        }
+        .confirmation-details {
+            margin-bottom: 2rem;
+        }
+        .delete-btn {
+            background: #f87171;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            animation: fadeInOut 5s ease-in-out;
+        }
+
+        .flash-message.error {
+            background: #f87171;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+        <!-- Flash messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    <div class="booking-container">
+        <h1>Booking Confirmed!</h1>
+        <div class="booking-form">
+            <h2>Appointment Details</h2>
+            <p><strong>Doctor:</strong> {{ doctor_name }}</p>
+            <p><strong>Patient Name:</strong> {{ patient_name }}</p>
+            <p><strong>Date:</strong> {{ booking_date }}</p>
+            <p><strong>Time:</strong> {{ booking_time }}</p>
+        </div>
+        <!-- Delete Booking Button -->
+        <form action="/delete-booking/{{ booking_id }}" method="POST">
+            <input type="hidden" name="source" value="confirmation">
+            <button type="submit" class="delete-btn">Delete My Booking</button>
+        </form>
+        
+        <br>
+        <button onclick="window.location.href='/'">Back to Home</button>
+        </form>
+    </div>
+</body>
+</html>
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+doctor_login.html:
+
+<!DOCTYPE html>
+<html lang="en"> <!-- Set lang -->
+<head>
+    <meta charset="UTF-8"> <!-- Set charset -->
+    <title>Doctor Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Clinic Style Palette */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border-color: #dee2e6;
+            --border-color-focus: #80bdff;
+            --text-dark: #343a40;
+            --text-medium: #6c757d;
+            --text-light: #ffffff;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --error: #dc3545;
+            --error-bg: #f8d7da;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-dark);
+            font-family: 'Open Sans', 'Lato', sans-serif;
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .logo-header { /* Optional logo/header */
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Lato', sans-serif;
+        }
+
+        .login-container {
+            background: var(--bg-primary);
+            padding: 2rem 2.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 20px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 400px; /* Constrain width */
+            width: 100%;
+             animation: fadeIn 0.5s ease-out; /* Reuse fadeIn */
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .login-container h1 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            font-size: 1.6rem;
+            font-weight: 700;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            text-align: left; /* Align labels left */
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%; /* Full width input */
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.3rem;
+            background: var(--bg-primary);
+            color: var(--text-dark);
+            font-size: 0.95rem;
+             transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--border-color-focus);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+         /* --- Button Styles (Copied) --- */
+         .btn { padding: 0.7rem 1.5rem; border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 1rem; text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0.5rem 0; }
+         .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+         .btn-primary { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
+         .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); }
+         .btn-outline-primary { border-color: var(--accent); color: var(--accent); background: transparent;}
+         .btn-outline-primary:hover { background-color: var(--accent); color: var(--text-light);}
+         .btn-block { width: 100%; }
+
+        /* Flash Messages - Light Theme (Same) */
+         .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
+         .flash-message { /* ... Styles are the same ... */ padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
+         .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+         .flash-message.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+         .flash-message.info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+         @keyframes slideInFadeOut { /* ... Keyframes remain same ... */ 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+
+        .back-link { /* Style for Back to Home link */
+             margin-top: 1.5rem;
+             font-size: 0.9rem;
+         }
+        .back-link a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color var(--transition-speed);
+        }
+        .back-link a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+             .login-container { padding: 1.5rem; }
+             h1 { font-size: 1.4rem;}
+         }
+    </style>
+</head>
+<body>
+    <!-- Flash messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+     <div class="logo-header">Health Station</div> <!-- Optional: Add Logo -->
+
+    <div class="login-container">
+        <h1>Doctor Portal Login</h1>
+        <form action="/doctor-login" method="POST">
+            <div class="input-group">
+                <label for="doctorName">Doctor Name</label>
+                <input type="text" id="doctorName" name="doctorName" required>
+            </div>
+            <div class="input-group">
+                <label for="doctorId">Doctor ID</label>
+                <!-- Consider changing type to password if ID is sensitive -->
+                <input type="text" id="doctorId" name="doctorId" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+        <div class="back-link">
+            <a href="/"><i class="fas fa-arrow-left" style="margin-right: 5px;"></i> Back to Home</a>
+        </div>
+    </div>
+    <script>
+        // JS for flash messages (same as others)
+        function hideFlashMessages() { /* ... */
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => { setTimeout(() => { message.style.opacity = '0'; setTimeout(() => message.remove(), 500); }, 4000); });
+        }
+        window.onload = hideFlashMessages;
+    </script>
+</body>
+</html>
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+doctor_dashboard.html:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Dashboard - Simplified</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border-color: #dee2e6;
+            --border-color-focus: #80bdff;
+            --text-dark: #343a40;
+            --text-medium: #6c757d;
+            --text-light: #ffffff;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --accent-light: #e6f2ff; /* Lighter accent for hover/backgrounds */
+            --success: #28a745;
+            --success-hover: #218838;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --error: #dc3545;
+            --error-bg: #f8d7da;
+            --info-bg: #d1ecf1;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-dark);
+            font-family: 'Open Sans', 'Lato', sans-serif;
+            padding: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .dashboard-wrapper {
+             max-width: 1400px;
+             margin: 0 auto;
+             background: var(--bg-primary);
+             padding: 2rem;
+             border-radius: 0.5rem;
+             border: 1px solid var(--border-color);
+             box-shadow: 0 4px 15px var(--shadow-color);
+         }
+
+        h1 {
+            color: var(--accent); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 2rem; font-family: 'Lato', sans-serif; font-weight: 700; display: flex; align-items: center; gap: 0.75rem;
+        }
+        h1 i { font-size: 1.8rem; }
+
+        /* Stats Section */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background-color: var(--bg-primary); padding: 1.25rem; border-radius: 0.4rem; border: 1px solid var(--border-color); box-shadow: 0 2px 5px var(--shadow-color); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform var(--transition-speed), box-shadow var(--transition-speed); }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 12px rgba(0,0,0,0.12); }
+        .stat-card .icon { font-size: 2rem; margin-bottom: 0.75rem; color: var(--accent); }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); line-height: 1.2; }
+        .stat-card .label { font-size: 0.9rem; color: var(--text-medium); margin-top: 0.25rem; }
+        .stat-card.today .icon { color: var(--success); }
+        .stat-card.week .icon { color: var(--info); }
+        .stat-card.pending .icon { color: var(--warning); }
+
+        /* Charts Section - Fix Applied */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr); /* Single column */
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .chart-container {
+            background-color: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: 0.4rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px var(--shadow-color);
+            /* --- FIX: Define aspect ratio --- */
+            aspect-ratio: 2 / 1; /* Common ratio for bar charts, adjust 2/1 or 16/9 if needed */
+            /* Optional: Set a max-height to prevent extreme vertical stretching on very narrow screens */
+             /* max-height: 400px; */
+            /* Ensure canvas can fill container height now */
+            display: flex; /* Allow canvas to potentially grow */
+            flex-direction: column;
+        }
+         .chart-container canvas {
+            /* Ensure canvas doesn't overflow its container (important with aspect-ratio) */
+             max-width: 100%;
+             height: auto !important; /* Override any inline Chart.js height to respect aspect ratio */
+         }
+
+        .chart-container h3 { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-dark); font-weight: 600; text-align: center; }
+
+        /* Filter/Action Bar */
+        .controls-bar { background: var(--bg-secondary); padding: 1rem 1.5rem; border-radius: 0.4rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border: 1px solid var(--border-color); }
+        .controls-bar .filter-group { display: flex; align-items: center; gap: 0.5rem; flex-grow: 1; min-width: 250px; }
+        .controls-bar label { font-weight: 600; color: var(--text-dark); font-size: 0.95rem; white-space: nowrap; }
+        .controls-bar input[type="date"] { padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 0.3rem; background: var(--bg-primary); color: var(--text-dark); font-size: 0.9rem; flex-grow: 1; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
+        .controls-bar input[type="date"]:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+
+        /* Buttons */
+        .btn { padding: 0.7rem 1.2rem; border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
+        .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-outline-primary { border-color: var(--accent); color: var(--accent); background: transparent;}
+        .btn-outline-primary:hover { background-color: var(--accent); color: var(--text-light);}
+        .btn-success { background-color: var(--success); color: var(--text-light); border-color: var(--success); }
+        .btn-success:hover { background-color: var(--success-hover); border-color: var(--success-hover); }
+        .btn-controls { padding: 0.5rem 1rem; font-size: 0.85rem; margin: 0; }
+        .btn-action { padding: 0.3rem 0.6rem; font-size: 0.75rem; margin-right: 0.3rem; line-height: 1; }
+        .btn-action i { margin-right: 3px; }
+        .btn-action-view { background-color: var(--info); color: var(--text-light); border-color: var(--info); }
+        .btn-action-view:hover { background-color: #138496; border-color: #117a8b;}
+        .btn-action-complete { background-color: var(--success); color: var(--text-light); border-color: var(--success); }
+        .btn-action-complete:hover { background-color: var(--success-hover); border-color: var(--success-hover); }
+        .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none;} /* Improve disabled style */
+
+        /* Table Styling */
+        .month-header { margin-top: 2rem; }
+        .month-header h2 { color: var(--accent); font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; font-family: 'Lato', sans-serif; }
+        .day-section { margin-bottom: 1.5rem; border: 1px solid var(--border-color); border-radius: 0.4rem; overflow: hidden; }
+        .day-section h3 { color: var(--text-dark); background-color: var(--bg-secondary); padding: 0.8rem 1rem; font-size: 1.1rem; font-weight: 600; border-bottom: 1px solid var(--border-color); margin: 0; }
+
+        table { width: 100%; border-collapse: collapse; background-color: var(--bg-primary); table-layout: fixed; /* Help stabilize columns */}
+        th, td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: middle; overflow-wrap: break-word; /* Prevent long notes breaking layout */ }
+        td { color: var(--text-medium); }
+        td:first-child { color: var(--text-dark); font-weight: 500; width: 25%; /* Example width */}
+        td:nth-child(2) { width: 15%; /* Example width */}
+        td:nth-child(3) { width: 10%; /* Example width */}
+        /* Notes column can take remaining space */
+        .notes-cell { width: auto; }
+        .actions-cell { width: 130px; /* Fixed width for actions */}
+
+
+        th { background: var(--bg-secondary); color: var(--text-dark); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom-width: 2px; }
+        tbody tr:nth-child(odd) { background-color: var(--bg-secondary); }
+        tbody tr:not(.completed-appointment):hover { background-color: var(--accent-light); } /* Don't highlight completed rows on hover */
+
+        .past-appointment td { color: var(--text-medium); opacity: 0.8; }
+        .past-appointment .notes-cell { opacity: 0.9; }
+        .completed-appointment { opacity: 0.65; /* Slightly increased opacity for readability */ }
+        .completed-appointment td { color: var(--text-medium); background-color: var(--bg-secondary); /* Subtle background */ }
+
+        .notes-cell { white-space: pre-wrap; min-width: 150px; /* Min width for notes */ line-height: 1.4; padding: 0.6rem 1rem; border: 1px dashed transparent; transition: background-color var(--transition-speed), border-color var(--transition-speed); color: var(--text-dark); outline-color: var(--accent); }
+        .notes-cell[contenteditable="true"]:focus { background-color: #e0f7ff; border-color: var(--border-color-focus); }
+        .notes-cell[contenteditable="false"] { background-color: transparent; /* Ensure non-editable look normal */ color: var(--text-medium); font-style: italic; }
+
+        .actions-cell { white-space: nowrap; text-align: right; }
+
+
+        /* Flash Messages */
+        .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
+        .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
+        .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .flash-message.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .flash-message.info { background-color: var(--info-bg); border-color: #bee5eb; color: #0c5460; }
+        @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        /* Responsive */
+        @media (max-width: 992px) { /* No change needed for single chart */ }
+        @media (max-width: 768px) { .controls-bar { flex-direction: column; align-items: stretch; } .controls-bar .filter-group { width: 100%;} .btn-controls { width: 100%; } body { padding: 0.5rem; } .dashboard-wrapper { padding: 1rem;} h1 { font-size: 1.6rem; } .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; } .stat-card .value { font-size: 1.5rem; } .stat-card .icon { font-size: 1.8rem; } th, td { padding: 0.6rem 0.8rem; font-size: 0.85rem; } .actions-cell { min-width: auto; white-space: normal; text-align: left; width: auto;} .btn-action { margin-bottom: 0.3rem; } table { table-layout: auto; /* Allow table to adjust more freely on small screens */} td:first-child, td:nth-child(2), td:nth-child(3), .actions-cell { width: auto; /* Remove fixed widths */ } }
+        @media (max-width: 576px) { h1 { font-size: 1.4rem; gap: 0.5rem;} h1 i { font-size: 1.3rem; } .stats-grid { grid-template-columns: 1fr 1fr; } .notes-cell { min-width: 80px; /* Adjust min width */} }
+
+    </style>
+</head>
+<body>
+    <!-- Flash messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="dashboard-wrapper">
+        <h1><i class="fas fa-tachometer-alt"></i> Doctor Dashboard</h1>
+
+        <!-- Summary Stats -->
+        <div class="stats-grid">
+             <div class="stat-card today"><div class="icon"><i class="fas fa-calendar-day"></i></div><div class="value" id="stat-today-count">0</div><div class="label">Appointments Today</div></div>
+             <div class="stat-card week"><div class="icon"><i class="fas fa-calendar-week"></i></div><div class="value" id="stat-week-count">0</div><div class="label">Appointments This Week</div></div>
+             <div class="stat-card pending"><div class="icon"><i class="fas fa-clock"></i></div><div class="value" id="stat-pending-count">0</div><div class="label">Upcoming Pending</div></div>
+        </div>
+
+         <!-- Charts Section -->
+
+
+        <!-- Controls Bar -->
+        <div class="controls-bar">
+             <div class="filter-group"><label for="datePicker"><i class="fas fa-calendar-alt"></i> Filter by Date:</label><input type="date" id="datePicker" onchange="filterBookingsByDate()"></div>
+             <button class="btn btn-success btn-controls" onclick="showAllBookings()"><i class="fas fa-list"></i> Show All</button>
+             <button class="btn btn-primary btn-controls" onclick="saveAllNotes()"><i class="fas fa-save"></i> Save All Notes</button>
+             <button class="btn btn-outline-primary btn-controls" onclick="window.location.href='{{ url_for('home') }}'"><i class="fas fa-home"></i> Home</button>
+        </div>
+
+        <!-- Bookings Display -->
+        {% for month_year, days in bookings_by_month.items() %}
+        <div class="month-header" data-month="{{ month_year }}">
+            <h2>{{ month_year }}</h2>
+            {% for day, bookings in days.items() %}
+            <div class="day-section" data-date="{{ day }}">
+                <h3>Appointments for <span class="appointment-date-display"></span></h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th><th>Phone</th><th>Time</th><th>Notes</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr data-time="{{ booking.booking_time | default('00:00') }}" class="{{ 'completed-appointment' if booking.status == 'Completed' else '' }}">
+                            <td>{{ booking.patient_name | default('N/A') }}</td>
+                            <td>{{ booking.patient_phone | default('N/A') }}</td>
+                            <td>{{ booking.booking_time | default('N/A') }}</td>
+                            <td class="notes-cell"
+                                contenteditable="{{ 'true' if booking.status == 'Pending' else 'false' }}"
+                                data-booking-id="{{ booking.id }}"
+                                data-original-value="{{ booking.notes or '' }}">
+                                {{ booking.notes or '' }}</td>
+                            <td class="actions-cell">
+                                <button class="btn btn-action btn-action-view" onclick="viewDetails({{ booking.id }})" title="View Details"><i class="fas fa-eye"></i> View</button>
+                                <button class="btn btn-action btn-action-complete" onclick="markComplete({{ booking.id }})" {{ 'disabled' if booking.status == 'Completed' }} title="{{ 'Mark Done' if booking.status == 'Pending' else 'Completed' }}"><i class="fas fa-check"></i> {{ 'Done' if booking.status == 'Pending' else 'Completed' }}</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not bookings %}
+                         <tr><td colspan="5" style="text-align:center; color: var(--text-medium); font-style:italic;">No bookings for this day.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+          <p style="text-align: center; color: var(--text-medium); margin-top: 2rem; font-style: italic;">You have no bookings scheduled.</p>
+        {% endfor %}
+    </div> <!-- End dashboard-wrapper -->
+
+    <script>
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+
+        let appointmentsChart = null; // Keep track of the chart instance
+
+        // --- Backend Data Passed from Flask ---
+        const statsData = {{ stats | tojson | safe }};
+        const chartConfigDaily = {{ chart_config_daily | tojson | safe }};
+        const doctorId = {{ doctor_id | tojson | safe }};
+
+        // --- Helper Functions ---
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return '';
+            try {
+                const dateObj = new Date(dateString + 'T00:00:00');
+                if (isNaN(dateObj.getTime())) return dateString;
+                return dateObj.toLocaleDateString(navigator.language || 'en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+            } catch (e) { return dateString; }
+        }
+
+        function markPastAppointments() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const todaySection = document.querySelector(`.day-section[data-date="${todayString}"]`);
+            if (!todaySection) return;
+
+            todaySection.querySelectorAll('tbody tr[data-time]').forEach(row => {
+                if (row.classList.contains('completed-appointment')) { row.classList.remove('past-appointment'); return; }
+                if (!row.dataset.time || !row.dataset.time.includes(':')) return;
+                try {
+                    const [hour, minute] = row.dataset.time.split(':').map(Number);
+                    if (hour < currentHour || (hour === currentHour && minute < currentMinute)) { row.classList.add('past-appointment'); }
+                    else { row.classList.remove('past-appointment'); }
+                } catch (e) { console.error("Time parsing error:", row.dataset.time, e); }
+            });
+        }
+
+        // --- Update Stats Display ---
+        function updateStatsDisplay(stats) {
+            stats = stats || {};
+            document.getElementById('stat-today-count').textContent = stats.today_count ?? 0;
+            document.getElementById('stat-week-count').textContent = stats.week_count ?? 0;
+            document.getElementById('stat-pending-count').textContent = stats.pending_count ?? 0;
+            document.getElementById('stat-patients-count').textContent = stats.unique_patients_this_month ?? 0;
+        }
+
+        // --- Chart Creation Function ---
+        function createAppointmentsPerDayChart(config) {
+             const canvas = document.getElementById('appointmentsPerDayChart');
+             if (!canvas) { console.error("'appointmentsPerDayChart' canvas not found."); return; }
+             const ctx = canvas.getContext('2d');
+
+             // Check config data existence
+             if (!config || !config.labels || !config.data) {
+                 console.error("Daily chart config data missing or invalid.");
+                 ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'var(--text-medium)'; ctx.font = '14px "Open Sans"'; ctx.fillText('Chart data unavailable', canvas.width / 2, canvas.height / 2); ctx.restore();
+                 return;
+             }
+
+             // Destroy existing chart instance before creating new one
+             if (appointmentsChart) {
+                 appointmentsChart.destroy();
+                 appointmentsChart = null; // Clear the variable
+             }
+
+             appointmentsChart = new Chart(ctx, {
+                 type: 'bar',
+                 data: { labels: config.labels, datasets: [{ label: 'Appointments', data: config.data, backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 1, borderRadius: 4 }] },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false, // Keep false, container's aspect-ratio CSS handles shape
+                     scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } },
+                     plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.7)', padding: 10 } },
+                     animation: { duration: 500 }, // Re-enable modest animation
+                     // Avoid potential resize loops during initialization (advanced)
+                      onResize: null // Let Chart.js handle default resize internally based on container
+                  }
+             });
+        }
+
+
+        // --- Event Handlers ---
+        function filterBookingsByDate() {
+            const selectedDate = document.getElementById('datePicker').value;
+            document.querySelectorAll('.month-header').forEach(mh => {
+                let monthVisible = false;
+                mh.querySelectorAll('.day-section').forEach(ds => {
+                    const isVisible = !selectedDate || ds.dataset.date === selectedDate;
+                    ds.style.display = isVisible ? 'block' : 'none';
+                    if (isVisible) {
+                        monthVisible = true;
+                        if (ds.dataset.date === todayString) markPastAppointments();
+                    }
+                });
+                mh.style.display = monthVisible ? 'block' : 'none';
+            });
+        }
+
+        function showAllBookings() {
+            document.getElementById('datePicker').value = '';
+            document.querySelectorAll('.month-header, .day-section').forEach(el => el.style.display = 'block');
+            markPastAppointments(); // Check today's appointments status
+        }
+
+        function saveAllNotes() {
+            const updates = [];
+            document.querySelectorAll('.notes-cell').forEach(cell => {
+                if (cell.isContentEditable && cell.dataset.bookingId && cell.innerText.trim() !== (cell.dataset.originalValue || '')) {
+                    updates.push({ bookingId: cell.dataset.bookingId, notes: cell.innerText.trim() });
+                }
+            });
+            if (updates.length === 0) { displayFlashMessage("No note changes.", "info"); return; }
+            fetch('/update-all-notes', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ updates }) })
+                .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+                .then(data => {
+                    if (data.success) {
+                        displayFlashMessage(data.message || 'Notes saved!', 'success');
+                        updates.forEach(upd => { const cell = document.querySelector(`.notes-cell[data-booking-id="${upd.bookingId}"]`); if (cell) cell.dataset.originalValue = upd.notes; });
+                    } else { displayFlashMessage(`Save failed: ${data.message || 'Error'}`, 'error'); }
+                })
+                .catch(error => { console.error('Save error:', error); displayFlashMessage(`Save error: ${error.message}`, 'error'); });
+        }
+
+        // --- Action Functions ---
+        function viewDetails(bookingId) { alert("Placeholder: View details " + bookingId); }
+
+        function markComplete(bookingId) {
+            const button = event?.target.closest('button') || document.querySelector(`.actions-cell button.btn-action-complete[onclick*="${bookingId}"]`);
+            if (!confirm(`Mark booking ID ${bookingId} as complete?`)) return;
+            if (button) button.disabled = true;
+
+            fetch(`/mark-complete/${bookingId}`, { method: 'POST', headers: { 'Accept': 'application/json' } })
+                .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status} ${response.statusText}`)))
+                .then(data => {
+                    if (data.success) {
+                        displayFlashMessage(data.message || 'Marked complete!', 'success');
+                        const row = document.querySelector(`.notes-cell[data-booking-id="${bookingId}"]`)?.closest('tr');
+                        if (row) {
+                            row.classList.add('completed-appointment'); row.classList.remove('past-appointment');
+                            row.querySelector('.notes-cell')?.setAttribute('contenteditable', 'false');
+                            if (button) { button.innerHTML = '<i class="fas fa-check"></i> Completed'; button.title = 'Appointment Completed'; }
+                            // Keep other buttons (like view) enabled maybe? row.querySelectorAll('.btn-action').forEach(btn => btn.disabled = true);
+                        }
+                    } else { displayFlashMessage(`Update failed: ${data.message || 'Error'}`, 'error'); if (button) button.disabled = false; }
+                })
+                .catch(error => { console.error('Mark complete error:', error); displayFlashMessage(`Update error: ${error.message}`, 'error'); if (button) button.disabled = false; });
+        }
+
+        // --- Flash Message Handling ---
+        function displayFlashMessage(message, category = 'info') {
+            const container = document.querySelector('.flash-messages'); if (!container) return;
+            const div = document.createElement('div'); div.className = `flash-message ${category}`; div.textContent = message; container.appendChild(div);
+            requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateX(0)'; });
+            setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(100%)'; setTimeout(() => div.remove(), 500); }, 4500);
+        }
+
+        function hideFlashMessages() {
+            document.querySelectorAll('.flash-message:not(.fade-init)').forEach(message => {
+                message.classList.add('fade-init'); // Prevent re-animating on resize etc.
+                requestAnimationFrame(() => { message.style.opacity = '1'; message.style.transform = 'translateX(0)'; });
+                setTimeout(() => { message.style.opacity = '0'; message.style.transform = 'translateX(100%)'; setTimeout(() => message.remove(), 500); }, 4500);
+            });
+        }
+
+        // --- Initial Dashboard Update ---
+        function updateDashboardData() {
+             console.log("Initializing dashboard components...");
+             if (typeof statsData === 'undefined' || typeof chartConfigDaily === 'undefined') { console.error("Backend data (stats or chart) not found in JS scope!"); return; }
+             updateStatsDisplay(statsData);
+             createAppointmentsPerDayChart(chartConfigDaily);
+             markPastAppointments();
+             // Format date display
+             document.querySelectorAll('.day-section').forEach(section => {
+                 const span = section.querySelector('h3 .appointment-date-display'); if(span) span.textContent = formatDateForDisplay(section.dataset.date);
+             });
+         }
+
+        // --- On Load ---
+        window.onload = () => {
+            hideFlashMessages(); // Show&fade backend messages
+            document.querySelectorAll('.notes-cell').forEach(cell => { cell.dataset.originalValue = cell.innerText.trim(); }); // Store original notes
+            updateDashboardData(); // Initialize stats, chart, dates
+            setInterval(markPastAppointments, 10 * 60 * 1000); // Periodically check time
+        };
+    </script>
+
+</body>
+</html>
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+patient_login.html:
+
+<!DOCTYPE html>
+<html lang="en"> <!-- Set lang -->
+<head>
+    <meta charset="UTF-8"> <!-- Set charset -->
+    <title>Patient Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { /* Clinic Style Palette */
+             --bg-primary: #ffffff; --bg-secondary: #f8f9fa; --border-color: #dee2e6;
+             --border-color-focus: #80bdff; --text-dark: #343a40; --text-medium: #6c757d;
+             --text-light: #ffffff; --accent: #007bff; --accent-hover: #0056b3;
+             --error: #dc3545; --error-bg: #f8d7da; --shadow-color: rgba(0, 0, 0, 0.1);
+             --transition-speed: 0.3s; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-secondary); color: var(--text-dark); font-family: 'Open Sans', 'Lato', sans-serif;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 1rem; }
+
+        .logo-header { /* Optional logo/header */
+             margin-bottom: 1.5rem; font-size: 1.8rem; font-weight: 700; color: var(--accent); font-family: 'Lato', sans-serif; }
+
+        .login-container {
+            background: var(--bg-primary); padding: 2rem 2.5rem; border-radius: 0.5rem;
+            box-shadow: 0 5px 20px var(--shadow-color); border: 1px solid var(--border-color);
+            text-align: center; max-width: 400px; width: 100%;
+            animation: fadeIn 0.5s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .login-container h1 {
+            color: var(--accent); margin-bottom: 1.5rem; font-size: 1.6rem; font-weight: 700; font-family: 'Lato', sans-serif; }
+
+        .input-group { margin-bottom: 1.2rem; text-align: left; }
+        .input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-dark); font-size: 0.9rem; font-weight: 600; }
+        .input-group input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.3rem; background: var(--bg-primary); color: var(--text-dark); font-size: 0.95rem; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
+        .input-group input:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+
+         /* --- Button Styles --- */
+         .btn { padding: 0.7rem 1.5rem; border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 1rem; text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0.5rem 0; }
+         .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+         .btn-primary { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
+         .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); }
+         .btn-outline-primary { border-color: var(--accent); color: var(--accent); background: transparent;}
+         .btn-outline-primary:hover { background-color: var(--accent); color: var(--text-light);}
+         .btn-block { width: 100%; }
+
+        /* Flash Messages - Light Theme */
+         .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
+         .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
+         .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+         .flash-message.error { background-color: var(--error-bg); border-color: #f5c6cb; color: #721c24; }
+         .flash-message.info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+        .back-link { margin-top: 1.5rem; font-size: 0.9rem; }
+        .back-link a { color: var(--accent); text-decoration: none; transition: color var(--transition-speed); }
+        .back-link a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+        @media (max-width: 480px) { .login-container { padding: 1.5rem; } h1 { font-size: 1.4rem;} }
+    </style>
+</head>
+<body>
+    <!-- Flash messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                     {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                     <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+     <div class="logo-header">Health Station</div>
+
+    <div class="login-container">
+        <h1>Patient Portal Login</h1>
+        <p style="color: var(--text-medium); margin-bottom: 1.5rem; font-size: 0.9rem;">
+             Enter your full name or phone number to view your appointments.
+        </p>
+        <form action="/patient-login" method="POST">
+            <div class="input-group">
+                <label for="patientIdentifier">Your Name or Phone Number</label>
+                <input type="text" id="patientIdentifier" name="patientIdentifier" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+         <div class="back-link">
+            <a href="/"><i class="fas fa-arrow-left" style="margin-right: 5px;"></i> Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        // JS for flash messages
+        function hideFlashMessages() { /* ... same */
+             const flashMessages = document.querySelectorAll('.flash-message');
+             flashMessages.forEach(message => { setTimeout(() => { message.style.opacity = '0'; setTimeout(() => message.remove(), 500); }, 4000); });
+        }
+        window.onload = hideFlashMessages;
+    </script>
+</body>
+</html>
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+patient_dashboard.html:
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"> {# Assuming RTL is correct for you #}
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> {# Added FontAwesome link #}
+    <style>
+        :root {
+            /* Using your existing dark theme */
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0ea5e9;
+            --text: #e6e6e6;
+            --text-muted: #a0a0a0; /* Added for less important text */
+            --border-color: #2c3a5a;
+            --error: #f87171;
+            --error-hover: #dc2626;
+            --disabled-bg: #6b7280;
+            --success-bg: #4ade80;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            background: var(--primary);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Common font stack */
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--secondary);
+            border-radius: 1rem; /* Slightly smaller radius */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 2rem; /* More space */
+            text-align: center;
+            font-size: 1.8rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .appointment-table { /* Use a class for the table */
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .appointment-table th,
+        .appointment-table td {
+            padding: 0.9rem 1rem; /* Adjusted padding */
+            border: 1px solid var(--border-color);
+            text-align: right; /* Default to right for RTL */
+            vertical-align: middle;
+        }
+
+        .appointment-table th {
+            background: rgba(0,0,0, 0.2); /* Slightly darker header */
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+         /* Align specific columns if needed */
+        .appointment-table td:nth-child(3), /* Time */
+        .appointment-table td:nth-child(5) { /* Action */
+            text-align: center;
+        }
+        .appointment-table td:nth-child(4) { /* Notes */
+            color: var(--text-muted);
+            font-style: italic;
+            white-space: pre-wrap; /* Respect newlines in notes */
+        }
+
+
+        .action-cell form { /* Ensure form doesn't add extra space */
+             display: inline-block;
+             margin: 0;
+             padding: 0;
+         }
+
+        .btn { /* General button style */
+             padding: 0.5rem 1rem;
+             border: none;
+             border-radius: 0.5rem;
+             cursor: pointer;
+             transition: background-color var(--transition-speed), transform var(--transition-speed);
+             font-weight: 500;
+             display: inline-flex;
+             align-items: center;
+             gap: 0.4rem;
+         }
+         .btn:hover:not(:disabled) {
+             transform: translateY(-2px);
+         }
+
+        .delete-btn {
+            background: var(--error);
+            color: white;
+        }
+
+        .delete-btn:hover:not(:disabled) {
+            background: var(--error-hover);
+        }
+
+        .delete-btn:disabled {
+            background: var(--disabled-bg);
+            color: #bdbdbd;
+            cursor: not-allowed;
+             opacity: 0.7;
+        }
+
+        .no-bookings { /* Style for the 'no bookings' message */
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            /* Adjust left/right based on RTL/LTR if needed, right works for RTL too */
+            left: 20px;
+            z-index: 1050;
+            width: clamp(280px, 80%, 350px);
+        }
+
+        .flash-message {
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1rem;
+            border-radius: 0.4rem;
+            color: var(--primary); /* Darker text on light bg */
+            font-weight: 500;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(-100%); /* Slide in from left for RTL */
+            animation: slideInFadeOut 5s ease-in-out forwards;
+        }
+
+        .flash-message.success {
+            background: var(--success-bg);
+        }
+
+        .flash-message.error {
+            background: var(--error);
+            color: white; /* Keep white text on error red */
+        }
+         .flash-message.info { /* Added info style */
+             background: var(--accent);
+             color: white;
+         }
+
+        @keyframes slideInFadeOut {
+            0% { opacity: 0; transform: translateX(-100%); } /* Start from left */
+            10% { opacity: 1; transform: translateX(0); }
+            90% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-100%); } /* Fade out to left */
+        }
+
+        /* Back Button */
+        .back-link-container {
+             text-align: center;
+             margin-top: 2rem;
+         }
+         .back-link {
+             color: var(--accent);
+             text-decoration: none;
+             padding: 0.6rem 1.2rem;
+             border: 1px solid var(--accent);
+             border-radius: 0.5rem;
+             transition: background-color var(--transition-speed), color var(--transition-speed);
+         }
+         .back-link:hover {
+             background-color: var(--accent);
+             color: var(--secondary);
+         }
+         .back-link i { /* Optional Icon */
+             margin-left: 0.5rem; /* Adjust margin for RTL */
+         }
+
+    </style>
+</head>
+<body>
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                     {# Ensure category mapping if needed #}
+                     {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="dashboard-container">
+        <h1><i class="fas fa-calendar-check" style="margin-left: 10px;"></i> مواعيدك المحجوزة</h1> {# Appointments Icon #}
+
+        {% if bookings %}
+            <table class="appointment-table">
+                <thead>
+                    <tr>
+                        <th>اسم الطبيب</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>ملاحظات الطبيب</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        {# *** FIX: Use dictionary keys *** #}
+                        <td>{{ booking['doctor_name'] | default('N/A') }}</td>
+                        <td>{{ booking['booking_date'] | default('N/A') }}</td>
+                        <td>{{ booking['booking_time'] | default('N/A') }}</td>
+                        <td>{{ booking['notes'] or 'لا توجد ملاحظات' }}</td> {# Default text #}
+                        <td class="action-cell">
+                             {# *** FIX: Use the 'is_deletable' flag passed from Python *** #}
+                            {% if booking.is_deletable %}
+                                <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST">
+                                    <input type="hidden" name="source" value="patient_dashboard"> {# Make source specific #}
+                                    <input type="hidden" name="patient_identifier" value="{{ patient_identifier }}">
+                                    <button type="submit" class="btn delete-btn">
+                                        <i class="fas fa-trash-alt"></i> {# Delete Icon #}
+                                        حذف
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button class="btn delete-btn" disabled title="لا يمكن حذف المواعيد السابقة">
+                                     <i class="fas fa-trash-alt"></i> {# Delete Icon #}
+                                     حذف
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+             <p class="no-bookings">لا توجد لديك حجوزات حالياً.</p>
+        {% endif %}
+
+        <div class="back-link-container">
+            <a href="{{ url_for('home') }}" class="back-link">
+                 <i class="fas fa-home"></i> {# Home Icon #}
+                 العودة للرئيسية
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Function to hide flash messages after 4 seconds
+        function hideFlashMessages() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                // Ensure animation starts correctly
+                requestAnimationFrame(() => {
+                     message.style.opacity = '1';
+                     message.style.transform = 'translateX(0)';
+                 });
+                // Set timeout to fade out and remove
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateX(-100%)'; // Match animation direction
+                    setTimeout(() => message.remove(), 500); // Remove after fade-out (500ms animation)
+                }, 4500); // Start fade out after 4.5 seconds (total 5s animation)
+            });
+        }
+
+        // Call the function when the page loads
+        window.onload = hideFlashMessages;
+    </script>
+</body>
+</html>
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+this is my clinics appointments booking websit i want you to make some edits in it:
+
+1-the doctors data are getten from json file ..... make them getten from the sqlit db (the same bookings db) from table named doctors and make the app.py creat it and add the same info that is in the json file in the doctors table in the db
+
+2- the section (status) in the index make it gets its counts from the db
+
+3- the section   <!-- Featured Specialties --> make each secializatiion  button in it filters the doctor cards according to the specialization and the specializations in the cards are getten from the available  specialization from the db from doctors
+
+4-genarate more doctors withe tere informations to the docttors table in the db 
+
+5-rewrite the files that will be edited and give it to me compleated
