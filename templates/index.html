@@ -122,7 +122,7 @@
         /* --- Subtle Section Background Gradients --- */
         /* Adds a slight visual depth to sections */
         .featured-plcs-section,
-        .doctors-section,
+        .doctors-section, /* Applied here now */
         .site-reviews-section {
             background: linear-gradient(to bottom, var(--bg-primary) 0%, #fdfdfd 100%);
         }
@@ -167,6 +167,13 @@
               outline-offset: 1px;
               box-shadow: 0 8px 15px var(--shadow-color-medium), 0 0 0 3px rgba(0, 122, 122, 0.15);
          }
+        /* Focus visible for Doctor card */
+         .doctor-card:focus-visible {
+              outline: 2px solid var(--accent-primary);
+              outline-offset: 2px;
+              box-shadow: 0 15px 30px var(--shadow-color-strong), 0 0 0 3px rgba(0, 122, 122, 0.15); /* Match hover shadow + outline */
+         }
+
 
         /* --- Animations --- */
         /* Keyframes for scroll-reveal effects */
@@ -240,7 +247,6 @@
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 12px var(--shadow-color-medium); }
         .btn:active { transform: translateY(0px); box-shadow: 0 2px 4px var(--shadow-color); }
         .btn-primary { background-color: var(--accent-primary); color: var(--text-light); border-color: var(--accent-primary); margin: 0; }
-        /* Removed specific grid placement for .search-btn here, handled below */
         .btn-primary:hover { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
         .btn-secondary { background-color: var(--bg-secondary); color: var(--accent-primary); border-color: var(--border-color); box-shadow: none; }
         .btn-secondary:hover { background-color: var(--bg-accent-very-light); border-color: var(--accent-primary-light); color: var(--accent-primary-dark); }
@@ -250,19 +256,17 @@
 
         /* --- Hero Section --- */
         .hero-section {
-            /* Removed fixed background gradient to simplify mobile rendering slightly, can be added back */
             background-color: var(--bg-primary); /* Fallback solid color */
             padding: 6rem 5% 5rem; /* Top, L/R, Bottom padding */
             text-align: center;
             border-bottom: 1px solid var(--border-color);
             overflow: visible; /* Allow elements like shadow to overflow */
         }
-        /* Fade-in animations for hero content */
         .hero-title, .hero-subtitle, .typing-effect-container {
             opacity: 0;
             animation: fadeInUp 0.8s ease-out 0.2s forwards;
         }
-        .hero-subtitle { animation-delay: 0.35s; } /* Stagger animations */
+        .hero-subtitle { animation-delay: 0.35s; }
         .typing-effect-container { animation-delay: 0.5s; }
 
         .hero-title {
@@ -270,10 +274,10 @@
             margin-bottom: 1rem;
             color: var(--text-dark);
             font-weight: 700;
-            font-family: 'Lato', sans-serif; /* Use Lato for hero title */
+            font-family: 'Lato', sans-serif;
             line-height: 1.3;
         }
-        .hero-title span { color: var(--accent-primary); } /* Highlight part of the title */
+        .hero-title span { color: var(--accent-primary); }
 
         .hero-subtitle {
             font-size: 1.2rem;
@@ -281,7 +285,7 @@
             margin-bottom: 2rem;
             max-width: 700px;
             margin-left: auto;
-            margin-right: auto; /* Center subtitle */
+            margin-right: auto;
         }
 
         /* Typing Effect Container */
@@ -800,12 +804,13 @@
         /* --- Doctors Grid (Search Results) --- */
         .doctors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); /* Responsive grid */
-            gap: 2.5rem;
+            /* ADJUSTED: Smaller min-width for cards */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem; /* ADJUSTED: Slightly smaller gap */
         }
         .doctor-card { /* Individual doctor card */
             background: var(--bg-primary);
-            border-radius: 12px; /* More rounded corners */
+            border-radius: 10px; /* ADJUSTED: Slightly smaller radius */
             overflow: hidden; /* Clip content to rounded corners */
             border: 1px solid var(--border-color);
             border-top: 3px solid transparent; /* Placeholder for hover effect */
@@ -825,7 +830,7 @@
         }
         .doctor-photo-container { /* Container for doctor photo */
             width: 100%;
-            height: 220px; /* Fixed photo height */
+            height: 180px; /* ADJUSTED: Significantly smaller height */
             overflow: hidden; /* Hide parts of image outside container */
             border-bottom: 1px solid var(--border-color);
         }
@@ -842,16 +847,17 @@
             transform: scale(1.08); /* Zoom effect on hover */
         }
         .doctor-info { /* Container for text info below photo */
-            padding: 1.5rem 1.5rem 1rem 1.5rem; /* Padding */
+            padding: 1rem 1rem 0.8rem 1rem; /* ADJUSTED: Reduced padding */
             flex-grow: 1; /* Allow info section to grow */
             display: flex;
             flex-direction: column; /* Stack elements vertically */
         }
         .doctor-info h3 { /* Doctor name */
             color: var(--text-dark);
-            margin-bottom: 0.3rem;
-            font-size: 1.35rem;
+            margin-bottom: 0.2rem; /* ADJUSTED: Reduced margin */
+            font-size: 1.15rem; /* ADJUSTED: Reduced font size */
             font-weight: 700;
+            line-height: 1.3; /* Ensure good spacing for smaller font */
             transition: color var(--transition-speed) var(--transition-ease);
         }
         .doctor-card:hover .doctor-info h3 {
@@ -860,20 +866,20 @@
         .doctor-info .specialization { /* Doctor's specialization */
             color: var(--accent-primary);
             font-weight: 600;
-            margin-bottom: 0.7rem;
-            font-size: 1rem;
+            margin-bottom: 0.5rem; /* ADJUSTED: Reduced margin */
+            font-size: 0.9rem; /* ADJUSTED: Reduced font size */
         }
         .doctor-info .rating-display { /* Container for stars and review count */
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.7rem; /* ADJUSTED: Reduced margin */
+            font-size: 0.85rem; /* ADJUSTED: Reduced font size (affects stars indirectly) */
         }
         .doctor-info .rating-display .stars { /* Star icons container */
             display: flex;
             gap: 2px; /* Small gap between stars */
-            font-size: 1em; /* Inherit size from parent */
+            font-size: 1em; /* Inherit size from parent (now smaller) */
         }
         /* Doctor card star colors */
         .doctor-info .rating-display .stars .fas.fa-star,
@@ -881,29 +887,29 @@
         .doctor-info .rating-display .stars .far.fa-star { color: var(--border-color-strong); }
         .doctor-info .rating-display .review-count { /* Review count text */
             color: var(--text-medium);
-            font-size: 0.9rem;
+            font-size: 0.8rem; /* ADJUSTED: Reduced font size */
         }
         /* Style for 'No reviews yet' message */
         .doctor-info .rating-display .no-reviews {
             font-style: italic;
             color: var(--text-medium);
-            font-size: 0.9rem;
+            font-size: 0.8rem; /* ADJUSTED: Consistent with review-count */
         }
         .doctor-details { /* Container for location, clinic etc. */
-            font-size: 0.95rem;
+            font-size: 0.85rem; /* ADJUSTED: Reduced font size */
             color: var(--text-medium);
-            margin-bottom: 1.2rem;
-            line-height: 1.6;
+            margin-bottom: 0.8rem; /* ADJUSTED: Reduced margin */
+            line-height: 1.5; /* ADJUSTED: Slightly tighter line height */
             flex-grow: 1; /* Allow details to take space */
-            padding-bottom: 1rem; /* Space before availability */
+            padding-bottom: 0; /* Removed extra padding */
         }
         .doctor-details p { /* Each detail line */
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.4rem; /* ADJUSTED: Reduced margin */
             display: flex;
             align-items: center;
         }
         .doctor-details i { /* Detail icons */
-            margin-right: 0.8rem;
+            margin-right: 0.5rem; /* ADJUSTED: Reduced spacing */
             color: var(--accent-primary-light);
             width: 1.3em; /* Ensure consistent icon spacing */
             text-align: center;
@@ -920,16 +926,16 @@
         }
         /* Availability Section (visually separated at bottom) */
         .availability {
-            font-size: 0.9rem;
+            font-size: 0.85rem; /* ADJUSTED: Reduced font size */
             color: var(--text-medium);
             margin-top: auto; /* Push to bottom of info section */
-            padding: 1rem 1.5rem; /* Consistent padding */
+            padding: 0.8rem 1rem; /* ADJUSTED: Reduced padding */
             border-top: 1px dashed var(--border-color); /* Dashed separator */
             background-color: var(--bg-secondary); /* Slightly different background */
-            border-radius: 0 0 12px 12px; /* Match card bottom radius */
-            margin-left: -1.5rem; /* Span full width */
-            margin-right: -1.5rem;
-            margin-bottom: -1rem; /* Adjust bottom spacing */
+            border-radius: 0 0 10px 10px; /* ADJUSTED: Match card bottom radius */
+            margin-left: -1rem; /* ADJUSTED: Span full width of new padding */
+            margin-right: -1rem; /* ADJUSTED: Span full width of new padding */
+            margin-bottom: -0.8rem; /* ADJUSTED: Match info bottom padding */
         }
         .availability strong {
             color: var(--text-dark);
@@ -937,10 +943,10 @@
             margin-right: 0.5rem;
         }
         .book-btn { /* Booking button styling */
-            margin-top: 1.5rem; /* Space above button */
+            margin-top: 1rem; /* ADJUSTED: Space above button */
             width: 100%;
-            font-size: 1rem;
-            padding: 0.8rem 1rem;
+            font-size: 0.9rem; /* ADJUSTED: Smaller font */
+            padding: 0.6rem 0.8rem; /* ADJUSTED: Smaller padding */
             /* Positioned inside .doctor-info, appears below details/availability */
         }
 
@@ -1131,7 +1137,8 @@
             .site-reviews-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
             /* Adjust search button container if needed */
             .search-button-container .btn.search-btn { flex-basis: 200px; } /* Slightly smaller base */
-            .doctors-grid { gap: 2rem; } /* Slightly reduce gap */
+            /* Doctor grid remains based on the adjusted base style (280px min) */
+            .doctors-grid { gap: 1.8rem; } /* Keep a slightly smaller gap */
         }
 
         /* Small Devices (Landscape phones, large portrait phones) - max-width: 768px */
@@ -1145,7 +1152,8 @@
             .section-padding-sm { padding: 2rem 0; }
             .btn { padding: 0.65rem 1.3rem; font-size: 0.9rem; } /* Slightly smaller buttons */
             .nav-actions { gap: 0.6rem; } /* Reduce gap between nav buttons */
-            .doctors-grid { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.8rem;}
+            /* ADJUSTED: Still using auto-fit but allow slightly wider min */
+            .doctors-grid { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.5rem;}
             .footer-content { gap: 2.5rem; }
             .flash-messages { top: 75px; width: clamp(280px, 95%, 380px);} /* Adjust flash message position/size */
             /* Adjust grid columns for featured cards */
@@ -1184,13 +1192,14 @@
             .how-it-works-grid-standalone,
             /* .trust-factors-grid already stacked */
             .stats-grid,
-            .doctors-grid {
+            .doctors-grid { /* Stack doctors */
                 grid-template-columns: 1fr;
                 gap: 1.5rem; /* Consistent smaller gap */
             }
             .stat-number { font-size: 2.4rem; } /* Smaller stat numbers */
-            .doctor-card { border-radius: 10px; } /* Slightly less rounding */
-            .doctor-photo-container { height: 180px; } /* Smaller photo height */
+            .doctor-card { border-radius: 10px; } /* Keep consistent with new base */
+            /* Keep photo height consistent with new base or slightly smaller if desired */
+            .doctor-photo-container { height: 180px; } /* Matches new base */
 
             .footer-content { text-align: center; grid-template-columns: 1fr; gap: 2rem;} /* Stack and center footer content */
             .footer-section h3::after { left: 50%; transform: translateX(-50%); } /* Center title underline */
@@ -1287,6 +1296,7 @@
              <div class="typing-effect-container"> <span id="text"></span> </div>
 
              <!-- Search Area moved INSIDE Hero -->
+            <div class="search-area-container reveal-on-scroll reveal-zoom"> {# Added animation class #}
 
                 <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
                 <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
@@ -1460,7 +1470,7 @@
             <!-- Title for the results (hidden initially, shown via JS) -->
             <h2 class="section-title" id="resultsTitle" style="display: none;">Available Doctors</h2>
             <!-- Container where doctor cards will be injected by JavaScript -->
-            <div class="featured-plcs-grid" id="resultsContainer" aria-live="polite"> {# aria-live informs screen readers about dynamic changes #}
+            <div class="doctors-grid" id="resultsContainer" aria-live="polite"> {# Changed class here #}
                 <!-- Doctor cards dynamically added here -->
             </div>
             <!-- Message displayed when no results are found (hidden initially) -->
@@ -1731,7 +1741,7 @@
     </footer>
     <!-- Footer End -->
 
-    <!-- JavaScript Start (Unchanged from original) -->
+    <!-- JavaScript Start (Unchanged) -->
     <script>
         /**
          * CareConnect Frontend Script
@@ -1990,7 +2000,7 @@
                     card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
 
                     // --- Prepare doctor data with safe defaults ---
-                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=310x220`; // Default avatar if no photo
+                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=280x180`; // Default avatar if no photo (adjusted size)
                     const name = doctor.name || 'Doctor Name Unavailable';
                     const spec = doctor.specialization || 'General Practice';
                     const ratingValue = doctor.average_rating; // Can be null or number
@@ -2021,7 +2031,7 @@
                     // --- Assemble the Card HTML ---
                     card.innerHTML = `
                         <div class="doctor-photo-container">
-                            <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=310x220';"> {# Fallback image using ui-avatars #}
+                            <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=280x180';"> {# Fallback image using ui-avatars, adjusted size #}
                         </div>
                         <div class="doctor-info">
                             <h3>${name}</h3>
