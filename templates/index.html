@@ -9,163 +9,68 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-       <style>
-        /* --- :root Variables ---
-           Centralized configuration for colors, transitions, and shadows.
-           Makes theme adjustments easier.
-        */
+        <style>
+        /* --- :root Variables --- */
         :root {
-            /* --- Colors --- */
-            --bg-primary: #ffffff; /* Primary background (e.g., cards, navbar) */
-            --bg-secondary: #f9fafb; /* Secondary background (e.g., body, some sections) */
-            --bg-accent-light: #e0f2f2; /* Light accent background */
-            --bg-accent-very-light: #f0fafa; /* Very light accent background (e.g., trust factors) */
-
-            --border-color: #e5e7eb; /* Standard border color */
-            --border-color-strong: #d1d5db; /* Stronger border color */
-
-            --text-dark: #1f2937; /* Primary text color */
-            --text-medium: #4b5563; /* Secondary text color (subtitles, details) */
-            --text-light: #ffffff; /* Text color for dark backgrounds */
-
-            --accent-primary: #007A7A; /* Main accent color (teal) */
-            --accent-primary-dark: #005F5F; /* Darker shade of accent */
-            --accent-primary-light: #4DB6AC; /* Lighter shade of accent */
-
-            --accent-warm: #F2A900; /* Warm accent (e.g., stars) */
-            --accent-warm-dark: #D99700; /* Darker shade of warm accent */
-
-            --success: #10b981; /* Success state color */
-            --error: #ef4444; /* Error state color */
-            --info: #3b82f6; /* Info state color */
-
-            /* --- Shadows (Adjusted for softer look) --- */
-            --shadow-color: rgba(0, 50, 50, 0.06); /* Base shadow */
-            --shadow-color-medium: rgba(0, 50, 50, 0.1); /* Medium shadow (hover) */
-            --shadow-color-strong: rgba(0, 50, 50, 0.15); /* Strong shadow */
-
-            /* --- Timings & Transitions --- */
-            --transition-speed: 0.3s; /* Standard transition duration */
-            --transition-ease: ease-in-out; /* Standard transition timing function */
-            --scroll-animation-duration: 0.6s; /* Duration for scroll-reveal animations */
-            --stagger-delay: 0.12s; /* Delay between staggered animations (slightly increased) */
-            --counter-animation-duration: 1500ms; /* Duration for the stats counter animation */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-accent-light: #e0f2f2;
+            --bg-accent-very-light: #f0fafa;
+            --border-color: #e5e7eb;
+            --border-color-strong: #d1d5db;
+            --text-dark: #1f2937;
+            --text-medium: #4b5563;
+            --text-light: #ffffff;
+            --accent-primary: #007A7A;
+            --accent-primary-dark: #005F5F;
+            --accent-primary-light: #4DB6AC;
+            --accent-warm: #F2A900;
+            --accent-warm-dark: #D99700;
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --shadow-color: rgba(0, 50, 50, 0.06);
+            --shadow-color-medium: rgba(0, 50, 50, 0.1);
+            --shadow-color-strong: rgba(0, 50, 50, 0.15);
+            --transition-speed: 0.3s;
+            --transition-ease: ease-in-out;
+            --scroll-animation-duration: 0.6s;
+            --stagger-delay: 0.12s;
+            --counter-animation-duration: 1500ms;
         }
 
         /* --- Base & Global Styles --- */
-        html {
-            scroll-behavior: smooth; /* Enable smooth scrolling for anchor links */
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box; /* Include padding and border in element's total width/height */
-        }
-
+        html { scroll-behavior: smooth; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background-color: var(--bg-secondary);
             color: var(--text-dark);
-            font-family: 'Open Sans', sans-serif; /* Default font */
-            line-height: 1.7; /* Default line height for readability */
-            overflow-x: hidden; /* Prevent horizontal scrolling */
-            -webkit-font-smoothing: antialiased; /* Improve font rendering on WebKit */
-            -moz-osx-font-smoothing: grayscale; /* Improve font rendering on Firefox */
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-
-        /* --- Layout Containers --- */
-        .container {
-            width: 90%; /* Responsive width */
-            max-width: 1280px; /* Max width for large screens */
-            margin: 0 auto; /* Center the container */
-            padding: 0 1rem; /* Horizontal padding */
-        }
-
-        /* --- Section Padding --- */
-        .section-padding {
-            padding: 5rem 0; /* Standard vertical padding for major sections */
-        }
-        .section-padding-sm {
-            padding: 3rem 0; /* Smaller vertical padding */
-        }
-
-        /* --- Section Titles & Subtitles --- */
-        .section-title {
-            text-align: center;
-            margin-bottom: 3rem;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            font-family: 'Lato', sans-serif; /* Use Lato for titles */
-            position: relative; /* For the underline */
-            padding-bottom: 0.8rem;
-        }
-        .section-title::after { /* Decorative underline */
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70px;
-            height: 4px;
-            background-color: var(--accent-primary);
-            border-radius: 2px;
-        }
-        .section-subtitle {
-            text-align: center;
-            color: var(--text-medium);
-            max-width: 600px; /* Limit width for readability */
-            margin: -2rem auto 3rem auto; /* Adjust spacing relative to title */
-            font-size: 1.05rem;
-        }
+        .container { width: 90%; max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
+        .section-padding { padding: 5rem 0; }
+        .section-padding-sm { padding: 3rem 0; }
+        .section-title { text-align: center; margin-bottom: 3rem; font-size: 2rem; font-weight: 700; color: var(--text-dark); font-family: 'Lato', sans-serif; position: relative; padding-bottom: 0.8rem; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 4px; background-color: var(--accent-primary); border-radius: 2px; }
+        .section-subtitle { text-align: center; color: var(--text-medium); max-width: 600px; margin: -2rem auto 3rem auto; font-size: 1.05rem; }
 
         /* --- Subtle Section Background Gradients --- */
-        .featured-plcs-section,
-        .doctors-section,
-        .site-reviews-section {
-            background: linear-gradient(to bottom, var(--bg-primary) 0%, #fdfdfd 100%);
-        }
-        .featured-facility-types-section {
-            background: linear-gradient(to bottom, var(--bg-secondary) 0%, #f7f8fa 100%);
-        }
-        .how-it-works-section {
-            background: linear-gradient(to bottom, var(--bg-primary) 0%, #fbfcfc 100%);
-        }
-        .trust-factors-section,
-        #site-review-form-section {
-            background: linear-gradient(to bottom, var(--bg-accent-very-light) 0%, #eafafa 100%);
-        }
-
+        .featured-plcs-section, .doctors-section, .site-reviews-section { background: linear-gradient(to bottom, var(--bg-primary) 0%, #fdfdfd 100%); }
+        .featured-facility-types-section { background: linear-gradient(to bottom, var(--bg-secondary) 0%, #f7f8fa 100%); }
+        .how-it-works-section { background: linear-gradient(to bottom, var(--bg-primary) 0%, #fbfcfc 100%); }
+        .trust-factors-section, #site-review-form-section { background: linear-gradient(to bottom, var(--bg-accent-very-light) 0%, #eafafa 100%); }
 
         /* --- Accessibility: Focus Styles --- */
-        *:focus-visible {
-            outline: 2px solid var(--accent-primary);
-            outline-offset: 2px;
-            box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.25); /* Soft glow */
-            border-radius: 4px;
-        }
-        select:focus, input[type="text"]:focus {
-            outline: none;
-        }
-        select:focus-visible, input[type="text"]:focus-visible {
-             outline: none;
-             border-color: var(--accent-primary);
-             box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15);
-        }
-         .btn:focus-visible {
-             box-shadow: 0 2px 4px var(--shadow-color), 0 0 0 3px rgba(0, 122, 122, 0.25);
-         }
-         .specialty-card:focus-visible, .facility-type-card:focus-visible, .plc-card:focus-visible {
-              outline: 2px solid var(--accent-primary);
-              outline-offset: 1px;
-              box-shadow: 0 8px 15px var(--shadow-color-medium), 0 0 0 3px rgba(0, 122, 122, 0.15);
-         }
-         .doctor-card:focus-visible {
-              outline: 2px solid var(--accent-primary);
-              outline-offset: 2px;
-              box-shadow: 0 15px 30px var(--shadow-color-strong), 0 0 0 3px rgba(0, 122, 122, 0.15);
-         }
-
+        *:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.25); border-radius: 4px; }
+        select:focus, input[type="text"]:focus { outline: none; }
+        select:focus-visible, input[type="text"]:focus-visible { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); }
+        .btn:focus-visible { box-shadow: 0 2px 4px var(--shadow-color), 0 0 0 3px rgba(0, 122, 122, 0.25); }
+        .specialty-card:focus-visible, .facility-type-card:focus-visible, .plc-card:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; box-shadow: 0 8px 15px var(--shadow-color-medium), 0 0 0 3px rgba(0, 122, 122, 0.15); }
+        .doctor-card:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; box-shadow: 0 8px 15px var(--shadow-color-strong), 0 0 0 3px rgba(0, 122, 122, 0.15); }
 
         /* --- Animations --- */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -175,60 +80,19 @@
         @keyframes blinkCursor { 50% { border-color: transparent; } }
 
         /* Scroll Reveal Base Class */
-        .reveal-on-scroll {
-            opacity: 0;
-            will-change: opacity, transform;
-            animation-fill-mode: forwards;
-        }
-        .reveal-on-scroll.is-visible {
-            animation-name: fadeInUp;
-            animation-duration: var(--scroll-animation-duration);
-            animation-timing-function: ease-out;
-        }
+        .reveal-on-scroll { opacity: 0; will-change: opacity, transform; animation-fill-mode: forwards; }
+        .reveal-on-scroll.is-visible { animation-name: fadeInUp; animation-duration: var(--scroll-animation-duration); animation-timing-function: ease-out; }
         .reveal-left.is-visible { animation-name: fadeInLeft; }
         .reveal-right.is-visible { animation-name: fadeInRight; }
         .reveal-zoom.is-visible { animation-name: zoomIn; }
 
         /* --- Navbar --- */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 5%;
-            background: var(--bg-primary);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            transition: box-shadow var(--transition-speed) var(--transition-ease),
-                        padding var(--transition-speed) var(--transition-ease),
-                        background-color var(--transition-speed) var(--transition-ease);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .navbar.scrolled {
-            box-shadow: 0 3px 8px var(--shadow-color-medium);
-            padding: 0.8rem 5%;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(5px);
-        }
-        .logo {
-            font-size: 1.9rem;
-            font-weight: 700;
-            color: var(--accent-primary);
-            font-family: 'Lato', sans-serif;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            transition: transform var(--transition-speed) var(--transition-ease);
-        }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background: var(--bg-primary); position: sticky; top: 0; z-index: 1000; transition: box-shadow var(--transition-speed) var(--transition-ease), padding var(--transition-speed) var(--transition-ease), background-color var(--transition-speed) var(--transition-ease); border-bottom: 1px solid var(--border-color); }
+        .navbar.scrolled { box-shadow: 0 3px 8px var(--shadow-color-medium); padding: 0.8rem 5%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(5px); }
+        .logo { font-size: 1.9rem; font-weight: 700; color: var(--accent-primary); font-family: 'Lato', sans-serif; text-decoration: none; display: flex; align-items: center; gap: 0.6rem; transition: transform var(--transition-speed) var(--transition-ease); }
         .logo i { font-size: 1.7rem; }
         .logo:hover { transform: scale(1.03); }
-
-        .nav-actions {
-            display: flex;
-            gap: 0.9rem;
-            align-items: center;
-        }
+        .nav-actions { display: flex; gap: 0.9rem; align-items: center; }
 
         /* --- Buttons --- */
         .btn { padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; text-align: center; transition: all var(--transition-speed) var(--transition-ease); border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; line-height: 1.2; box-shadow: 0 2px 4px var(--shadow-color); }
@@ -243,864 +107,308 @@
         .btn-small { padding: 0.4rem 0.9rem; font-size: 0.85rem; gap: 0.4rem; }
 
         /* --- Hero Section --- */
-        .hero-section {
-            background-color: var(--bg-primary);
-            padding: 6rem 5% 5rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border-color);
-            overflow: visible;
-        }
-        .hero-title, .hero-subtitle, .typing-effect-container {
-            opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.2s forwards;
-        }
+        .hero-section { background-color: var(--bg-primary); padding: 6rem 5% 5rem; text-align: center; border-bottom: 1px solid var(--border-color); overflow: visible; }
+        .hero-title, .hero-subtitle, .typing-effect-container { opacity: 0; animation: fadeInUp 0.8s ease-out 0.2s forwards; }
         .hero-subtitle { animation-delay: 0.35s; }
         .typing-effect-container { animation-delay: 0.5s; }
-
-        .hero-title {
-            font-size: 2.8rem;
-            margin-bottom: 1rem;
-            color: var(--text-dark);
-            font-weight: 700;
-            font-family: 'Lato', sans-serif;
-            line-height: 1.3;
-        }
+        .hero-title { font-size: 2.8rem; margin-bottom: 1rem; color: var(--text-dark); font-weight: 700; font-family: 'Lato', sans-serif; line-height: 1.3; }
         .hero-title span { color: var(--accent-primary); }
-
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-medium);
-            margin-bottom: 2rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Typing Effect Container */
-        .typing-effect-container {
-            min-height: 32px;
-            margin-bottom: 3rem;
-            font-size: 1.2rem;
-            color: var(--accent-primary-dark);
-            font-weight: 600;
-        }
-        #text {
-            border-right: 3px solid var(--accent-primary);
-            padding-right: 6px;
-            display: inline-block;
-            white-space: nowrap;
-            overflow: hidden;
-            vertical-align: bottom;
-            animation: blinkCursor 0.7s infinite steps(1);
-        }
+        .hero-subtitle { font-size: 1.2rem; color: var(--text-medium); margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto; }
+        .typing-effect-container { min-height: 32px; margin-bottom: 3rem; font-size: 1.2rem; color: var(--accent-primary-dark); font-weight: 600; }
+        #text { border-right: 3px solid var(--accent-primary); padding-right: 6px; display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: bottom; animation: blinkCursor 0.7s infinite steps(1); }
 
         /* --- Search Area Container (within Hero) --- */
-        .search-area-container {
-            border: 1px solid var(--border-color-strong);
-            border-radius: 12px;
-            padding: 2.5rem 2rem;
-            margin: 3rem auto 0 auto;
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(4px);
-            max-width: 1100px;
-            box-shadow: 0 8px 25px rgba(0, 50, 50, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            align-items: center;
-            opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.65s forwards;
-        }
-        /* Search Form & Inputs (inside .search-area-container) */
-        .search-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.5rem;
-            width: 100%;
-            align-items: center;
-        }
-        .input-group {
-            position: relative;
-            width: 100%;
-        }
+        .search-area-container { border: 1px solid var(--border-color-strong); border-radius: 12px; padding: 2.5rem 2rem; margin: 3rem auto 0 auto; background-color: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px); max-width: 1100px; box-shadow: 0 8px 25px rgba(0, 50, 50, 0.1); display: flex; flex-direction: column; gap: 1.5rem; align-items: center; opacity: 0; animation: fadeInUp 0.8s ease-out 0.65s forwards; }
+        .search-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; width: 100%; align-items: center; }
+        .input-group { position: relative; width: 100%; }
         .input-group i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-medium); font-size: 1em; transition: color var(--transition-speed) var(--transition-ease); pointer-events: none; }
-        select, input[type="text"] {
-            width: 100%;
-            padding: 0.9rem 0.9rem 0.9rem 2.8rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-primary);
-            color: var(--text-dark);
-            font-size: 1rem;
-            transition: border-color var(--transition-speed) var(--transition-ease),
-                        box-shadow var(--transition-speed) var(--transition-ease);
-            height: 48px;
-        }
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234b5563' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M7.646 11.854a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8 10.793 4.354 7.146a.5.5 0 1 0-.708.708l4 4z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1em;
-            padding-right: 3rem;
-            cursor: pointer;
-        }
-        .input-group:focus-within i {
-            color: var(--accent-primary);
-        }
-        /* Search Button Container */
-        .search-button-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-top: 1rem;
-            gap: 1rem;
-        }
-        .search-button-container .btn.search-btn {
-            flex-basis: 220px;
-            flex-grow: 0;
-            width: auto;
-            padding: 0.8rem 2rem;
-            font-size: 1.05rem;
-        }
-
+        select, input[type="text"] { width: 100%; padding: 0.9rem 0.9rem 0.9rem 2.8rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-dark); font-size: 1rem; transition: border-color var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease); height: 48px; }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234b5563' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M7.646 11.854a.5.5 0 0 0 .708 0l4-4a.5.5 0 0 0-.708-.708L8 10.793 4.354 7.146a.5.5 0 1 0-.708.708l4 4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; padding-right: 3rem; cursor: pointer; }
+        .input-group:focus-within i { color: var(--accent-primary); }
+        .search-button-container { display: flex; justify-content: center; width: 100%; margin-top: 1rem; gap: 1rem; }
+        .search-button-container .btn.search-btn { flex-basis: 220px; flex-grow: 0; width: auto; padding: 0.8rem 2rem; font-size: 1.05rem; }
 
         /* --- How It Works Section --- */
-        .how-it-works-grid,
-        .how-it-works-grid-standalone {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2.5rem;
-            text-align: center;
-            margin-top: 4rem;
-        }
-        .how-it-works-step {
-            padding: 2rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: var(--bg-primary);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px var(--shadow-color);
-            border: 1px solid var(--border-color);
-        }
-        .how-it-works-step .icon {
-            font-size: 3rem;
-            color: var(--accent-primary);
-            margin-bottom: 1.5rem;
-            display: inline-block;
-            transition: transform 0.3s ease;
-        }
-        .how-it-works-step h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 0.8rem;
-            color: var(--text-dark);
-        }
-        .how-it-works-step p {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-        }
-        .how-it-works-step:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 20px var(--shadow-color-medium);
-        }
-        .how-it-works-step:hover .icon {
-            transform: scale(1.15) rotate(-8deg);
-            color: var(--accent-primary-dark);
-        }
-        .how-it-works-section {
-             border-top: 1px solid var(--border-color);
-        }
+        .how-it-works-grid, .how-it-works-grid-standalone { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2.5rem; text-align: center; margin-top: 4rem; }
+        .how-it-works-step { padding: 2rem; transition: transform 0.3s ease, box-shadow 0.3s ease; background: var(--bg-primary); border-radius: 8px; box-shadow: 0 4px 8px var(--shadow-color); border: 1px solid var(--border-color); }
+        .how-it-works-step .icon { font-size: 3rem; color: var(--accent-primary); margin-bottom: 1.5rem; display: inline-block; transition: transform 0.3s ease; }
+        .how-it-works-step h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.8rem; color: var(--text-dark); }
+        .how-it-works-step p { color: var(--text-medium); font-size: 0.95rem; }
+        .how-it-works-step:hover { transform: translateY(-10px); box-shadow: 0 10px 20px var(--shadow-color-medium); }
+        .how-it-works-step:hover .icon { transform: scale(1.15) rotate(-8deg); color: var(--accent-primary-dark); }
+        .how-it-works-section { border-top: 1px solid var(--border-color); }
 
         /* --- Featured Sections (Specialties, Facility Types, PLCs) --- */
-        .featured-specialties-grid,
-        .featured-facility-types-grid,
-        .featured-plcs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.8rem;
-        }
+        .featured-specialties-grid, .featured-facility-types-grid, .featured-plcs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.8rem; }
 
         /* --- Individual Card Styles (Specialty, Facility Type, PLC) --- */
-        .specialty-card, .facility-type-card, .plc-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            transition: all var(--transition-speed) var(--transition-ease);
-            box-shadow: 0 2px 5px var(--shadow-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            min-height: 210px;
-            justify-content: space-between;
-            overflow: hidden;
-            position: relative;
-        }
-        .specialty-card .icon, .facility-type-card .icon, .plc-card .icon {
-            font-size: 2.5rem;
-            color: var(--accent-primary-light);
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .specialty-card h4, .facility-type-card h4, .plc-card h4 {
-            font-size: 1.0rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            line-height: 1.3;
-            padding: 0 0.5rem;
-            margin-top: auto;
-            margin-bottom: 0.5rem;
-            transition: color 0.3s ease;
-        }
-        .plc-photo {
-            width: 100%;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 4px 4px 0 0;
-            display: block;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 0.8rem;
-            transition: transform 0.3s ease;
-        }
+        .specialty-card, .facility-type-card, .plc-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; transition: all var(--transition-speed) var(--transition-ease); box-shadow: 0 2px 5px var(--shadow-color); display: flex; flex-direction: column; align-items: center; cursor: pointer; min-height: 210px; justify-content: space-between; overflow: hidden; position: relative; }
+        .specialty-card .icon, .facility-type-card .icon, .plc-card .icon { font-size: 2.5rem; color: var(--accent-primary-light); margin-top: 1rem; transition: all 0.3s ease; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        .specialty-card h4, .facility-type-card h4, .plc-card h4 { font-size: 1.0rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; padding: 0 0.5rem; margin-top: auto; margin-bottom: 0.5rem; transition: color 0.3s ease; }
+        .plc-photo { width: 100%; height: 110px; object-fit: cover; border-radius: 4px 4px 0 0; display: block; border-bottom: 1px solid var(--border-color); margin-bottom: 0.8rem; transition: transform 0.3s ease; }
         .plc-card .icon + h4 { margin-top: 0.8rem; }
-
-        .plc-details-button-container {
-            width: 100%;
-            margin-top: 0.8rem;
-            padding-bottom: 0.2rem;
-        }
-        .plc-details-btn {
-            width: calc(100% - 1rem);
-            margin: 0 auto;
-        }
-
-        .specialty-card:hover, .facility-type-card:hover, .plc-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            border-color: var(--accent-primary);
-            box-shadow: 0 8px 18px var(--shadow-color-medium);
-        }
-        .specialty-card:hover h4, .facility-type-card:hover h4, .plc-card:hover h4 {
-            color: var(--accent-primary);
-        }
-        .specialty-card:hover .icon, .facility-type-card:hover .icon, .plc-card:hover .icon {
-            color: var(--accent-primary);
-            transform: scale(1.18);
-        }
-        .plc-card:hover .plc-photo {
-            transform: scale(1.05);
-        }
+        .plc-details-button-container { width: 100%; margin-top: 0.8rem; padding-bottom: 0.2rem; }
+        .plc-details-btn { width: calc(100% - 1rem); margin: 0 auto; }
+        .specialty-card:hover, .facility-type-card:hover, .plc-card:hover { transform: translateY(-8px) scale(1.03); border-color: var(--accent-primary); box-shadow: 0 8px 18px var(--shadow-color-medium); }
+        .specialty-card:hover h4, .facility-type-card:hover h4, .plc-card:hover h4 { color: var(--accent-primary); }
+        .specialty-card:hover .icon, .facility-type-card:hover .icon, .plc-card:hover .icon { color: var(--accent-primary); transform: scale(1.18); }
+        .plc-card:hover .plc-photo { transform: scale(1.05); }
 
         /* --- Enhanced Selected Card Style --- */
-        .facility-type-card.card-selected,
-        .plc-card.card-selected {
-            border-color: var(--accent-primary-dark);
-            box-shadow: 0 6px 12px var(--shadow-color-medium);
-            background-color: var(--bg-accent-very-light);
-            transform: translateY(-5px) scale(1.02);
-            position: relative;
-        }
-        .facility-type-card.card-selected h4,
-        .plc-card.card-selected h4 {
-            color: var(--accent-primary-dark);
-            font-weight: 700;
-        }
-        .facility-type-card.card-selected::after,
-        .plc-card.card-selected::after {
-             content: '\f00c';
-             font-family: 'Font Awesome 6 Free';
-             font-weight: 900;
-             position: absolute;
-             top: 8px;
-             right: 8px;
-             font-size: 0.8rem;
-             color: var(--bg-primary);
-             background-color: var(--accent-primary);
-             border-radius: 50%;
-             width: 22px;
-             height: 22px;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-             z-index: 2;
-             animation: zoomIn 0.3s ease-out;
-        }
-        .facility-type-card.card-selected:hover,
-        .plc-card.card-selected:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 8px 18px var(--shadow-color-medium);
-            border-color: var(--accent-primary-dark);
-            background-color: var(--bg-accent-very-light);
-        }
+        .facility-type-card.card-selected, .plc-card.card-selected { border-color: var(--accent-primary-dark); box-shadow: 0 6px 12px var(--shadow-color-medium); background-color: var(--bg-accent-very-light); transform: translateY(-5px) scale(1.02); position: relative; }
+        .facility-type-card.card-selected h4, .plc-card.card-selected h4 { color: var(--accent-primary-dark); font-weight: 700; }
+        .facility-type-card.card-selected::after, .plc-card.card-selected::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 8px; right: 8px; font-size: 0.8rem; color: var(--bg-primary); background-color: var(--accent-primary); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 2; animation: zoomIn 0.3s ease-out; }
+        .facility-type-card.card-selected:hover, .plc-card.card-selected:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 8px 18px var(--shadow-color-medium); border-color: var(--accent-primary-dark); background-color: var(--bg-accent-very-light); }
 
         /* --- Trust Factors Section --- */
-        .trust-factors-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-        .trust-factor {
-            display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-            border: 1px solid transparent;
-        }
-        .trust-factor:hover {
-            background: var(--bg-primary);
-            border-color: var(--border-color);
-        }
-        .trust-factor .icon {
-            font-size: 2rem;
-            color: var(--accent-primary);
-            flex-shrink: 0;
-            margin-top: 0.1rem;
-        }
-        .trust-factor h4 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 0.4rem;
-        }
-        .trust-factor p {
-            color: var(--text-medium);
-            font-size: 0.95rem;
-        }
+        .trust-factors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+        .trust-factor { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1.5rem; background: rgba(255, 255, 255, 0.6); border-radius: 8px; transition: background-color 0.3s ease; border: 1px solid transparent; }
+        .trust-factor:hover { background: var(--bg-primary); border-color: var(--border-color); }
+        .trust-factor .icon { font-size: 2rem; color: var(--accent-primary); flex-shrink: 0; margin-top: 0.1rem; }
+        .trust-factor h4 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .trust-factor p { color: var(--text-medium); font-size: 0.95rem; }
 
         /* --- Stats Section --- */
-        .stats-section {
-            background: var(--accent-primary);
-            color: var(--text-light);
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            text-align: center;
-        }
+        .stats-section { background: var(--accent-primary); color: var(--text-light); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
         .stat-item { padding: 1rem; }
-        .stat-item .icon {
-            font-size: 2.8rem;
-            margin-bottom: 1rem;
-            opacity: 0.85;
-            transition: transform 0.3s ease;
-        }
+        .stat-item .icon { font-size: 2.8rem; margin-bottom: 1rem; opacity: 0.85; transition: transform 0.3s ease; }
         .stat-item:hover .icon { transform: scale(1.1); }
-        .stat-item .stat-number {
-            font-size: 2.8rem;
-            font-weight: 700;
-            font-family: 'Lato', sans-serif;
-            margin-bottom: 0.3rem;
-        }
-        .stat-item .stat-label {
-            font-size: 1rem;
-            font-weight: 600;
-            opacity: 0.9;
-        }
+        .stat-item .stat-number { font-size: 2.8rem; font-weight: 700; font-family: 'Lato', sans-serif; margin-bottom: 0.3rem; }
+        .stat-item .stat-label { font-size: 1rem; font-weight: 600; opacity: 0.9; }
 
         /* --- Site Reviews Display Section --- */
-        .site-reviews-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-        }
-        .site-review-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--accent-primary-light);
-            border-radius: 8px;
-            padding: 2rem;
-            position: relative;
-            box-shadow: 0 4px 10px var(--shadow-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            display: flex;
-            flex-direction: column;
-        }
-        .site-review-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 22px var(--shadow-color-medium);
-            border-left-color: var(--accent-primary);
-        }
-        .site-review-card::before {
-            content: '\f10d';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            font-size: 3rem;
-            color: var(--accent-primary);
-            opacity: 0.1;
-            position: absolute;
-            top: 0.8rem;
-            left: 1.2rem;
-            z-index: 0;
-        }
-        .site-review-card .stars {
-            display: flex;
-            gap: 4px;
-            font-size: 1.3em;
-            margin-bottom: 1.2rem;
-            justify-content: flex-start;
-            position: relative;
-            z-index: 1;
-        }
-        .site-review-card .stars .fas.fa-star,
-        .site-review-card .stars .fas.fa-star-half-alt { color: var(--accent-warm); }
+        .site-reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; }
+        .site-review-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-primary-light); border-radius: 8px; padding: 2rem; position: relative; box-shadow: 0 4px 10px var(--shadow-color); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; display: flex; flex-direction: column; }
+        .site-review-card:hover { transform: translateY(-8px); box-shadow: 0 10px 22px var(--shadow-color-medium); border-left-color: var(--accent-primary); }
+        .site-review-card::before { content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; font-size: 3rem; color: var(--accent-primary); opacity: 0.1; position: absolute; top: 0.8rem; left: 1.2rem; z-index: 0; }
+        .site-review-card .stars { display: flex; gap: 4px; font-size: 1.3em; margin-bottom: 1.2rem; justify-content: flex-start; position: relative; z-index: 1; }
+        .site-review-card .stars .fas.fa-star, .site-review-card .stars .fas.fa-star-half-alt { color: var(--accent-warm); }
         .site-review-card .stars .far.fa-star { color: var(--border-color-strong); }
-
-        .site-review-comment {
-            font-style: italic;
-            color: var(--text-medium);
-            margin-bottom: 1.5rem;
-            position: relative;
-            z-index: 1;
-            flex-grow: 1;
-            font-size: 1.05rem;
-        }
-        .site-review-author {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-top: auto;
-            z-index: 1;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .site-review-author i {
-            font-size: 1.5rem;
-            color: var(--text-medium);
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--border-color);
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .site-review-author h5 {
-            font-size: 1.05rem;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text-dark);
-        }
+        .site-review-comment { font-style: italic; color: var(--text-medium); margin-bottom: 1.5rem; position: relative; z-index: 1; flex-grow: 1; font-size: 1.05rem; }
+        .site-review-author { display: flex; align-items: center; gap: 1rem; margin-top: auto; z-index: 1; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        .site-review-author i { font-size: 1.5rem; color: var(--text-medium); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: var(--border-color); border-radius: 50%; flex-shrink: 0; }
+        .site-review-author h5 { font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-dark); }
         .site-review-author span { display: none; }
 
          /* --- Site Review Submission Form --- */
-        #site-review-form-section .form-container {
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: var(--bg-primary);
-            padding: 3rem;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px var(--shadow-color-medium);
-            border: 1px solid var(--border-color);
-        }
-        #site-review-form-section h3 {
-            text-align: center;
-            font-size: 1.8rem;
-            border-bottom: none;
-            margin-bottom: 2.5rem;
-            color: var(--text-dark);
-        }
+        #site-review-form-section .form-container { max-width: 700px; margin: 0 auto; background-color: var(--bg-primary); padding: 3rem; border-radius: 12px; box-shadow: 0 6px 18px var(--shadow-color-medium); border: 1px solid var(--border-color); }
+        #site-review-form-section h3 { text-align: center; font-size: 1.8rem; border-bottom: none; margin-bottom: 2.5rem; color: var(--text-dark); }
         #site-review-form-section h3::after { display: none; }
-        #site-review-form-section .form-group {
-            margin-bottom: 1.8rem;
-        }
-        #site-review-form-section label {
-            font-weight: 600;
-            margin-bottom: 0.6rem;
-            display: block;
-            color: var(--text-dark);
-        }
-        #site-review-form-section input[type="text"],
-        #site-review-form-section textarea {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            background: var(--bg-primary);
-            color: var(--text-dark);
-        }
-         #site-review-form-section textarea {
-             min-height: 130px;
-             resize: vertical;
-         }
-         #site-review-form-section .rating-input {
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             gap: 8px;
-             margin-bottom: 1.5rem;
-             flex-direction: row-reverse;
-         }
-         #site-review-form-section .rating-input input[type="radio"] {
-             display: none;
-         }
-         #site-review-form-section .rating-input label {
-             font-size: 2rem;
-             color: var(--border-color-strong);
-             cursor: pointer;
-             transition: color 0.2s ease, transform 0.2s ease;
-         }
-         #site-review-form-section .rating-input label:hover {
-             transform: scale(1.15);
-         }
-         #site-review-form-section .rating-input input[type="radio"]:checked ~ label,
-         #site-review-form-section .rating-input label:hover ~ label {
-             color: var(--accent-warm);
-             transform: scale(1.15);
-         }
-        #site-review-form button[type="submit"] {
-            background-color: var(--accent-primary-dark);
-            width: 100%;
-        }
-
+        #site-review-form-section .form-group { margin-bottom: 1.8rem; }
+        #site-review-form-section label { font-weight: 600; margin-bottom: 0.6rem; display: block; color: var(--text-dark); }
+        #site-review-form-section input[type="text"], #site-review-form-section textarea { width: 100%; padding: 0.9rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background: var(--bg-primary); color: var(--text-dark); }
+         #site-review-form-section textarea { min-height: 130px; resize: vertical; }
+         #site-review-form-section .rating-input { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1.5rem; flex-direction: row-reverse; }
+         #site-review-form-section .rating-input input[type="radio"] { display: none; }
+         #site-review-form-section .rating-input label { font-size: 2rem; color: var(--border-color-strong); cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; }
+         #site-review-form-section .rating-input label:hover { transform: scale(1.15); }
+         #site-review-form-section .rating-input input[type="radio"]:checked ~ label, #site-review-form-section .rating-input label:hover ~ label { color: var(--accent-warm); transform: scale(1.15); }
+        #site-review-form button[type="submit"] { background-color: var(--accent-primary-dark); width: 100%; }
 
         /* --- Doctors Grid (Search Results) --- */
         .doctors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* ADJUSTED: Slightly larger min-width */
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.8rem;
+            align-items: start;
         }
 
-        /* --- UPDATED Doctor Card --- */
+        /* --- UPDATED Doctor Card (Overall Structure) --- */
         .doctor-card {
             background: var(--bg-primary);
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            display: flex; /* Changed to flex row */
-            flex-direction: row; /* Explicitly row */
-            align-items: flex-start; /* Align items to the top */
-            gap: 1.2rem; /* Space between photo and info */
-            padding: 1.2rem; /* Padding for the card */
+            display: flex;
+            flex-direction: column;
+            padding: 1.2rem;
             transition: transform var(--transition-speed) var(--transition-ease),
                         box-shadow var(--transition-speed) var(--transition-ease),
                         border-color var(--transition-speed) var(--transition-ease);
-            box-shadow: 0 4px 12px var(--shadow-color);
+            box-shadow: 0 4px 10px var(--shadow-color);
+            height: 100%; /* Ensure cards in same row have same height */
         }
         .doctor-card:hover {
-            transform: translateY(-8px); /* Adjusted lift slightly */
-            border-color: var(--border-color-strong); /* Keep border highlight */
-            box-shadow: 0 12px 25px var(--shadow-color-medium); /* Adjusted shadow */
+            transform: translateY(-6px);
+            border-color: var(--accent-primary-light);
+            box-shadow: 0 10px 20px var(--shadow-color-medium);
         }
 
-        /* --- UPDATED Doctor Photo (Circular) --- */
+        /* --- Doctor Card Top Section (Photo + Primary Info) --- */
+        .doctor-card-top {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem; /* Space below top row */
+            width: 100%;
+        }
+
+        /* --- Doctor Photo (Within Top Section) --- */
         .doctor-photo {
-            width: 90px; /* Medium size circle */
-            height: 90px; /* Medium size circle */
-            border-radius: 50%; /* Make it circular */
-            object-fit: cover; /* Cover the area */
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
             display: block;
-            flex-shrink: 0; /* Prevent image from shrinking */
-            border: 2px solid var(--border-color); /* Subtle border */
-            transition: border-color var(--transition-speed) var(--transition-ease);
+            flex-shrink: 0;
+            border: 2px solid var(--border-color);
+            transition: border-color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease);
         }
         .doctor-card:hover .doctor-photo {
-             border-color: var(--accent-primary-light); /* Highlight border on hover */
+             border-color: var(--accent-primary);
+             transform: scale(1.05);
         }
 
-
-        /* --- UPDATED Doctor Info --- */
-        .doctor-info {
-            padding: 0; /* Remove padding, card has it */
-            flex-grow: 1; /* Take remaining space */
+        /* --- Doctor Primary Info (Name, Spec, Rating - Within Top Section) --- */
+        .doctor-primary-info {
             display: flex;
-            flex-direction: column; /* Stack elements vertically */
-            min-width: 0; /* Prevent flex overflow issues */
-            align-items: flex-start; /* Align text content left */
+            flex-direction: column;
+            align-items: flex-start;
+            flex-grow: 1;
+            min-width: 0;
+            line-height: 1.4;
         }
-        .doctor-info h3 {
+        .doctor-primary-info h3 {
             color: var(--text-dark);
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.15rem;
             font-size: 1.15rem;
             font-weight: 700;
-            line-height: 1.3;
             transition: color var(--transition-speed) var(--transition-ease);
         }
-        .doctor-card:hover .doctor-info h3 {
-            color: var(--accent-primary);
+        .doctor-card:hover .doctor-primary-info h3 {
+            color: var(--accent-primary-dark);
         }
-        .doctor-info .specialization {
+        .doctor-primary-info .specialization {
             color: var(--accent-primary);
             font-weight: 600;
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
         }
-        .doctor-info .rating-display {
+        .doctor-primary-info .rating-display {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.7rem;
+            gap: 0.4rem;
+            margin-bottom: 0;
             font-size: 0.85rem;
         }
-        .doctor-info .rating-display .stars {
+        .doctor-primary-info .rating-display .stars { display: flex; gap: 2px; font-size: 1em; }
+        .doctor-primary-info .rating-display .stars .fas.fa-star,
+        .doctor-primary-info .rating-display .stars .fas.fa-star-half-alt { color: var(--accent-warm); }
+        .doctor-primary-info .rating-display .stars .far.fa-star { color: var(--border-color-strong); }
+        .doctor-primary-info .rating-display .review-count { color: var(--text-medium); font-size: 0.8rem; }
+        .doctor-primary-info .rating-display .no-reviews { font-style: italic; color: var(--text-medium); font-size: 0.8rem; }
+
+        /* --- Doctor Info (Bottom Section Container) --- */
+        .doctor-info {
+            /* Removed border-top here */
+            width: 100%;
             display: flex;
-            gap: 2px;
-            font-size: 1em;
-        }
-        .doctor-info .rating-display .stars .fas.fa-star,
-        .doctor-info .rating-display .stars .fas.fa-star-half-alt { color: var(--accent-warm); }
-        .doctor-info .rating-display .stars .far.fa-star { color: var(--border-color-strong); }
-        .doctor-info .rating-display .review-count {
-            color: var(--text-medium);
-            font-size: 0.8rem;
-        }
-        .doctor-info .rating-display .no-reviews {
-            font-style: italic;
-            color: var(--text-medium);
-            font-size: 0.8rem;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.5;
+            flex-grow: 1; /* Allow section to grow */
+            margin-top: 0; /* Reset margin-top */
         }
 
+        /* --- Doctor Details (Within Bottom Section) --- */
         .doctor-details {
             font-size: 0.85rem;
             color: var(--text-medium);
-            margin-bottom: 0.8rem;
-            line-height: 1.5;
-            flex-grow: 1; /* Allow details to push availability down */
-             width: 100%; /* Ensure it takes width */
+            margin-bottom: 0.8rem; /* Space before separator line */
+            width: 100%;
+            text-align: left;
         }
-        .doctor-details p {
-            margin-bottom: 0.4rem;
-            display: flex;
-            align-items: center;
-        }
-        .doctor-details i {
-            margin-right: 0.5rem;
-            color: var(--accent-primary-light);
-            width: 1.3em;
-            text-align: center;
-            transition: color var(--transition-speed) var(--transition-ease);
-            flex-shrink: 0;
-        }
-        .doctor-card:hover .doctor-details i {
-            color: var(--accent-primary);
-        }
+        .doctor-details p { margin-bottom: 0.4rem; display: flex; align-items: center; justify-content: flex-start; }
+        .doctor-details i { margin-right: 0.6rem; color: var(--accent-primary-light); width: 1.3em; text-align: center; transition: color var(--transition-speed) var(--transition-ease); flex-shrink: 0; }
+        .doctor-card:hover .doctor-details i { color: var(--accent-primary); }
         .doctor-details i.fa-map-pin, .doctor-details i.fa-map-marker-alt,
-        .doctor-details i.fa-hospital, .doctor-details i.fa-clinic-medical {
-             color: var(--accent-primary);
-        }
+        .doctor-details i.fa-hospital, .doctor-details i.fa-clinic-medical { color: var(--accent-primary); }
 
-        /* --- UPDATED Availability Section --- */
-        .availability {
+        /* --- Availability Details Section (Within Bottom Section) --- */
+        .availability-details {
             font-size: 0.85rem;
             color: var(--text-medium);
-            margin-top: auto; /* Pushed down by doctor-details flex-grow */
-            padding-top: 0.5rem; /* Small space above */
-            width: 100%; /* Ensure it takes width */
-            /* Remove background, border, negative margins */
-            background-color: transparent;
-            border-top: none;
-            margin-left: 0;
-            margin-right: 0;
-            margin-bottom: 0;
-            border-radius: 0; /* No specific radius needed */
-            padding-left: 0; /* No specific padding needed */
-            padding-right: 0;
-            padding-bottom: 0;
+            width: 100%;
+            text-align: left;
+            border-top: 1px solid var(--border-color); /* Separator LINE added here */
+            padding-top: 0.8rem; /* Space above availability text */
+            margin-bottom: 1rem; /* Space before button */
         }
-        .availability strong {
-            color: var(--text-dark);
-            font-weight: 600;
-            margin-right: 0.5rem;
+        .availability-details .availability-title {
+            display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem;
         }
+        .availability-details .availability-title i { color: var(--accent-primary); font-size: 1em; }
+        .availability-details p { margin-bottom: 0.25rem; padding-left: 1.8em; line-height: 1.4; }
+        .availability-details p:last-child { margin-bottom: 0; }
 
-        /* --- UPDATED Booking button styling --- */
+
+        /* --- Booking button styling (Within Bottom Section) --- */
         .book-btn {
-            margin-top: 1rem; /* Space above button */
-            /* Remove width: 100% */
+            margin-top: auto; /* Pushes button to the bottom */
             width: auto;
             font-size: 0.9rem;
-            padding: 0.6rem 1.2rem; /* Adjusted padding */
-            align-self: flex-start; /* Align to the left under info */
+            padding: 0.5rem 1.2rem;
+            align-self: flex-start; /* Align button left */
         }
 
 
         /* --- No Results Message --- */
-        #noResultsMessage {
-            color: var(--text-medium);
-            text-align: center;
-            padding: 6rem 1rem;
-            font-size: 1.15rem;
-            display: none;
-        }
-        #noResultsMessage i {
-            display: block;
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            color: var(--border-color-strong);
-            animation: zoomIn 0.8s ease-out;
-        }
+        #noResultsMessage { color: var(--text-medium); text-align: center; padding: 6rem 1rem; font-size: 1.15rem; display: none; }
+        #noResultsMessage i { display: block; font-size: 4rem; margin-bottom: 1.5rem; color: var(--border-color-strong); animation: zoomIn 0.8s ease-out; }
 
         /* --- Footer --- */
-        .footer {
-            background: #1A202C;
-            color: #a0aec0;
-            padding: 5rem 5% 2rem;
-            margin-top: 0;
-            border-top: 5px solid var(--accent-primary);
-        }
-        .footer-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 3.5rem;
-            margin-bottom: 4rem;
-        }
-        .footer-section h3 {
-            color: var(--text-light);
-            margin-bottom: 1.5rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            position: relative;
-            padding-bottom: 0.7rem;
-        }
-        .footer-section h3::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 45px;
-            height: 3px;
-            background-color: var(--accent-primary);
-            border-radius: 1px;
-        }
-        .footer-section p {
-            font-size: 0.95rem;
-            line-height: 1.7;
-            margin-bottom: 1rem;
-        }
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: 0.9rem;
-        }
-        .footer-links a {
-            color: #cbd5e0;
-            text-decoration: none;
-            transition: color var(--transition-speed) var(--transition-ease),
-                        padding-left var(--transition-speed) var(--transition-ease),
-                        transform var(--transition-speed) var(--transition-ease);
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-        }
-        .footer-links a i {
-            font-size: 0.8em;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-        .footer-links a:hover {
-            color: var(--text-light);
-            padding-left: 8px;
-            transform: translateX(2px);
-            text-decoration: none;
-        }
+        .footer { background: #1A202C; color: #a0aec0; padding: 5rem 5% 2rem; margin-top: 0; border-top: 5px solid var(--accent-primary); }
+        .footer-content { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 3.5rem; margin-bottom: 4rem; }
+        .footer-section h3 { color: var(--text-light); margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700; position: relative; padding-bottom: 0.7rem; }
+        .footer-section h3::after { content: ''; position: absolute; bottom: 0; left: 0; width: 45px; height: 3px; background-color: var(--accent-primary); border-radius: 1px; }
+        .footer-section p { font-size: 0.95rem; line-height: 1.7; margin-bottom: 1rem; }
+        .footer-links { display: flex; flex-direction: column; gap: 0.9rem; }
+        .footer-links a { color: #cbd5e0; text-decoration: none; transition: color var(--transition-speed) var(--transition-ease), padding-left var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease); display: flex; align-items: center; gap: 0.7rem; }
+        .footer-links a i { font-size: 0.8em; opacity: 0.7; transition: opacity 0.3s ease; }
+        .footer-links a:hover { color: var(--text-light); padding-left: 8px; transform: translateX(2px); text-decoration: none; }
         .footer-links a:hover i { opacity: 1; }
-
-        .social-links {
-            display: flex;
-            gap: 1.3rem;
-            margin-top: 1.5rem;
-        }
-        .social-links a {
-            font-size: 1.6rem;
-            color: #cbd5e0;
-            transition: color var(--transition-speed) var(--transition-ease),
-                        transform var(--transition-speed) var(--transition-ease);
-        }
-        .social-links a:hover {
-            color: var(--accent-primary-light);
-            transform: translateY(-4px) rotate(-5deg);
-        }
-        .copyright {
-            text-align: center;
-            padding-top: 2.5rem;
-            border-top: 1px solid #4a5568;
-            color: #a0aec0;
-            font-size: 0.9rem;
-        }
+        .social-links { display: flex; gap: 1.3rem; margin-top: 1.5rem; }
+        .social-links a { font-size: 1.6rem; color: #cbd5e0; transition: color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease); }
+        .social-links a:hover { color: var(--accent-primary-light); transform: translateY(-4px) rotate(-5deg); }
+        .copyright { text-align: center; padding-top: 2.5rem; border-top: 1px solid #4a5568; color: #a0aec0; font-size: 0.9rem; }
 
         /* --- Flash Messages --- */
-        .flash-messages {
-            position: fixed;
-            top: 90px;
-            right: 20px;
-            z-index: 1050;
-            width: clamp(300px, 90%, 420px);
-        }
-        .flash-message {
-            padding: 1rem 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.18);
-            opacity: 0;
-            transform: translateX(100%);
-            animation: slideInFadeOut 5s ease-in-out forwards;
-            border: 1px solid transparent;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background-color: var(--bg-primary);
-        }
-        .flash-message::before {
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            font-size: 1.3em;
-        }
-        .flash-message.success {
-            border-left: 6px solid var(--success);
-            color: #046c4e;
-        }
+        .flash-messages { position: fixed; top: 90px; right: 20px; z-index: 1050; width: clamp(300px, 90%, 420px); }
+        .flash-message { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 8px; font-weight: 600; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.18); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; display: flex; align-items: center; gap: 1rem; background-color: var(--bg-primary); }
+        .flash-message::before { font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 1.3em; }
+        .flash-message.success { border-left: 6px solid var(--success); color: #046c4e; }
         .flash-message.success::before { content: '\f058'; color: var(--success); }
-        .flash-message.error {
-            border-left: 6px solid var(--error);
-            color: #9b1c1c;
-        }
+        .flash-message.error { border-left: 6px solid var(--error); color: #9b1c1c; }
         .flash-message.error::before { content: '\f071'; color: var(--error); }
-        .flash-message.info {
-            border-left: 6px solid var(--info);
-            color: #1e40af;
-        }
+        .flash-message.info { border-left: 6px solid var(--info); color: #1e40af; }
         .flash-message.info::before { content: '\f05a'; color: var(--info); }
-
-        @keyframes slideInFadeOut {
-            0% { opacity: 0; transform: translateX(100%); }
-           10% { opacity: 1; transform: translateX(0); }
-           90% { opacity: 1; transform: translateX(0); }
-          100% { opacity: 0; transform: translateX(100%); }
-        }
+        @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
 
 
         /* --- Responsive Design --- */
-
         @media (max-width: 1024px) {
             .hero-title { font-size: 2.5rem; }
             .hero-section { padding: 5rem 5% 4rem; }
             .container { width: 95%; padding: 0 0.8rem; }
             .section-padding { padding: 4rem 0; }
             .section-padding-sm { padding: 2.5rem 0; }
-            .featured-specialties-grid,
-            .featured-facility-types-grid,
-            .featured-plcs-grid {
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-                gap: 1.5rem;
-            }
+            .featured-specialties-grid, .featured-facility-types-grid, .featured-plcs-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; }
             .search-area-container { max-width: 90%; padding: 2rem 1.5rem; }
             .search-form { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
             .site-reviews-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
             .search-button-container .btn.search-btn { flex-basis: 200px; }
-            .doctors-grid { gap: 1.8rem; } /* Slight gap reduction */
+            .doctors-grid { gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+            .doctor-card { padding: 1rem; }
+            .doctor-photo { width: 70px; height: 70px; }
+            .doctor-card-top { gap: 0.9rem; margin-bottom: 0.8rem;}
+            .doctor-primary-info h3 { font-size: 1.1rem;}
+            .doctor-info { /* No specific changes needed here now */ }
+            .doctor-details { font-size: 0.8rem;}
+            .availability-details { font-size: 0.8rem; margin-bottom: 0.8rem; padding-top: 0.7rem;}
+            .availability-details p { padding-left: 1.6em;}
+            .book-btn { font-size: 0.85rem; padding: 0.4rem 1rem;}
         }
 
         @media (max-width: 768px) {
@@ -1113,125 +421,73 @@
             .section-padding-sm { padding: 2rem 0; }
             .btn { padding: 0.65rem 1.3rem; font-size: 0.9rem; }
             .nav-actions { gap: 0.6rem; }
-            .doctors-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;} /* Min width adjusts slightly less */
+            .doctors-grid { grid-template-columns: 1fr; gap: 1.2rem;} /* Stack doctors */
             .footer-content { gap: 2.5rem; }
             .flash-messages { top: 75px; width: clamp(280px, 95%, 380px);}
-            .featured-specialties-grid,
-            .featured-facility-types-grid,
-            .featured-plcs-grid {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 1.2rem;
-            }
-             .plc-card, .specialty-card, .facility-type-card { min-height: 190px; }
-             .plc-photo { height: 90px; }
-
+            .featured-specialties-grid, .featured-facility-types-grid, .featured-plcs-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.2rem; }
+            .plc-card, .specialty-card, .facility-type-card { min-height: 190px; }
+            .plc-photo { height: 90px; }
             .search-area-container { padding: 1.8rem 1rem; backdrop-filter: blur(2px); }
             .search-form { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; }
             .site-reviews-grid { grid-template-columns: 1fr; }
             .search-button-container { gap: 0.8rem; }
-             .search-button-container .btn.search-btn { flex-basis: auto; flex-grow: 1; max-width: 300px; }
-             #site-review-form-section .form-container { padding: 2.5rem 1.5rem; }
-             .trust-factors-grid { grid-template-columns: 1fr; }
+            .search-button-container .btn.search-btn { flex-basis: auto; flex-grow: 1; max-width: 300px; }
+            #site-review-form-section .form-container { padding: 2.5rem 1.5rem; }
+            .trust-factors-grid { grid-template-columns: 1fr; }
+            .doctor-photo { width: 65px; height: 65px; }
+            .doctor-card-top { gap: 0.8rem; margin-bottom: 0.7rem;}
+            .doctor-primary-info h3 { font-size: 1rem;}
         }
 
         @media (max-width: 480px) {
+            body { line-height: 1.5; }
             .hero-title { font-size: 1.9rem; line-height: 1.4; }
             .hero-subtitle { font-size: 1rem; }
             .hero-section { padding: 3rem 5% 2.5rem; }
             .nav-actions .btn-secondary { display: none; }
             .logo { font-size: 1.6rem; }
             .logo i { font-size: 1.4rem; }
-
-            /* Stack common grids */
-            .how-it-works-grid,
-            .how-it-works-grid-standalone,
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-             /* Stack doctors grid too */
-            .doctors-grid {
-                 grid-template-columns: 1fr;
-                 gap: 1.5rem;
-             }
+            .how-it-works-grid, .how-it-works-grid-standalone, .stats-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .doctors-grid { gap: 1rem; } /* Stacked already */
 
             /* --- RESPONSIVE DOCTOR CARD (Small screens) --- */
-            .doctor-card {
-                flex-direction: column; /* Stack image above text */
-                align-items: center; /* Center items */
-                padding: 1rem; /* Slightly reduce padding */
-                gap: 1rem; /* Adjust gap for vertical stack */
-            }
-            .doctor-photo {
-                width: 80px; /* Slightly smaller circle */
-                height: 80px;
-                margin-bottom: 0.5rem; /* Add space below photo */
-            }
-            .doctor-info {
-                align-items: center; /* Center text */
-                text-align: center; /* Center align text */
-            }
-             .doctor-details {
-                 text-align: left; /* Keep details left-aligned inside centered block */
-                  justify-content: center; /* Center icon + text lines */
-             }
-            .doctor-details p {
-                 justify-content: center; /* Center individual detail lines */
-            }
-            .availability {
-                 text-align: center;
-            }
-             .book-btn {
-                align-self: center; /* Center button */
-                margin-top: 1.2rem;
-             }
+             .doctor-card { padding: 0.9rem; }
+             .doctor-card-top { flex-direction: row; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.7rem; }
+             .doctor-photo { width: 60px; height: 60px; }
+             .doctor-primary-info h3 { font-size: 1rem; }
+             .doctor-primary-info .specialization { font-size: 0.8rem; margin-bottom: 0.3rem; }
+             .doctor-primary-info .rating-display { font-size: 0.8rem; }
+             .doctor-info { /* No specific changes needed */ }
+             .doctor-details { font-size: 0.8rem; margin-bottom: 0.6rem; }
+             .doctor-details p { margin-bottom: 0.2rem; }
+             .availability-details { font-size: 0.8rem; margin-bottom: 0.8rem; padding-top: 0.6rem;}
+             .availability-details p { padding-left: 0; } /* Remove indent on mobile */
+             .availability-details .availability-title { margin-bottom: 0.3rem;}
+             .book-btn { font-size: 0.85rem; padding: 0.4rem 1rem; margin-top: 0.8rem; }
              /* End Responsive Doctor Card */
 
-
             .stat-number { font-size: 2.4rem; }
-
             .footer-content { text-align: center; grid-template-columns: 1fr; gap: 2rem;}
             .footer-section h3::after { left: 50%; transform: translateX(-50%); }
             .social-links { justify-content: center; }
             .footer-links { align-items: center; }
             .footer-links a { justify-content: center; }
             .footer-links a:hover { padding-left: 0; transform: none; }
-
-            .featured-specialties-grid,
-            .featured-facility-types-grid,
-            .featured-plcs-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-             .plc-card, .specialty-card, .facility-type-card { min-height: 170px; }
-             .plc-photo { height: 80px; }
-             .specialty-card .icon, .facility-type-card .icon, .plc-card .icon { font-size: 2rem; }
-             .specialty-card h4, .facility-type-card h4, .plc-card h4 { font-size: 0.9rem; }
-             .btn-small { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
-
-            .search-area-container {
-                margin-top: 2rem;
-                padding: 1.5rem 0.8rem;
-                background-color: rgba(255, 255, 255, 0.9);
-                backdrop-filter: none;
-                border-radius: 8px;
-            }
+            .featured-specialties-grid, .featured-facility-types-grid, .featured-plcs-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+            .plc-card, .specialty-card, .facility-type-card { min-height: 170px; }
+            .plc-photo { height: 80px; }
+            .specialty-card .icon, .facility-type-card .icon, .plc-card .icon { font-size: 2rem; }
+            .specialty-card h4, .facility-type-card h4, .plc-card h4 { font-size: 0.9rem; }
+            .btn-small { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+            .search-area-container { margin-top: 2rem; padding: 1.5rem 0.8rem; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: none; border-radius: 8px; }
             .search-form { grid-template-columns: 1fr; gap: 1rem; }
             select, input[type="text"] { font-size: 0.95rem; height: 44px; padding-left: 2.5rem; }
             .input-group i { left: 0.8rem; }
             select { padding-right: 2.5rem; background-position: right 0.8rem center; }
-
-            .search-button-container .btn.search-btn {
-                width: 100%;
-                max-width: none;
-                padding: 0.7rem 1rem;
-                font-size: 1rem;
-            }
-
+            .search-button-container .btn.search-btn { width: 100%; max-width: none; padding: 0.7rem 1rem; font-size: 1rem; }
             #site-review-form-section .form-container { padding: 2rem 1rem; border-radius: 8px; }
             #site-review-form-section h3 {font-size: 1.5rem;}
             #site-review-form-section .rating-input label { font-size: 1.8rem; }
-
             .section-padding { padding: 2.5rem 0; }
             .section-padding-sm { padding: 1.5rem 0; }
             .flash-messages { width: 90%; left: 5%; right: 5%; top: 70px; }
@@ -1243,13 +499,11 @@
 <body>
 
     <!-- Flash Messages Container -->
-    <!-- Pop-up messages for user feedback (e.g., form submission success/error) -->
     <div class="flash-messages">
         {# Flask/Jinja specific: Render flashed messages passed from the backend #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    {# Determine CSS class based on category (success, error, info) #}
                     {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
                     <div class="flash-message {{ category_class }}">{{ message }}</div>
                 {% endfor %}
@@ -1260,141 +514,78 @@
 
     <!-- Navbar Start -->
     <nav class="navbar" id="navbar">
-        <!-- Logo -->
-        <div>
-        <a href="/" class="logo">
-            <i class="fas fa-heart-pulse"></i> CareConnect
-        </a>
-        </div>
-        <!-- Navigation Actions (Buttons) -->
-        <div class="nav-actions">
-             <button class="btn btn-secondary" onclick="window.location.href='/doctor-login'">For Providers</button>
-            </div>
-        <div>
-             <button class="btn btn-primary" onclick="window.location.href='/patient-login'">Patient Login</button>
-        </div>
+        <div><a href="/" class="logo"><i class="fas fa-heart-pulse"></i> CareConnect</a></div>
+        <div class="nav-actions"><button class="btn btn-secondary" onclick="window.location.href='/doctor-login'">For Providers</button></div>
+        <div><button class="btn btn-primary" onclick="window.location.href='/patient-login'">Patient Login</button></div>
     </nav>
     <!-- Navbar End -->
+
+    <!-- Hero Section Start -->
     <section class="hero-section" id="search-section">
         <div class="container">
              <h1 class="hero-title">Find & Book <span>Clinic Appointments</span>, Effortlessly.</h1>
              <p class="hero-subtitle">Access a network of trusted doctors and specialists near you. Your health journey starts here.</p>
              <div class="typing-effect-container"> <span id="text"></span> </div>
-
-             <!-- Search Area moved INSIDE Hero -->
-            <div class="search-area-container reveal-on-scroll reveal-zoom"> {# Added animation class #}
-
+             <div class="search-area-container reveal-on-scroll reveal-zoom">
                 <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
                 <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
-                    <!-- Province -->
                     <div class="input-group">
                         <i class="fas fa-map-location-dot"></i>
                         <select id="province" aria-label="Select Province">
                            <option value="">All Provinces</option>
-                           {# Assumes standard Nepal provinces, adjust if different #}
-                           {% for prov in ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali'] %}
-                               <option value="{{ prov }}">{{ prov }}</option>
-                           {% endfor %}
+                           {% for prov in ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali'] %} <option value="{{ prov }}">{{ prov }}</option> {% endfor %}
                         </select>
                     </div>
-                     <!-- Governorate (Dynamic) -->
                     <div class="input-group">
                         <i class="fas fa-map-pin"></i>
                         <select id="governorate" aria-label="Select Governorate">
                            <option value="">All Governorates</option>
-                           {% if governorates %}
-                               {% for gov in governorates %} <option value="{{ gov }}">{{ gov }}</option> {% endfor %}
-                           {% else %}
-                               {# Maybe pre-populate known ones or show message #}
-                                <option value="" disabled>Loading...</option>
-                           {% endif %}
+                           {% if governorates %} {% for gov in governorates %} <option value="{{ gov }}">{{ gov }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %}
                         </select>
                     </div>
-                    <!-- Specialization (Dynamic) -->
                     <div class="input-group">
                         <i class="fas fa-stethoscope"></i>
                         <select id="specialization" aria-label="Select Specialization">
                            <option value="">All Specialties</option>
-                           {% if specialties %}
-                               {% for spec in specialties %} <option value="{{ spec }}">{{ spec }}</option> {% endfor %}
-                           {% else %}
-                               <option value="" disabled>Loading...</option>
-                           {% endif %}
+                           {% if specialties %} {% for spec in specialties %} <option value="{{ spec }}">{{ spec }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %}
                         </select>
                     </div>
-                    <!-- Facility Type (Dynamic) -->
                     <div class="input-group">
                         <i class="fas fa-hospital"></i>
                         <select id="facilityType" aria-label="Select Facility Type">
                            <option value="">All Facility Types</option>
-                           {% if facility_types %}
-                               {% for f_type in facility_types %} <option value="{{ f_type }}">{{ f_type }}</option> {% endfor %}
-                           {% else %}
-                                <option value="" disabled>Loading...</option>
-                           {% endif %}
+                           {% if facility_types %} {% for f_type in facility_types %} <option value="{{ f_type }}">{{ f_type }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %}
                         </select>
                     </div>
-                    <!-- Doctor/Clinic Name -->
                     <div class="input-group">
                         <i class="fas fa-user-doctor"></i>
                         <input type="text" id="doctorName" placeholder="Doctor, Clinic Name..." aria-label="Doctor or Clinic Name">
                     </div>
-                    <!-- Search Button MOVED BELOW form -->
                 </form>
-                <!-- Container for the button -->
                 <div class="search-button-container">
-                    <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false)"> {# Added event=null, isInitial=false #}
-                        <i class="fas fa-search"></i> Find Care
-                    </button>
-                     <!-- Optional: Clear Filters Button -->
-                     <!-- <button type="button" id="clearFiltersBtn" class="btn btn-secondary" onclick="clearAllFilters()">
-                         <i class="fas fa-times"></i> Clear
-                     </button> -->
+                    <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false)"><i class="fas fa-search"></i> Find Care</button>
                 </div>
-            </div> {# End search-area-container #}
-        </div> <!-- Closing tag for hero container -->
+            </div>
+        </div>
    </section>
-
-    <!-- Hero Section with Search End -->
-
+    <!-- Hero Section End -->
 
     <!-- Featured Facility Types Section Start -->
     <section class="featured-facility-types-section section-padding-sm">
         <div class="container">
              <h2 class="section-title reveal-on-scroll">Explore Facility Types</h2>
-             <!-- Grid for Facility Type Cards -->
              <div class="featured-facility-types-grid">
-                 {# Check if facility types data exists #}
                  {% if facility_types %}
-                    {# Loop through each facility type passed from backend #}
                     {% for f_type in facility_types %}
-                         {# Facility Type Card - clickable to filter results #}
-                         <div class="facility-type-card reveal-on-scroll"
-                              data-facility-type="{{ f_type }}" {# Store type for JS #}
-                              onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" {# JS function on click #}
-                              role="button" tabindex="0" aria-pressed="false"> {# Accessibility attributes #}
-
-                             {# Dynamically assign an icon based on facility type name #}
-                             {% set icon_class = 'fas fa-clinic-medical' %} {# Default icon #}
-                             {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %}
-                             {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %}
-                             {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %}
-                             {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %}
-                             {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %}
-                             {% endif %}
-                             <i class="{{ icon_class }} icon"></i>
-                             <h4>{{ f_type }}</h4> {# Display facility type name #}
+                         <div class="facility-type-card reveal-on-scroll" data-facility-type="{{ f_type }}" onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" role="button" tabindex="0" aria-pressed="false">
+                             {% set icon_class = 'fas fa-clinic-medical' %}
+                             {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %} {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %} {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %} {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %} {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %} {% endif %}
+                             <i class="{{ icon_class }} icon"></i> <h4>{{ f_type }}</h4>
                          </div>
                     {% endfor %}
-                 {% else %}
-                    {# Message if no facility types are loaded #}
-                    <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p>
-                 {% endif %}
+                 {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p> {% endif %}
              </div>
-             <!-- Button to clear facility type filter -->
-             <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll">
-                 <button class="btn btn-secondary" onclick="clearFacilityTypeFilterAndSearch()">View All Facility Types</button>
-             </div>
+             <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll"> <button class="btn btn-secondary" onclick="clearFacilityTypeFilterAndSearch()">View All Facility Types</button> </div>
          </div>
     </section>
     <!-- Featured Facility Types Section End -->
@@ -1403,67 +594,29 @@
     <section class="featured-plcs-section section-padding-sm">
         <div class="container">
             <h2 class="section-title reveal-on-scroll">Explore Clinics & Centers</h2>
-            <!-- Grid for PLC Cards -->
             <div class="featured-plcs-grid">
-                {# Check if PLC data exists #}
                 {% if plcs %}
-                   {# Loop through each PLC name #}
                    {% for plc in plcs %}
-                       {# Generate a URL-friendly slug from the PLC name for image lookup #}
                        {% set plc_slug = plc | lower | replace(' ', '_') | replace('&', 'and') | replace('.', '') | replace("'", '') %}
-                       {# PLC Card - clickable to filter results by this PLC #}
-                       <div class="plc-card reveal-on-scroll"
-                            data-plc-name="{{ plc }}" {# Store PLC name for JS #}
-                            onclick="setPlcFilterAndSearch('{{ plc }}', this)" {# JS function on click #}
-                            role="button" tabindex="0" aria-pressed="false"> {# Accessibility attributes #}
-
-                           {# PLC Photo - uses generated slug for filename #}
-                           <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}"
-                                alt="Photo of {{ plc }}" class="plc-photo" loading="lazy"
-                                {# Fallback: Hide image and show icon if image fails to load #}
-                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                           {# Fallback Icon (hidden by default) #}
-                           <i class="fas fa-hospital-user icon" style="display: none;"></i>
-
-                           <h4>{{ plc }}</h4> {# Display PLC name #}
-                           <!-- Button container for PLC details link -->
-                           <div class="plc-details-button-container">
-                               <a href="{{ url_for('center_details', plc_name=plc) }}" {# Link to PLC details page #}
-                                  class="btn btn-secondary btn-small plc-details-btn"
-                                  onclick="event.stopPropagation();"> {# Prevent card click when button is clicked #}
-                                  <i class="fas fa-info-circle"></i> View Details
-                               </a>
-                           </div>
+                       <div class="plc-card reveal-on-scroll" data-plc-name="{{ plc }}" onclick="setPlcFilterAndSearch('{{ plc }}', this)" role="button" tabindex="0" aria-pressed="false">
+                           <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}" alt="Photo of {{ plc }}" class="plc-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                           <i class="fas fa-hospital-user icon" style="display: none;"></i> <h4>{{ plc }}</h4>
+                           <div class="plc-details-button-container"> <a href="{{ url_for('center_details', plc_name=plc) }}" class="btn btn-secondary btn-small plc-details-btn" onclick="event.stopPropagation();"><i class="fas fa-info-circle"></i> View Details</a> </div>
                        </div>
                    {% endfor %}
-               {% else %}
-                   {# Message if no PLCs are loaded #}
-                   <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p>
-               {% endif %}
+               {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p> {% endif %}
            </div>
-           <!-- Button to clear PLC filter -->
-           <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll">
-               <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button>
-           </div>
+           <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll"> <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button> </div>
         </div>
     </section>
     <!-- Featured PLCs Section End -->
 
     <!-- Doctors Results Section Start -->
-    <!-- This section displays the search results -->
     <section class="doctors-section section-padding" id="doctors-results">
         <div class="container">
-            <!-- Title for the results (hidden initially, shown via JS) -->
             <h2 class="section-title" id="resultsTitle" style="display: none;">Available Doctors</h2>
-            <!-- Container where doctor cards will be injected by JavaScript -->
-            <div class="doctors-grid" id="resultsContainer" aria-live="polite"> {# Changed class here #}
-                <!-- Doctor cards dynamically added here -->
-            </div>
-            <!-- Message displayed when no results are found (hidden initially) -->
-            <div id="noResultsMessage" style="display: none;">
-                <i class="fas fa-user-times"></i> <!-- Icon indicating no users/doctors found -->
-                <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p>
-            </div>
+            <div class="doctors-grid" id="resultsContainer" aria-live="polite"></div>
+            <div id="noResultsMessage" style="display: none;"> <i class="fas fa-user-times"></i> <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p> </div>
          </div>
     </section>
     <!-- Doctors Results Section End -->
@@ -1472,1058 +625,364 @@
     <section class="how-it-works-section section-padding">
         <div class="container">
             <h2 class="section-title reveal-on-scroll">Booking in 3 Simple Steps</h2>
-             <p class="section-subtitle reveal-on-scroll">Finding healthcare is easier than ever.</p>
-             <!-- Grid for the steps -->
+            <p class="section-subtitle reveal-on-scroll">Finding healthcare is easier than ever.</p>
             <div class="how-it-works-grid-standalone">
-                 <!-- Step 1 -->
-                 <div class="how-it-works-step reveal-on-scroll">
-                     <i class="fas fa-search-location icon"></i>
-                     <h3>1. Search & Filter</h3>
-                     <p>Use location, specialty, facility type, or name.</p>
-                 </div>
-                 <!-- Step 2 -->
-                 <div class="how-it-works-step reveal-on-scroll">
-                     <i class="fas fa-calendar-check icon"></i>
-                     <h3>2. Select & Book</h3>
-                     <p>See real-time slots and book instantly.</p>
-                 </div>
-                 <!-- Step 3 -->
-                 <div class="how-it-works-step reveal-on-scroll">
-                     <i class="fas fa-notes-medical icon"></i>
-                     <h3>3. Visit Clinic</h3>
-                     <p>Attend your appointment and manage bookings online.</p>
-                 </div>
+                 <div class="how-it-works-step reveal-on-scroll"> <i class="fas fa-search-location icon"></i> <h3>1. Search & Filter</h3> <p>Use location, specialty, facility type, or name.</p> </div>
+                 <div class="how-it-works-step reveal-on-scroll"> <i class="fas fa-calendar-check icon"></i> <h3>2. Select & Book</h3> <p>See real-time slots and book instantly.</p> </div>
+                 <div class="how-it-works-step reveal-on-scroll"> <i class="fas fa-notes-medical icon"></i> <h3>3. Visit Clinic</h3> <p>Attend your appointment and manage bookings online.</p> </div>
             </div>
         </div>
     </section>
     <!-- How It Works Section End -->
 
      <!-- Trust Factors Section Start -->
-     <!-- Highlights key benefits of using the service -->
     <section class="trust-factors-section section-padding">
         <div class="container">
             <h2 class="section-title reveal-on-scroll">Why Choose CareConnect?</h2>
-            <!-- Grid for trust factor items -->
             <div class="trust-factors-grid">
-                <!-- Factor 1: Verified Professionals -->
-                <div class="trust-factor reveal-on-scroll reveal-left">
-                    <i class="fas fa-user-shield icon"></i>
-                    <div>
-                        <h4>Verified Professionals</h4>
-                        <p>Connect with licensed doctors and specialists vetted for quality.</p>
-                    </div>
-                </div>
-                <!-- Factor 2: Easy Booking -->
-                <div class="trust-factor reveal-on-scroll reveal-right">
-                    <i class="fas fa-calendar-alt icon"></i>
-                    <div>
-                        <h4>Easy Online Booking</h4>
-                        <p>Schedule appointments 24/7, hassle-free, from any device.</p>
-                    </div>
-                </div>
-                <!-- Factor 3: Real-Time Availability -->
-                <div class="trust-factor reveal-on-scroll reveal-left">
-                    <i class="fas fa-clock icon"></i>
-                    <div>
-                        <h4>Real-Time Availability</h4>
-                        <p>See instantly available slots and secure your appointment right away.</p>
-                    </div>
-                </div>
-                <!-- Factor 4: Security -->
-                <div class="trust-factor reveal-on-scroll reveal-right">
-                    <i class="fas fa-lock icon"></i>
-                    <div>
-                        <h4>Secure & Private</h4>
-                        <p>Your health information is kept confidential and secure.</p>
-                    </div>
-                </div>
+                <div class="trust-factor reveal-on-scroll reveal-left"> <i class="fas fa-user-shield icon"></i> <div> <h4>Verified Professionals</h4> <p>Connect with licensed doctors and specialists vetted for quality.</p> </div> </div>
+                <div class="trust-factor reveal-on-scroll reveal-right"> <i class="fas fa-calendar-alt icon"></i> <div> <h4>Easy Online Booking</h4> <p>Schedule appointments 24/7, hassle-free, from any device.</p> </div> </div>
+                <div class="trust-factor reveal-on-scroll reveal-left"> <i class="fas fa-clock icon"></i> <div> <h4>Real-Time Availability</h4> <p>See instantly available slots and secure your appointment right away.</p> </div> </div>
+                <div class="trust-factor reveal-on-scroll reveal-right"> <i class="fas fa-lock icon"></i> <div> <h4>Secure & Private</h4> <p>Your health information is kept confidential and secure.</p> </div> </div>
             </div>
         </div>
     </section>
     <!-- Trust Factors Section End -->
 
     <!-- Stats Section Start -->
-    <!-- Displays key statistics about the platform -->
     <section class="stats-section section-padding-sm">
         <div class="container">
-            <!-- Grid for stat items -->
             <div class="stats-grid">
-                <!-- Stat 1: Doctor Count -->
-                <div class="stat-item reveal-on-scroll reveal-zoom">
-                    <i class="fas fa-user-doctor icon"></i>
-                    {# The number itself, animated by JS. data-target holds the final value. #}
-                    <div class="stat-number" data-target="{{ stats.doctor_count | default(0) }}">{{ stats.doctor_count | default(0) }}</div>
-                    <div class="stat-label">Verified Doctors</div>
-                </div>
-                <!-- Stat 2: Specialty Count -->
-                <div class="stat-item reveal-on-scroll reveal-zoom">
-                    <i class="fas fa-stethoscope icon"></i>
-                    <div class="stat-number" data-target="{{ stats.specialty_count | default(0) }}">{{ stats.specialty_count | default(0) }}</div>
-                    <div class="stat-label">Specialties Available</div>
-                </div>
-                <!-- Stat 3: Total Bookings -->
-                <div class="stat-item reveal-on-scroll reveal-zoom">
-                    <i class="fas fa-calendar-check icon"></i>
-                    <div class="stat-number" data-target="{{ stats.total_bookings | default(0) }}">{{ stats.total_bookings | default(0) }}</div>
-                    <div class="stat-label">Appointments Booked</div>
-                </div>
-                <!-- Stat 4: Review Count -->
-                <div class="stat-item reveal-on-scroll reveal-zoom">
-                    <i class="fas fa-star icon"></i>
-                    {# Note: This stat might need specific data if different from doctor reviews #}
-                    <div class="stat-number" data-target="{{ stats.review_count | default(0) }}">0</div> {# Start at 0 for animation #}
-                    <div class="stat-label">Patient Reviews</div>
-                </div>
+                <div class="stat-item reveal-on-scroll reveal-zoom"> <i class="fas fa-user-doctor icon"></i> <div class="stat-number" data-target="{{ stats.doctor_count | default(0) }}">{{ stats.doctor_count | default(0) }}</div> <div class="stat-label">Verified Doctors</div> </div>
+                <div class="stat-item reveal-on-scroll reveal-zoom"> <i class="fas fa-stethoscope icon"></i> <div class="stat-number" data-target="{{ stats.specialty_count | default(0) }}">{{ stats.specialty_count | default(0) }}</div> <div class="stat-label">Specialties Available</div> </div>
+                <div class="stat-item reveal-on-scroll reveal-zoom"> <i class="fas fa-calendar-check icon"></i> <div class="stat-number" data-target="{{ stats.total_bookings | default(0) }}">{{ stats.total_bookings | default(0) }}</div> <div class="stat-label">Appointments Booked</div> </div>
+                <div class="stat-item reveal-on-scroll reveal-zoom"> <i class="fas fa-star icon"></i> <div class="stat-number" data-target="{{ stats.review_count | default(0) }}">0</div> <div class="stat-label">Patient Reviews</div> </div>
             </div>
         </div>
     </section>
     <!-- Stats Section End -->
 
     <!-- Site Reviews Display Section Start -->
-    <!-- Shows general reviews about the CareConnect platform itself -->
     <section class="site-reviews-section section-padding" id="site-reviews-section">
         <div class="container">
             <h2 class="section-title reveal-on-scroll">What People Say About CareConnect</h2>
             <p class="section-subtitle reveal-on-scroll">General feedback about our platform and service.</p>
-            <!-- Grid for site review cards -->
             <div class="site-reviews-grid">
-                {# Check if site reviews data exists #}
                 {% if site_reviews %}
-                    {# Loop through each review #}
                     {% for review in site_reviews %}
                     <div class="site-review-card reveal-on-scroll">
-                         <!-- Star Rating Display -->
-                         <div class="stars" title="{{ review.rating }}/5 Stars">
-                             {# Assuming 'get_stars' is a Jinja macro/function that returns star classes #}
-                             {# Example: ['fas fa-star', 'fas fa-star', 'fas fa-star', 'far fa-star', 'far fa-star'] #}
-                             {% for star_class in get_stars(review.rating) %}
-                                 <i class="{{ star_class }}"></i>
-                             {% endfor %}
-                         </div>
-                         <!-- Review Comment -->
-                         <p class="site-review-comment">"{{ review.comment | default('No comment provided.') | truncate(250) }}"</p> {# Display comment, provide default, truncate length #}
-                         <!-- Review Author Info -->
-                         <div class="site-review-author">
-                             <i class="fas fa-user-check"></i> <!-- Generic verified user icon -->
-                             <div class="author-info">
-                                 {# Display reviewer name, provide default, capitalize words #}
-                                 <h5>{{ review.reviewer_name | default('Verified User') | title }}</h5>
-                             </div>
-                         </div>
+                         <div class="stars" title="{{ review.rating }}/5 Stars"> {% for star_class in get_stars(review.rating) %} <i class="{{ star_class }}"></i> {% endfor %} </div>
+                         <p class="site-review-comment">"{{ review.comment | default('No comment provided.') | truncate(250) }}"</p>
+                         <div class="site-review-author"> <i class="fas fa-user-check"></i> <div class="author-info"> <h5>{{ review.reviewer_name | default('Verified User') | title }}</h5> </div> </div>
                      </div>
                      {% endfor %}
-                 {% else %}
-                     {# Message if no site reviews exist #}
-                     <p class="section-subtitle" style="grid-column: 1 / -1; margin-top: 2rem;">No platform feedback submitted yet. Be the first to share your thoughts!</p>
-                 {% endif %}
-            </div> <!-- End site-reviews-grid -->
-        </div> <!-- End container -->
+                 {% else %} <p class="section-subtitle" style="grid-column: 1 / -1; margin-top: 2rem;">No platform feedback submitted yet. Be the first to share your thoughts!</p> {% endif %}
+            </div>
+        </div>
     </section>
     <!-- Site Reviews Display Section End -->
 
 
     <!-- Site Review FORM Section Start -->
-    <!-- Allows users to submit feedback about the platform -->
     <section class="section-padding" id="site-review-form-section">
         <div class="container">
-            <!-- Form Container -->
             <div class="form-container reveal-on-scroll">
                  <h3>Share Your Feedback About CareConnect</h3>
-                 <!-- Form points to the 'submit_site_review' endpoint -->
                  <form id="site-review-form" method="POST" action="{{ url_for('submit_site_review') }}">
-
-                    <!-- Reviewer Name Input -->
-                    <div class="form-group">
-                        <label for="siteReviewerName">Your Name:</label>
-                        <input type="text" id="siteReviewerName" name="reviewer_name" required placeholder="E.g., Jane D.">
-                    </div>
-
-                    <!-- Rating Input (Stars) -->
-                    <div class="form-group">
-                        <label>Overall Rating:</label>
-                        <div class="rating-input">
-                             {# Radio buttons are hidden, labels act as stars. Reversed for CSS hover effect. #}
-                             <input type="radio" id="siteStar5" name="rating" value="5" required><label for="siteStar5" title="5 stars - Excellent">★</label>
-                             <input type="radio" id="siteStar4" name="rating" value="4"><label for="siteStar4" title="4 stars - Good">★</label>
-                             <input type="radio" id="siteStar3" name="rating" value="3"><label for="siteStar3" title="3 stars - Average">★</label>
-                             <input type="radio" id="siteStar2" name="rating" value="2"><label for="siteStar2" title="2 stars - Fair">★</label>
-                             <input type="radio" id="siteStar1" name="rating" value="1"><label for="siteStar1" title="1 star - Poor">★</label>
-                        </div>
-                    </div>
-
-                     <!-- Comment Textarea -->
-                     <div class="form-group">
-                        <label for="siteComment">Your Comments (Optional):</label>
-                        <textarea id="siteComment" name="comment" rows="5" placeholder="Tell us about your experience using the CareConnect platform..." maxlength="1000"></textarea>
-                    </div>
-
-                     <!-- Submit Button -->
-                     <button type="submit" class="btn btn-primary">
-                         <i class="fas fa-paper-plane"></i> Submit Feedback
-                     </button>
+                    <div class="form-group"> <label for="siteReviewerName">Your Name:</label> <input type="text" id="siteReviewerName" name="reviewer_name" required placeholder="E.g., Jane D."> </div>
+                    <div class="form-group"> <label>Overall Rating:</label> <div class="rating-input"> <input type="radio" id="siteStar5" name="rating" value="5" required><label for="siteStar5" title="5 stars - Excellent">★</label> <input type="radio" id="siteStar4" name="rating" value="4"><label for="siteStar4" title="4 stars - Good">★</label> <input type="radio" id="siteStar3" name="rating" value="3"><label for="siteStar3" title="3 stars - Average">★</label> <input type="radio" id="siteStar2" name="rating" value="2"><label for="siteStar2" title="2 stars - Fair">★</label> <input type="radio" id="siteStar1" name="rating" value="1"><label for="siteStar1" title="1 star - Poor">★</label> </div> </div>
+                    <div class="form-group"> <label for="siteComment">Your Comments (Optional):</label> <textarea id="siteComment" name="comment" rows="5" placeholder="Tell us about your experience using the CareConnect platform..." maxlength="1000"></textarea> </div>
+                    <button type="submit" class="btn btn-primary"> <i class="fas fa-paper-plane"></i> Submit Feedback </button>
                  </form>
-             </div> <!-- End form-container -->
-         </div> <!-- End container -->
+             </div>
+         </div>
     </section>
     <!-- Site Review FORM Section End -->
-
 
     <!-- Footer Start -->
     <footer class="footer">
         <div class="container">
-            <!-- Footer Content Grid -->
             <div class="footer-content">
-                <!-- Footer Section 1: About -->
-                <div class="footer-section reveal-on-scroll">
-                    <h3><i class="fas fa-heart-pulse"></i> CareConnect</h3>
-                    <p>Simplifying access to healthcare. Find and book trusted doctors near you.</p>
-                    <p><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> +977-1-XXXXXX</p> {# Placeholder phone #}
-                    <p><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i> support@careconnect.com</p> {# Placeholder email #}
-                </div>
-                <!-- Footer Section 2: Quick Links -->
-                <div class="footer-section reveal-on-scroll">
-                    <h3>Quick Links</h3>
-                    <div class="footer-links">
-                        <a href="/"><i class="fas fa-home"></i> Home</a>
-                        <a href="#search-section"><i class="fas fa-search"></i> Find Doctor</a>
-                        <a href="/patient-login"><i class="fas fa-user-circle"></i> Patient Portal</a>
-                        <a href="#"><i class="fas fa-question-circle"></i> FAQs</a> {# Placeholder link #}
-                        <a href="#site-reviews-section"><i class="fas fa-comments"></i> Feedback</a>
-                    </div>
-                </div>
-                <!-- Footer Section 3: For Providers -->
-                <div class="footer-section reveal-on-scroll">
-                    <h3>For Providers</h3>
-                    <div class="footer-links">
-                        <a href="/doctor-login"><i class="fas fa-clinic-medical"></i> Provider Login</a>
-                        <a href="#"><i class="fas fa-notes-medical"></i> List Practice</a> {# Placeholder link #}
-                        <a href="#"><i class="fas fa-cogs"></i> Features</a> {# Placeholder link #}
-                        <a href="#"><i class="fas fa-hands-helping"></i> Partnership</a> {# Placeholder link #}
-                    </div>
-                </div>
-                <!-- Footer Section 4: Follow Us & Legal -->
-                <div class="footer-section reveal-on-scroll">
-                    <h3>Follow Us</h3>
-                    <p>Stay updated:</p>
-                    <!-- Social Media Links -->
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a> {# Placeholder link #}
-                        <a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a> {# Placeholder link #}
-                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a> {# Placeholder link #}
-                    </div>
-                    <!-- Legal Links -->
-                    <h3 style="margin-top: 1.5rem;">Legal</h3>
-                    <div class="footer-links">
-                        <a href="#"><i class="fas fa-user-shield"></i> Privacy Policy</a> {# Placeholder link #}
-                        <a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a> {# Placeholder link #}
-                    </div>
-                </div>
-            </div> <!-- End footer-content -->
-        </div> <!-- End container -->
-        <!-- Copyright -->
-        <div class="copyright">
-            © <span id="copyright-year"></span> CareConnect Nepal. All Rights Reserved.
+                <div class="footer-section reveal-on-scroll"> <h3><i class="fas fa-heart-pulse"></i> CareConnect</h3> <p>Simplifying access to healthcare. Find and book trusted doctors near you.</p> <p><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> +977-1-XXXXXX</p> <p><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i> support@careconnect.com</p> </div>
+                <div class="footer-section reveal-on-scroll"> <h3>Quick Links</h3> <div class="footer-links"> <a href="/"><i class="fas fa-home"></i> Home</a> <a href="#search-section"><i class="fas fa-search"></i> Find Doctor</a> <a href="/patient-login"><i class="fas fa-user-circle"></i> Patient Portal</a> <a href="#"><i class="fas fa-question-circle"></i> FAQs</a> <a href="#site-reviews-section"><i class="fas fa-comments"></i> Feedback</a> </div> </div>
+                <div class="footer-section reveal-on-scroll"> <h3>For Providers</h3> <div class="footer-links"> <a href="/doctor-login"><i class="fas fa-clinic-medical"></i> Provider Login</a> <a href="#"><i class="fas fa-notes-medical"></i> List Practice</a> <a href="#"><i class="fas fa-cogs"></i> Features</a> <a href="#"><i class="fas fa-hands-helping"></i> Partnership</a> </div> </div>
+                <div class="footer-section reveal-on-scroll"> <h3>Follow Us</h3> <p>Stay updated:</p> <div class="social-links"> <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a> <a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a> <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a> </div> <h3 style="margin-top: 1.5rem;">Legal</h3> <div class="footer-links"> <a href="#"><i class="fas fa-user-shield"></i> Privacy Policy</a> <a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a> </div> </div>
+            </div>
         </div>
+        <div class="copyright"> © <span id="copyright-year"></span> CareConnect Nepal. All Rights Reserved. </div>
     </footer>
     <!-- Footer End -->
 
-    <!-- JavaScript Start (Unchanged) -->
+    <!-- JavaScript Start -->
     <script>
         /**
          * CareConnect Frontend Script
-         * Handles:
-         * - Navbar scroll effects
-         * - Dynamic content loading/filtering (Doctors)
-         * - Interactive card selections
-         * - Animations (Typing effect, scroll reveals, counters)
-         * - Form interactions (Search, Clear)
-         * - Initialization on DOM load
+         * Handles: Navbar scroll, Dynamic content (Doctors), Card selections, Animations, Forms, Initialization.
          */
 
-        // --- Constants & Global Variables ---
-        const SCROLL_THRESHOLD = 50; // Pixels scrolled before navbar changes style
-        const STAGGER_BASE_DELAY = 120; // Base delay in ms for staggered animations
-        const COUNTER_ANIMATION_DURATION = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--counter-animation-duration').trim() || '1500', 10); // Get duration from CSS variable
-        const DEBOUNCE_DELAY = 400; // Delay in ms for debouncing the name input search
+        const SCROLL_THRESHOLD = 50;
+        const STAGGER_BASE_DELAY = 120;
+        const COUNTER_ANIMATION_DURATION = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--counter-animation-duration').trim() || '1500', 10);
+        const DEBOUNCE_DELAY = 400;
 
-        let intersectionObserver; // Observer for scroll-reveal animations
-        let searchTimeoutId = null; // Timeout ID for debounced search
-        let currentSelectedFacilityType = null; // Tracks the currently selected facility type card
-        let currentSelectedPlcName = null; // Tracks the currently selected PLC card
-        let isInitialLoadSearch = true; // Flag to check if the search is the initial one on page load
+        let intersectionObserver;
+        let searchTimeoutId = null;
+        let currentSelectedFacilityType = null;
+        let currentSelectedPlcName = null;
+        let isInitialLoadSearch = true;
 
-        // --- Backend Data (Injected via Flask/Jinja) ---
-        // Gracefully handle cases where data might be missing from the backend
         const allDoctorsData = {{ doctors | default([]) | tojson | safe }};
         const allGovernorates = {{ governorates | tojson | safe if governorates else '[]' }};
         const allSpecialties = {{ specialties | tojson | safe if specialties else '[]' }};
         const allFacilityTypes = {{ facility_types | tojson | safe if facility_types else '[]' }};
         const allPlcs = {{ plcs | tojson | safe if plcs else '[]' }};
         const pageStats = {{ stats | tojson | safe if stats else '{}' }};
-        // Note: `get_stars` function for reviews is assumed to be handled by Jinja on the server-side.
 
-        // --- DOM Element References ---
-        // Cache frequently accessed DOM elements
         const navbar = document.getElementById('navbar');
         const copyrightYearEl = document.getElementById('copyright-year');
-        const resultsContainer = document.getElementById('resultsContainer'); // Where doctor cards are displayed
-        const noResultsMessage = document.getElementById('noResultsMessage'); // Message shown when no doctors match
-        const resultsTitle = document.getElementById('resultsTitle'); // Title above doctor results
-        const resultsSection = document.getElementById('doctors-results'); // The entire results section for scrolling
-        const textElement = document.getElementById("text"); // Span for typing effect
-        // Search Form Elements
+        const resultsContainer = document.getElementById('resultsContainer');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const resultsTitle = document.getElementById('resultsTitle');
+        const resultsSection = document.getElementById('doctors-results');
+        const textElement = document.getElementById("text");
         const doctorNameInput = document.getElementById('doctorName');
         const facilityTypeSelect = document.getElementById('facilityType');
         const specializationSelect = document.getElementById('specialization');
         const governorateSelect = document.getElementById('governorate');
         const provinceSelect = document.getElementById('province');
-        const searchButton = document.querySelector('.search-btn'); // Main search button
-        const clearFiltersButton = document.getElementById('clearFiltersBtn'); // Clear filters button
+        const searchButton = document.querySelector('.search-btn');
+        const clearFiltersButton = document.getElementById('clearFiltersBtn');
 
-        // --- Navbar Scroll Effect & Copyright Year ---
-        if (navbar) {
-            // Add/remove 'scrolled' class to navbar based on scroll position
-            window.addEventListener('scroll', () => {
-                navbar.classList.toggle('scrolled', window.scrollY > SCROLL_THRESHOLD);
-            });
-        }
-        if (copyrightYearEl) {
-            // Set the current year in the footer copyright
-            copyrightYearEl.textContent = new Date().getFullYear();
-        }
+        if (navbar) { window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > SCROLL_THRESHOLD)); }
+        if (copyrightYearEl) { copyrightYearEl.textContent = new Date().getFullYear(); }
 
-        // --- Debounced Search Function ---
-        /**
-         * Delays the execution of searchDoctors to prevent excessive calls
-         * while the user is typing in the doctor name input.
-         */
-         function searchDoctorsDebounced() {
-             clearTimeout(searchTimeoutId); // Clear any existing timer
-             // Set a new timer to call searchDoctors after DEBOUNCE_DELAY
-             searchTimeoutId = setTimeout(() => searchDoctors(null, false), DEBOUNCE_DELAY);
-         }
+        function searchDoctorsDebounced() { clearTimeout(searchTimeoutId); searchTimeoutId = setTimeout(() => searchDoctors(null, false), DEBOUNCE_DELAY); }
 
-        // --- Doctor Search/Filter (Core Logic) ---
-        /**
-         * Filters the `allDoctorsData` based on selected criteria from the search form
-         * and updates the displayed results.
-         * @param {Event|null} event - The event object (optional, usually null when called programmatically).
-         * @param {boolean} isInitial - Flag indicating if this is the initial search on page load.
-         */
         function searchDoctors(event = null, isInitial = false) {
-             // Prevent search if the button is already processing a search (disabled)
             if (searchButton && searchButton.disabled && !isInitial) return;
+            if (searchButton) { searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...'; searchButton.disabled = true; }
+            if (clearFiltersButton) clearFiltersButton.disabled = true;
 
-            // Provide visual feedback that search is in progress
-            if (searchButton) {
-                searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
-                searchButton.disabled = true;
-            }
-            if (clearFiltersButton) clearFiltersButton.disabled = true; // Disable clear button during search
-
-            isInitialLoadSearch = isInitial; // Update the global flag
-
-            // Get current values from search filters
+            isInitialLoadSearch = isInitial;
             const province = provinceSelect?.value || '';
             const governorate = governorateSelect?.value || '';
             const specialization = specializationSelect?.value || '';
             const facilityType = facilityTypeSelect?.value || '';
-            const nameQuery = doctorNameInput?.value.toLowerCase().trim() || ''; // Lowercase for case-insensitive search
+            const nameQuery = doctorNameInput?.value.toLowerCase().trim() || '';
 
             console.log("Searching with:", { province, governorate, specialization, facilityType, nameQuery });
 
-            // Use requestAnimationFrame for potentially smoother UI during filtering,
-            // especially if the dataset is large. Defers the filtering work slightly.
             requestAnimationFrame(() => {
-                 // Filter the main doctor data array
                  const filteredDoctors = allDoctorsData.filter(doctor => {
-                     if (!doctor) return false; // Skip invalid doctor entries
-
-                     // Extract doctor properties safely with defaults
-                     const dProvince = doctor.province || '';
-                     const dGov = doctor.governorate || '';
-                     const dSpec = doctor.specialization || '';
-                     const dFac = doctor.facility_type || '';
-                     const dName = (doctor.name || '').toLowerCase();
-                     const dClinic = (doctor.plc || '').toLowerCase(); // Search includes clinic name (PLC)
-
-                     // Check if doctor matches each filter criterion
-                     const provMatch = !province || dProvince === province; // True if no province selected or matches
-                     const govMatch = !governorate || dGov === governorate; // True if no governorate selected or matches
-                     const specMatch = !specialization || dSpec === specialization; // True if no specialty selected or matches
-                     const facMatch = !facilityType || dFac === facilityType; // True if no facility type selected or matches
-                     const nameMatch = !nameQuery || dName.includes(nameQuery) || dClinic.includes(nameQuery); // True if no name query or name/clinic matches
-
-                     // Doctor must match all active filters
+                     if (!doctor) return false;
+                     const dProvince = doctor.province || ''; const dGov = doctor.governorate || ''; const dSpec = doctor.specialization || ''; const dFac = doctor.facility_type || ''; const dName = (doctor.name || '').toLowerCase(); const dClinic = (doctor.plc || '').toLowerCase();
+                     const provMatch = !province || dProvince === province; const govMatch = !governorate || dGov === governorate; const specMatch = !specialization || dSpec === specialization; const facMatch = !facilityType || dFac === facilityType; const nameMatch = !nameQuery || dName.includes(nameQuery) || dClinic.includes(nameQuery);
                      return provMatch && govMatch && specMatch && facMatch && nameMatch;
                  });
-
                  console.log("Found doctors:", filteredDoctors.length);
-                 displayResults(filteredDoctors); // Update the DOM with results
-
-                 // Re-enable buttons after search completes
-                 if (searchButton) {
-                     searchButton.innerHTML = '<i class="fas fa-search"></i> Find Care';
-                     searchButton.disabled = false;
-                 }
+                 displayResults(filteredDoctors);
+                 if (searchButton) { searchButton.innerHTML = '<i class="fas fa-search"></i> Find Care'; searchButton.disabled = false; }
                  if (clearFiltersButton) clearFiltersButton.disabled = false;
-
-                 // Scroll to results section *unless* it's the initial page load search
-                 // or if no results were found.
-                 if (!isInitialLoadSearch && filteredDoctors.length > 0 && resultsSection) {
-                     console.log("Scrolling to results section...");
-                     // Use a short delay to ensure the DOM has updated before scrolling
-                     setTimeout(() => {
-                         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-                    }, 150);
-                 }
-                 isInitialLoadSearch = false; // Reset flag after the first search completes
+                 if (!isInitialLoadSearch && filteredDoctors.length > 0 && resultsSection) { setTimeout(() => { resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); }, 150); }
+                 isInitialLoadSearch = false;
             });
         }
 
-        // --- Clear All Search Filters ---
-        /**
-         * Resets all search form inputs and selected cards to their default state
-         * and triggers a new search to show all doctors.
-         */
         function clearAllFilters() {
             console.log("Clearing all search filters.");
-            // Reset dropdowns and input field
-            if (provinceSelect) provinceSelect.value = '';
-            if (governorateSelect) governorateSelect.value = '';
-            if (specializationSelect) specializationSelect.value = '';
-            if (facilityTypeSelect) facilityTypeSelect.value = '';
-            if (doctorNameInput) doctorNameInput.value = '';
-
-            // Reset card selections
-            currentSelectedFacilityType = null;
-            currentSelectedPlcName = null;
-            updateCardSelection(null, 'facility-type-card'); // Deselect facility type card
-            updateCardSelection(null, 'plc-card'); // Deselect PLC card
-            filterPlcCardsByFacilityType(null); // Show all PLC cards
-
-            // Trigger search to show all results
+            if (provinceSelect) provinceSelect.value = ''; if (governorateSelect) governorateSelect.value = ''; if (specializationSelect) specializationSelect.value = ''; if (facilityTypeSelect) facilityTypeSelect.value = ''; if (doctorNameInput) doctorNameInput.value = '';
+            currentSelectedFacilityType = null; currentSelectedPlcName = null;
+            updateCardSelection(null, 'facility-type-card'); updateCardSelection(null, 'plc-card');
+            filterPlcCardsByFacilityType(null);
             searchDoctors(null, false);
-
-             // Scroll back to the top of the search/hero section for better UX
-             const searchArea = document.getElementById('search-section');
-             if(searchArea) {
-                // Use a slight delay to ensure the search update is finishing before scroll starts
-                setTimeout(() => {
-                     searchArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                 }, 50);
-             }
+            const searchArea = document.getElementById('search-section');
+            if(searchArea) { setTimeout(() => { searchArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
         }
 
-
-        // --- JavaScript Star Renderer Utility ---
-        /**
-         * Generates HTML for star ratings based on a numerical rating.
-         * @param {number|null} rating - The rating value (e.g., 4.5). Should be between 0 and 5.
-         * @returns {string} HTML string representing the stars.
-         */
         function getStarsHTML(rating) {
-             // Handle invalid input
-             if (rating === null || typeof rating !== 'number' || rating < 0 || rating > 5) {
-                 // Return 5 empty stars if rating is invalid
-                 return '<span class="stars"><i class="far fa-star"></i>'.repeat(5) + '</span>';
-             }
-             // Clamp rating between 0 and 5
+             if (rating === null || typeof rating !== 'number' || rating < 0 || rating > 5) return '<span class="stars"><i class="far fa-star"></i>'.repeat(5) + '</span>';
              rating = Math.max(0, Math.min(5, rating));
-
-             // Calculate number of full, half, and empty stars
-             const full = Math.floor(rating);
-             const half = (rating - full) >= 0.4 ? 1 : 0; // Threshold for showing a half star
-             const empty = 5 - full - half;
-
-             // Build the HTML string
-             let html = '<span class="stars" title="' + rating.toFixed(1) + '/5 Stars">'; // Add tooltip with exact rating
-             html += '<i class="fas fa-star"></i>'.repeat(full); // Add full stars
-             html += half ? '<i class="fas fa-star-half-alt"></i>' : ''; // Add half star if needed
-             html += '<i class="far fa-star"></i>'.repeat(empty); // Add empty stars
-             html += '</span>';
-             return html;
+             const full = Math.floor(rating); const half = (rating - full) >= 0.4 ? 1 : 0; const empty = 5 - full - half;
+             let html = '<span class="stars" title="' + rating.toFixed(1) + '/5 Stars">';
+             html += '<i class="fas fa-star"></i>'.repeat(full); html += half ? '<i class="fas fa-star-half-alt"></i>' : ''; html += '<i class="far fa-star"></i>'.repeat(empty); html += '</span>'; return html;
         }
 
-        // --- Display Search Results ---
-        /**
-         * Updates the DOM to display the filtered list of doctors.
-         * @param {Array<Object>} doctors - An array of doctor objects to display.
-         */
         function displayResults(doctors) {
-            // Ensure container elements exist
-            if (!resultsContainer || !noResultsMessage || !resultsTitle) {
-                console.error("Missing display elements for results.");
-                return;
-            }
+            if (!resultsContainer || !noResultsMessage || !resultsTitle) { console.error("Missing display elements for results."); return; }
+            resultsContainer.innerHTML = ''; resultsContainer.style.opacity = '0';
 
-            // Clear previous results and fade out smoothly
-            resultsContainer.innerHTML = '';
-            resultsContainer.style.opacity = '0'; // Start faded out
-
-            // Check if the doctors array is valid and has results
             if (!Array.isArray(doctors) || doctors.length === 0) {
-                // Show "No Results" message
-                noResultsMessage.style.display = 'block';
-                resultsContainer.style.display = 'none'; // Hide the grid container
-                resultsTitle.style.display = 'none'; // Hide the results title
+                noResultsMessage.style.display = 'block'; resultsContainer.style.display = 'none'; resultsTitle.style.display = 'none';
             } else {
-                // Hide "No Results" message and show results grid/title
-                noResultsMessage.style.display = 'none';
-                resultsContainer.style.display = 'grid'; // Ensure grid is visible
-                resultsTitle.style.display = 'block';
-                // Update title with the number of results found
+                noResultsMessage.style.display = 'none'; resultsContainer.style.display = 'grid'; resultsTitle.style.display = 'block';
                 resultsTitle.textContent = `Found ${doctors.length} Doctor${doctors.length !== 1 ? 's' : ''}`;
 
-                // Create and append a card for each doctor
                 doctors.forEach((doctor, index) => {
-                    // Skip if doctor data or ID is missing
                     if (!doctor || !doctor.id) return;
-
                     const card = document.createElement('div');
-                    card.className = 'doctor-card reveal-on-scroll'; // Base class + animation class
-                    // Apply staggered animation delay based on index
-                    card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
+                    card.className = 'doctor-card reveal-on-scroll'; card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
 
-                    // --- Prepare doctor data with safe defaults ---
-                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=280x180`; // Default avatar if no photo (adjusted size)
-                    const name = doctor.name || 'Doctor Name Unavailable';
-                    const spec = doctor.specialization || 'General Practice';
-                    const ratingValue = doctor.average_rating; // Can be null or number
-                    const reviewCount = doctor.review_count || 0;
-                    const prov = doctor.province || '';
-                    const gov = doctor.governorate || '';
-                    const facType = doctor.facility_type || 'N/A';
-                    const avail = doctor.availability1shortform || 'Click Book Now for details'; // Use short form availability or placeholder
-                    const clinic = doctor.plc || null; // PLC/Clinic name
-                    const bookingUrl = `/booking/${doctor.id}`; // Construct booking URL (ensure this Flask route exists)
+                    // Match CSS size (75px ~ 150x150)
+                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=150x150`;
+                    const name = doctor.name || 'Doctor Name Unavailable'; const spec = doctor.specialization || 'General Practice'; const ratingValue = doctor.average_rating; const reviewCount = doctor.review_count || 0; const prov = doctor.province || ''; const gov = doctor.governorate || ''; const facType = doctor.facility_type || 'N/A'; const avail = doctor.availability1shortform || null; const clinic = doctor.plc || null; const bookingUrl = `/booking/${doctor.id}`;
 
-                    // --- Generate HTML snippets ---
-                    // Rating HTML (shows stars and count, or "No reviews")
                     let ratingHTML = '';
-                    if (reviewCount > 0 && typeof ratingValue === 'number') {
-                         ratingHTML = `<div class="rating-display">${getStarsHTML(ratingValue)} <span class="review-count">(${reviewCount} review${reviewCount !== 1 ? 's' : ''})</span></div>`;
-                    } else {
-                         // Display indication of no reviews
-                         ratingHTML = `<div class="rating-display"><span class="review-count no-reviews"><i class="far fa-star" style="color: var(--text-medium); margin-right: 4px;"></i>No reviews yet</span></div>`;
-                    }
-
-                    // Location HTML (shows Province, Governorate if available)
+                    if (reviewCount > 0 && typeof ratingValue === 'number') { ratingHTML = `<div class="rating-display">${getStarsHTML(ratingValue)} <span class="review-count">(${reviewCount} review${reviewCount !== 1 ? 's' : ''})</span></div>`; }
+                    else { ratingHTML = `<div class="rating-display"><span class="review-count no-reviews"><i class="far fa-star" style="color: var(--text-medium); margin-right: 4px;"></i>No reviews yet</span></div>`; }
                     let locationHTML = '';
-                    if (prov || gov) {
-                        locationHTML = `<p><i class="fas fa-map-marker-alt"></i> ${prov}${prov && gov ? ', ' : ''}${gov}</p>`;
+                    if (prov || gov) { locationHTML = `<p><i class="fas fa-map-marker-alt"></i> ${prov}${prov && gov ? ', ' : ''}${gov}</p>`; }
+
+                    // --- Availability Formatting ---
+                    let availabilityHTML = '';
+                    if (avail && avail.trim() !== '') {
+                        const availabilityLines = avail.split(',')
+                            .map(part => part.trim())
+                            .filter(part => part !== '')
+                            .map(part => `<p>${part}</p>`)
+                            .join('');
+                        if (availabilityLines) {
+                             availabilityHTML = `<div class="availability-details">
+                                                    <div class="availability-title"><i class="far fa-clock"></i>Availability:</div>
+                                                    ${availabilityLines}
+                                                </div>`;
+                        } else {
+                            availabilityHTML = `<div class="availability-details">
+                                                   <div class="availability-title"><i class="far fa-clock"></i>Availability:</div>
+                                                   <p>Click Book Now for details</p>
+                                               </div>`;
+                        }
+                    } else {
+                        availabilityHTML = `<div class="availability-details">
+                                               <div class="availability-title"><i class="far fa-clock"></i>Availability:</div>
+                                               <p>Not specified</p>
+                                           </div>`;
                     }
+                    // --- End Availability Formatting ---
 
-                    // --- Assemble the Card HTML ---
+
+                    // --- HTML Structure ---
                     card.innerHTML = `
-                        <div class="doctor-photo-container">
-                            <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=280x180';"> {# Fallback image using ui-avatars, adjusted size #}
-                        </div>
-                        <div class="doctor-info">
-                            <h3>${name}</h3>
-                            <p class="specialization">${spec}</p>
-                            ${ratingHTML} {# Inject rating HTML #}
-                            <div class="doctor-details">
-                                ${locationHTML} {# Inject location HTML #}
-                                ${clinic ? `<p><i class="fas fa-clinic-medical"></i> ${clinic}</p>` : ''} {# Show clinic if available #}
-                                <p><i class="fas fa-hospital"></i> Facility: ${facType}</p>
+                         <div class="doctor-card-top">
+                             <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=150x150';">
+                             <div class="doctor-primary-info">
+                                 <h3>${name}</h3>
+                                 <p class="specialization">${spec}</p>
+                                 ${ratingHTML}
                              </div>
-                             <div class="availability"><p><strong>Availability:</strong> ${avail}</p></div> {# Show availability info #}
-                             <button class="btn btn-primary book-btn" onclick="window.location.href='${bookingUrl}'">
-                                <i class="far fa-calendar-check"></i> Book Now
-                             </button>
-                         </div>`;
-                    resultsContainer.appendChild(card); // Add the completed card to the grid
+                         </div>
+                         <div class="doctor-info"> {# Bottom section container #}
+                              <div class="doctor-details">
+                                  ${locationHTML}
+                                  ${clinic ? `<p><i class="fas fa-clinic-medical"></i> ${clinic}</p>` : ''}
+                                  <p><i class="fas fa-hospital"></i> Facility: ${facType}</p>
+                               </div>
+                               ${availabilityHTML} {# Placed after details, separated by its own border-top #}
+                               <button class="btn btn-primary book-btn" onclick="window.location.href='${bookingUrl}'">
+                                  <i class="far fa-calendar-check"></i> Book Now
+                               </button>
+                           </div>`;
+                    // --- End HTML Structure ---
+
+                    resultsContainer.appendChild(card);
                 });
-
-                 // Re-initialize the scroll observer to catch the newly added doctor cards
-                 setupScrollObserver();
-
-                 // Fade in the new results smoothly
-                 setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50);
+                setupScrollObserver();
+                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50);
             }
         }
 
-        // --- Card Selection & Filtering Helpers ---
-
-        /**
-         * Updates the visual state of cards (e.g., Facility Type, PLC) to show which one is selected.
-         * Removes the 'card-selected' class from all cards of a category, then adds it to the specified card.
-         * @param {Element|null} selectedCard - The DOM element of the card to be marked as selected, or null to deselect all.
-         * @param {string} categoryClass - The CSS class identifying the category of cards (e.g., 'facility-type-card').
-         */
         function updateCardSelection(selectedCard, categoryClass) {
-            // Find all cards belonging to the specified category
-            document.querySelectorAll(`.${categoryClass}`).forEach(card => {
-                const wasSelected = card.classList.contains('card-selected');
-                // Remove selected class and reset ARIA attribute
-                card.classList.remove('card-selected');
-                card.setAttribute('aria-pressed', 'false');
-                // Re-enable transition if it was potentially disabled during selection animation (though not currently implemented)
-                if (wasSelected) card.style.transition = '';
-            });
-
-            // If a valid card was passed, mark it as selected
-            if (selectedCard && selectedCard.classList.contains(categoryClass)) {
-                selectedCard.classList.add('card-selected');
-                selectedCard.setAttribute('aria-pressed', 'true');
-                // Optional: Force reflow if checkmark animation isn't starting reliably.
-                // void selectedCard.offsetWidth;
-            }
+            document.querySelectorAll(`.${categoryClass}`).forEach(card => { card.classList.remove('card-selected'); card.setAttribute('aria-pressed', 'false'); if (card.classList.contains('card-selected')) card.style.transition = ''; });
+            if (selectedCard && selectedCard.classList.contains(categoryClass)) { selectedCard.classList.add('card-selected'); selectedCard.setAttribute('aria-pressed', 'true'); }
         }
 
-        /**
-         * Shows or hides PLC (Clinic/Place) cards based on a selected facility type.
-         * If no type is selected, all PLC cards are shown.
-         * @param {string|null} selectedType - The facility type to filter by, or null to show all.
-         */
         function filterPlcCardsByFacilityType(selectedType) {
-             const plcCards = document.querySelectorAll('.plc-card');
-             let visibleCount = 0;
-
-             // NOTE: For very large datasets, creating a Map { plcName -> facilityType } beforehand
-             // from `allDoctorsData` could be slightly faster than repeated `find`.
-             // const plcFacilityMap = new Map(allDoctorsData.filter(d => d.plc).map(d => [d.plc, d.facility_type]));
-
+             const plcCards = document.querySelectorAll('.plc-card'); let visibleCount = 0;
              plcCards.forEach(card => {
-                const plcName = card.getAttribute('data-plc-name');
-                if (!plcName) { card.style.display = 'none'; return; } // Hide cards without a name
-
-                // Find the corresponding doctor data to get the facility type for this PLC
-                // Assumes a PLC belongs to only one facility type in the context of filtering here.
-                const plcData = allDoctorsData.find(doc => doc.plc === plcName);
-                const plcFacType = plcData ? plcData.facility_type : null;
-
-                // Determine if the card should be visible
-                if (!selectedType || (plcFacType && plcFacType === selectedType)) {
-                    // Show card if no type is selected OR if its type matches the selected type
-                    card.style.display = 'flex'; // Use 'flex' as cards are flex containers
-                    visibleCount++;
-                } else {
-                    // Hide card if a type is selected and it doesn't match
-                     card.style.display = 'none';
-                }
+                const plcName = card.getAttribute('data-plc-name'); if (!plcName) { card.style.display = 'none'; return; }
+                const plcData = allDoctorsData.find(doc => doc.plc === plcName); const plcFacType = plcData ? plcData.facility_type : null;
+                if (!selectedType || (plcFacType && plcFacType === selectedType)) { card.style.display = 'flex'; visibleCount++; }
+                else { card.style.display = 'none'; }
              });
              console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`);
         }
 
-        // --- Filter Card Click Handlers & Select Change Handlers ---
-
-        /**
-         * Handles clicking on a Facility Type card.
-         * Updates the card selection, sets the corresponding dropdown, filters PLC cards,
-         * and triggers a doctor search. If the clicked card was already selected, it clears the filter.
-         * @param {string} type - The facility type associated with the clicked card.
-         * @param {Element} cardElement - The DOM element of the clicked card.
-         */
         function setFacilityTypeFilterAndSearch(type, cardElement) {
              console.log(`Set Facility Type: ${type}`);
-             // If the clicked card is already selected, clear the filter instead
-             if (cardElement?.classList.contains('card-selected')) {
-                 clearFacilityTypeFilterAndSearch();
-                 return;
-             }
-
-             // Update state and UI
-             currentSelectedFacilityType = type;
-             currentSelectedPlcName = null; // Clear PLC selection when facility type changes
-             updateCardSelection(cardElement, 'facility-type-card'); // Highlight this card
-             updateCardSelection(null, 'plc-card'); // Deselect any PLC card
-             if (facilityTypeSelect) facilityTypeSelect.value = type; // Sync dropdown
-             if (doctorNameInput) doctorNameInput.value = ''; // Clear name input
-             filterPlcCardsByFacilityType(type); // Show only relevant PLC cards
-             searchDoctors(null, false); // Trigger search
+             if (cardElement?.classList.contains('card-selected')) { clearFacilityTypeFilterAndSearch(); return; }
+             currentSelectedFacilityType = type; currentSelectedPlcName = null;
+             updateCardSelection(cardElement, 'facility-type-card'); updateCardSelection(null, 'plc-card');
+             if (facilityTypeSelect) facilityTypeSelect.value = type; if (doctorNameInput) doctorNameInput.value = '';
+             filterPlcCardsByFacilityType(type); searchDoctors(null, false);
          }
-
-        /**
-         * Clears the facility type filter, deselects cards, resets the dropdown,
-         * shows all PLC cards, and triggers a search.
-         */
         function clearFacilityTypeFilterAndSearch() {
-            console.log("Clear Facility Type Filter");
-            currentSelectedFacilityType = null;
-            updateCardSelection(null, 'facility-type-card'); // Deselect card
-            if (facilityTypeSelect) facilityTypeSelect.value = ""; // Reset dropdown
-            filterPlcCardsByFacilityType(null); // Show all PLC cards
-            searchDoctors(null, false); // Trigger search
+            console.log("Clear Facility Type Filter"); currentSelectedFacilityType = null;
+            updateCardSelection(null, 'facility-type-card'); if (facilityTypeSelect) facilityTypeSelect.value = "";
+            filterPlcCardsByFacilityType(null); searchDoctors(null, false);
         }
-
-        /**
-         * Handles clicking on a PLC (Clinic/Place) card.
-         * Updates card selections (PLC and associated Facility Type), sets the name input,
-         * and triggers a doctor search. If the clicked card was already selected, it clears the filter.
-         * @param {string} plcName - The name of the PLC associated with the clicked card.
-         * @param {Element} cardElement - The DOM element of the clicked card.
-         */
         function setPlcFilterAndSearch(plcName, cardElement) {
-            console.log(`Set PLC: ${plcName}`);
-            if (!plcName || !cardElement) return;
-
-            // If the clicked card is already selected, clear the filter instead
-             if (cardElement.classList.contains('card-selected')) {
-                 clearPlcFilterAndSearch();
-                 return;
-             }
-
-             // Update state and UI
+            console.log(`Set PLC: ${plcName}`); if (!plcName || !cardElement) return;
+             if (cardElement.classList.contains('card-selected')) { clearPlcFilterAndSearch(); return; }
              currentSelectedPlcName = plcName;
-
-             // Find the facility type associated with this PLC
-             const plcData = allDoctorsData.find(doc => doc.plc === plcName);
-             const assocFacType = plcData ? plcData.facility_type : null;
-             currentSelectedFacilityType = assocFacType; // Update facility type state
-
-             updateCardSelection(cardElement, 'plc-card'); // Select this PLC card
-
-             // Select the corresponding facility type card, if found
-             const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null;
-             updateCardSelection(facCard, 'facility-type-card');
-
-             // Sync form inputs
-             if (doctorNameInput) doctorNameInput.value = plcName; // Set name input to PLC name
-             if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || ''; // Set facility type dropdown
-
-             // Ensure the clicked PLC card is visible (it might have been hidden by facility type filter)
+             const plcData = allDoctorsData.find(doc => doc.plc === plcName); const assocFacType = plcData ? plcData.facility_type : null; currentSelectedFacilityType = assocFacType;
+             updateCardSelection(cardElement, 'plc-card');
+             const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null; updateCardSelection(facCard, 'facility-type-card');
+             if (doctorNameInput) doctorNameInput.value = plcName; if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || '';
              if (cardElement.style.display === 'none') { cardElement.style.display = 'flex'; }
-
-             searchDoctors(null, false); // Trigger search
+             searchDoctors(null, false);
          }
-
-         /**
-          * Clears the PLC filter, deselects the PLC card, potentially clears the name input,
-          * re-filters PLC cards based on any active facility type filter, and triggers a search.
-          */
          function clearPlcFilterAndSearch() {
-             console.log("Clear PLC Filter");
-             currentSelectedPlcName = null;
-             updateCardSelection(null, 'plc-card'); // Deselect PLC card
-
-             // Clear name input ONLY if it currently holds a PLC name (avoid clearing user-typed names)
-             if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
-                 doctorNameInput.value = "";
-             }
-
-             // Re-filter PLC cards based on the *currently selected* facility type (if any)
-             filterPlcCardsByFacilityType(currentSelectedFacilityType);
-
-             searchDoctors(null, false); // Trigger search
+             console.log("Clear PLC Filter"); currentSelectedPlcName = null; updateCardSelection(null, 'plc-card');
+             if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; }
+             filterPlcCardsByFacilityType(currentSelectedFacilityType); searchDoctors(null, false);
          }
 
-        // --- Typing Effect ---
-        const textsToType = [ // Array of strings to cycle through
-            "Need a specialist?",
-            "Book check-ups online.",
-            "Access verified doctors.",
-            "Your health, scheduled simply."
-        ];
-        let textIndex = 0; // Current index in textsToType array
-        let charIndex = 0; // Current character index in the string being typed/deleted
-        let isDeleting = false; // Flag to indicate if currently deleting text
-        let typingTimeout; // Timeout ID for the typing loop
-        const typeSpeed = 90; // Speed of typing characters (ms)
-        const deleteSpeed = 50; // Speed of deleting characters (ms)
-        const pauseBeforeDelete = 2200; // Pause after typing finishes (ms)
-        const pauseBeforeType = 300; // Pause after deleting finishes (ms)
-
-        /**
-         * Simulates the typing and deleting effect in the hero section.
-         */
+        const textsToType = ["Need a specialist?", "Book check-ups online.", "Access verified doctors.", "Your health, scheduled simply."];
+        let textIndex = 0; let charIndex = 0; let isDeleting = false; let typingTimeout;
+        const typeSpeed = 90; const deleteSpeed = 50; const pauseBeforeDelete = 2200; const pauseBeforeType = 300;
         function type() {
-            clearTimeout(typingTimeout); // Clear previous timeout if any
-            if (!textElement) return; // Exit if the text element doesn't exist
-
-            const currentText = textsToType[textIndex];
-            let typeDelay;
-
-            // Pause cursor blinking during character add/remove for smoother visual
+            clearTimeout(typingTimeout); if (!textElement) return;
+            const currentText = textsToType[textIndex]; let typeDelay;
             textElement.style.animationPlayState = 'paused';
-
-            if (!isDeleting) {
-                // Typing phase
-                textElement.textContent = currentText.slice(0, ++charIndex);
-                if (charIndex === currentText.length) {
-                    // Finished typing this string
-                    isDeleting = true;
-                    typeDelay = pauseBeforeDelete; // Pause before starting deletion
-                } else {
-                    // Continue typing next character
-                    typeDelay = typeSpeed + (Math.random() - 0.5) * 50; // Add slight randomness to typing speed
-                }
-            } else {
-                // Deleting phase
-                textElement.textContent = currentText.slice(0, --charIndex);
-                 if (charIndex === 0) {
-                     // Finished deleting this string
-                     isDeleting = false;
-                     textIndex = (textIndex + 1) % textsToType.length; // Move to the next string (looping)
-                     typeDelay = pauseBeforeType; // Pause before typing next string
-                 } else {
-                     // Continue deleting previous character
-                     typeDelay = deleteSpeed;
-                 }
-             }
-
-            // Resume cursor blinking
-            textElement.style.animationPlayState = 'running';
-            // Set timeout for the next character/action
-            typingTimeout = setTimeout(type, typeDelay);
+            if (!isDeleting) { textElement.textContent = currentText.slice(0, ++charIndex); if (charIndex === currentText.length) { isDeleting = true; typeDelay = pauseBeforeDelete; } else { typeDelay = typeSpeed + (Math.random() - 0.5) * 50; } }
+            else { textElement.textContent = currentText.slice(0, --charIndex); if (charIndex === 0) { isDeleting = false; textIndex = (textIndex + 1) % textsToType.length; typeDelay = pauseBeforeType; } else { typeDelay = deleteSpeed; } }
+            textElement.style.animationPlayState = 'running'; typingTimeout = setTimeout(type, typeDelay);
         }
 
-        // --- Animated Counter for Stats Section ---
-        /**
-         * Animates a number element from 0 up to its target value specified
-         * in the `data-target` attribute.
-         * @param {Element} element - The DOM element containing the number to animate (must have data-target).
-         */
         function animateCounter(element) {
-             if (!element) return;
-             const targetStr = element.dataset.target;
-
-             // Check if already animated or target is missing/invalid
-             if (element.dataset.animated === 'true' || !targetStr) return;
-             const target = parseInt(targetStr, 10);
-             if (isNaN(target)) return; // Exit if target is not a number
-
-             element.dataset.animated = 'true'; // Mark as animated to prevent re-running
-
-             // If target is 0, just set text to '0' and exit
-             if (target === 0) {
-                 element.textContent = '0';
-                 return;
-             }
-
-             let startTimestamp = null;
-             const duration = COUNTER_ANIMATION_DURATION; // Use duration from constant
-
-             // The step function called by requestAnimationFrame
-             const step = (timestamp) => {
-                 if (!startTimestamp) startTimestamp = timestamp;
-                 const elapsed = timestamp - startTimestamp;
-                 const progress = Math.min(elapsed / duration, 1); // Calculate progress (0 to 1)
-
-                 // Apply an easing function (cubic ease-out) for smoother animation
-                 const easedProgress = 1 - Math.pow(1 - progress, 3);
-                 const currentValue = Math.floor(easedProgress * target); // Calculate current value
-
-                 // Update the element's text content, formatted with commas
-                 element.textContent = currentValue.toLocaleString();
-
-                 // Continue animation if progress is less than 1
-                 if (progress < 1) {
-                     window.requestAnimationFrame(step);
-                 } else {
-                     // Ensure the final value is exactly the target, formatted
-                     element.textContent = target.toLocaleString();
-                 }
-             };
-             // Start the animation loop
-             window.requestAnimationFrame(step);
+             if (!element) return; const targetStr = element.dataset.target; if (element.dataset.animated === 'true' || !targetStr) return; const target = parseInt(targetStr, 10); if (isNaN(target)) return; element.dataset.animated = 'true'; if (target === 0) { element.textContent = '0'; return; }
+             let startTimestamp = null; const duration = COUNTER_ANIMATION_DURATION;
+             const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const elapsed = timestamp - startTimestamp; const progress = Math.min(elapsed / duration, 1); const easedProgress = 1 - Math.pow(1 - progress, 3); const currentValue = Math.floor(easedProgress * target); element.textContent = currentValue.toLocaleString(); if (progress < 1) { window.requestAnimationFrame(step); } else { element.textContent = target.toLocaleString(); } }; window.requestAnimationFrame(step);
          }
 
-        // --- Intersection Observer for Scroll Animations ---
-        /**
-         * Sets up the Intersection Observer to detect when elements with the
-         * '.reveal-on-scroll' class enter the viewport and trigger their animations.
-         * Also handles counter animation and PLC image error fallbacks.
-         */
         function setupScrollObserver() {
-            // Disconnect previous observer if it exists (e.g., after results update)
-            if (intersectionObserver) {
-                intersectionObserver.disconnect();
-            }
-
-             // Select all elements intended for scroll reveal that are not yet visible
-             const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
-             if (elements.length === 0) return; // Exit if no elements to observe
-
-             // Observer options: trigger when 10% visible, slightly offset root margin
-             const options = {
-                 root: null, // Use viewport as root
-                 threshold: 0.1, // Trigger when 10% of element is visible
-                 rootMargin: '0px 0px -30px 0px' // Trigger animation slightly before element fully enters bottom of viewport
-             };
-
-             // Callback function executed when observed elements intersect
-             const callback = (entries, observer) => {
-                entries.forEach(entry => {
-                     // If the element is intersecting (visible)
-                     if (entry.isIntersecting) {
-                        const el = entry.target;
-                        // Add 'is-visible' class to trigger the CSS animation
-                        el.classList.add('is-visible');
-
-                        // --- Special handling for specific elements ---
-                        // 1. Animate counter if it's a stat number and not already animated
-                         if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') {
-                             animateCounter(el);
-                         }
-                         // 2. Handle broken PLC images: If a PLC card becomes visible, check its image.
-                         //    If the image failed to load, hide it and show the fallback icon.
-                         else if (el.classList.contains('plc-card')) {
-                            const img = el.querySelector('img.plc-photo');
-                            const icon = el.querySelector('i.icon');
-                            // Check if img exists, icon exists, img is supposed to be displayed,
-                            // and if the image is broken (not complete or zero dimensions)
-                            if (img && icon && img.style.display !== 'none' && (!img.complete || img.naturalHeight === 0 || img.naturalWidth === 0)) {
-                                console.warn(`Image failed to load for PLC card: ${img.alt || 'Unknown'}. Showing icon.`);
-                                img.style.display = 'none'; // Hide broken image
-                                icon.style.display = 'flex'; // Show fallback icon
-                            }
-                         }
-
-                         // Stop observing the element once it has become visible
-                         observer.unobserve(el);
-                    }
-                 });
-             };
-
-             // Create and start the observer
-             intersectionObserver = new IntersectionObserver(callback, options);
-             elements.forEach(el => {
-                 // Ensure elements start truly hidden, especially for complex animations like scale+fade
-                 el.style.opacity = '0';
-                 intersectionObserver.observe(el);
-             });
+            if (intersectionObserver) { intersectionObserver.disconnect(); }
+             const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)'); if (elements.length === 0) return;
+             const options = { root: null, threshold: 0.1, rootMargin: '0px 0px -30px 0px' };
+             const callback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { const el = entry.target; el.classList.add('is-visible'); if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') { animateCounter(el); } else if (el.classList.contains('plc-card')) { const img = el.querySelector('img.plc-photo'); const icon = el.querySelector('i.icon'); if (img && icon && img.style.display !== 'none' && (!img.complete || img.naturalHeight === 0 || img.naturalWidth === 0)) { console.warn(`Image failed: ${img.alt || 'Unknown'}. Showing icon.`); img.style.display = 'none'; icon.style.display = 'flex'; } } observer.unobserve(el); } }); };
+             intersectionObserver = new IntersectionObserver(callback, options); elements.forEach(el => { el.style.opacity = '0'; intersectionObserver.observe(el); });
         }
 
-        // --- Initial Page Load Logic ---
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Initializing...");
+            if (provinceSelect) provinceSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced); if (clearFiltersButton) clearFiltersButton.addEventListener('click', clearAllFilters);
+            if (facilityTypeSelect) { facilityTypeSelect.addEventListener('change', (e) => { const selectedValue = e.target.value; currentSelectedFacilityType = selectedValue; const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null; updateCardSelection(matchingCard, 'facility-type-card'); updateCardSelection(null, 'plc-card'); currentSelectedPlcName = null; if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; } filterPlcCardsByFacilityType(selectedValue); searchDoctors(e, false); }); }
+            if (doctorNameInput) { doctorNameInput.addEventListener('keypress', function(event) { if (event.key === 'Enter') { event.preventDefault(); searchDoctorsDebounced(); clearTimeout(searchTimeoutId); } }); }
+            if (textElement && textsToType.length > 0) { setTimeout(type, pauseBeforeType + 500); }
 
-            // --- Attach Event Listeners ---
-            // Search form select changes trigger search
-            if (provinceSelect) provinceSelect.addEventListener('change', (e) => searchDoctors(e, false));
-            if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false));
-            if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false));
-            // Doctor name input triggers debounced search
-            if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced);
-            // Clear filters button resets everything
-            if (clearFiltersButton) clearFiltersButton.addEventListener('click', clearAllFilters);
-            // Facility type select change also syncs cards and triggers search
-            if (facilityTypeSelect) {
-                 facilityTypeSelect.addEventListener('change', (e) => {
-                     const selectedValue = e.target.value;
-                     currentSelectedFacilityType = selectedValue; // Update state
-
-                     // Find matching card and update selection visuals
-                     const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null;
-                     updateCardSelection(matchingCard, 'facility-type-card');
-                     // Clear PLC card selection when facility type dropdown changes
-                     updateCardSelection(null, 'plc-card');
-                     currentSelectedPlcName = null;
-
-                     // Clear name input if it contains a PLC name (avoid clearing user input)
-                     if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
-                         doctorNameInput.value = "";
-                     }
-
-                     filterPlcCardsByFacilityType(selectedValue); // Filter PLC cards
-                     searchDoctors(e, false); // Trigger search
-                 });
-            }
-
-             // Add Enter key listener to doctor name input for quick search
-            if (doctorNameInput) {
-                 doctorNameInput.addEventListener('keypress', function(event) {
-                    // Check if the key pressed was 'Enter'
-                    if (event.key === 'Enter') {
-                        event.preventDefault(); // Prevent default form submission (if any)
-                        searchDoctorsDebounced(); // Trigger the debounced search immediately
-                        clearTimeout(searchTimeoutId); // Clear the debounce timer as we are searching now
-                     }
-                 });
-             }
-
-            // --- Initialize Animations & Effects ---
-            // Start typing effect after a short delay
-            if (textElement && textsToType.length > 0) {
-                setTimeout(type, pauseBeforeType + 500); // Start slightly after page load
-            }
-
-            // --- Handle URL Parameters (for pre-filled searches/filters) ---
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                let runInitial = false; // Flag to check if any URL param was applied
+                const urlParams = new URLSearchParams(window.location.search); let runInitial = false;
+                function setDropdown(param, el, dataArray) { const v = urlParams.get(param); if (v && el && dataArray && dataArray.includes(v)) { el.value = v; console.log(`Set ${param} from URL: ${v}`); runInitial = true; return v; } return null; }
+                const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']); const initGov = setDropdown('governorate', governorateSelect, allGovernorates); const initSpec = setDropdown('specialization', specializationSelect, allSpecialties); const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes); const initName = urlParams.get('name'); let plcSetFromUrl = false;
+                if (initName && allPlcs && allPlcs.includes(initName)) { const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`); if (plcCard) { setPlcFilterAndSearch(initName, plcCard); plcSetFromUrl = true; runInitial = true; } }
+                else if (initFac) { const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`); if (facCard) { setFacilityTypeFilterAndSearch(initFac, facCard); } else { currentSelectedFacilityType = initFac; filterPlcCardsByFacilityType(initFac); runInitial = true; } }
+                else if (!plcSetFromUrl) { filterPlcCardsByFacilityType(null); }
+                if (initName && !plcSetFromUrl && doctorNameInput) { doctorNameInput.value = initName; runInitial = true; }
+                console.log("Performing initial doctor display/search..."); searchDoctors(null, true);
+            } catch (e) { console.error("Error processing URL parameters:", e); searchDoctors(null, true); filterPlcCardsByFacilityType(null); }
 
-                // Helper function to set dropdown value from URL param
-                function setDropdown(param, el, dataArray) {
-                    const v = urlParams.get(param);
-                    // Set value only if param exists, element exists, and value is valid
-                    if (v && el && dataArray && dataArray.includes(v)) {
-                        el.value = v;
-                        console.log(`Set ${param} from URL: ${v}`);
-                        runInitial = true;
-                        return v; // Return the value set
-                    }
-                    return null;
-                }
-
-                // Process known URL parameters
-                const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']); // Use actual province list
-                const initGov = setDropdown('governorate', governorateSelect, allGovernorates);
-                const initSpec = setDropdown('specialization', specializationSelect, allSpecialties);
-                const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes);
-                const initName = urlParams.get('name'); // Get potential name/plc query
-
-                let plcSetFromUrl = false;
-                // Special handling if 'name' param matches a known PLC
-                if (initName && allPlcs && allPlcs.includes(initName)) {
-                    const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`);
-                    if (plcCard) {
-                        // Use the dedicated function to set PLC filter and associated facility type
-                        setPlcFilterAndSearch(initName, plcCard);
-                        plcSetFromUrl = true;
-                        runInitial = true;
-                    }
-                }
-                // If facility type was set via URL (and not PLC), update card selection and filter PLCs
-                else if (initFac) {
-                    const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`);
-                    if (facCard) {
-                        // Use dedicated function to select card and filter
-                        setFacilityTypeFilterAndSearch(initFac, facCard);
-                        // runInitial = true; // Already set by setDropdown
-                    } else {
-                        // If card not found (maybe data loaded after DOM?), still set state and filter
-                        currentSelectedFacilityType = initFac;
-                        filterPlcCardsByFacilityType(initFac);
-                        runInitial = true;
-                    }
-                }
-                // If no facility type or PLC was set from URL, ensure all PLCs are initially visible
-                else if (!plcSetFromUrl) {
-                    filterPlcCardsByFacilityType(null);
-                }
-
-                // If 'name' param exists but wasn't a PLC, set the doctor name input
-                if (initName && !plcSetFromUrl && doctorNameInput) {
-                    doctorNameInput.value = initName;
-                    runInitial = true;
-                }
-
-                console.log("Performing initial doctor display/search...");
-                // Run the search function once on load.
-                // `isInitial` is true to prevent scrolling on the very first load.
-                searchDoctors(null, true);
-
-            } catch (e) {
-                 console.error("Error processing URL parameters:", e);
-                 // Fallback: Run default search and ensure PLCs are shown if URL processing fails
-                 searchDoctors(null, true);
-                 filterPlcCardsByFacilityType(null);
-            }
-
-
-            // --- Setup Scroll-Reveal Animations ---
-            // Use a short timeout to ensure the DOM is fully painted and elements
-            // are correctly positioned before initializing the observer.
-            setTimeout(() => {
-                 console.log("Setting up scroll observer...");
-                 setupScrollObserver();
-             }, 100);
-
+            setTimeout(() => { console.log("Setting up scroll observer..."); setupScrollObserver(); }, 100);
             console.log("Initialization complete.");
-        }); // End DOMContentLoaded
+        });
     </script>
     <!-- JavaScript End -->
 
