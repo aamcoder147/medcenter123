@@ -37,7 +37,7 @@
             --scroll-animation-duration: 0.6s;
             --stagger-delay: 0.12s;
             --counter-animation-duration: 1500ms;
-            --collapse-transition-speed: 0.4s;
+            --collapse-transition-speed: 0.4s; /* Updated speed */
         }
 
         /* --- Base & Global Styles --- */
@@ -89,19 +89,48 @@
         .reveal-zoom.is-visible { animation-name: zoomIn; }
 
         /* --- Navbar --- */
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; background: var(--bg-primary); position: sticky; top: 0; z-index: 1000; transition: box-shadow var(--transition-speed) var(--transition-ease), padding var(--transition-speed) var(--transition-ease), background-color var(--transition-speed) var(--transition-ease); border-bottom: 1px solid var(--border-color); }
-        .navbar.scrolled { box-shadow: 0 3px 8px var(--shadow-color-medium); padding: 0.8rem 5%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(5px); }
-        .logo { font-size: 1.9rem; font-weight: 700; color: var(--accent-primary); font-family: 'Lato', sans-serif; text-decoration: none; display: flex; align-items: center; gap: 0.6rem; transition: transform var(--transition-speed) var(--transition-ease); margin-right: auto; /* Push login buttons right */}
-        .logo i { font-size: 1.7rem; }
-        .logo:hover { transform: scale(1.03); }
-        /* .nav-actions { display: flex; gap: 0.9rem; align-items: center; } /* Removed original container */
-
-        /* *** NEW Styles for Login Button Container *** */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%; /* Base padding */
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: box-shadow var(--transition-speed) var(--transition-ease), padding var(--transition-speed) var(--transition-ease), background-color var(--transition-speed) var(--transition-ease);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .navbar.scrolled {
+            box-shadow: 0 4px 10px var(--shadow-color-medium); /* Slightly enhanced shadow */
+            padding: 0.7rem 5%; /* Slightly reduced padding on scroll */
+            background: rgba(255, 255, 255, 0.97); /* Slightly more opaque */
+            backdrop-filter: blur(8px); /* Stronger blur */
+            border-bottom-color: transparent; /* Hide border when shadow appears */
+        }
+        .logo {
+            font-size: 1.8rem; /* Slightly adjusted size */
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Lato', sans-serif;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: transform var(--transition-speed) var(--transition-ease);
+            margin-right: auto; /* Keeps pushing buttons right */
+        }
+        .logo i {
+            font-size: 1.6rem; /* Adjusted icon size */
+        }
+        .logo:hover {
+            transform: scale(1.03);
+        }
         .nav-login-buttons {
             display: flex;
-            gap: 0.9rem; /* Default horizontal gap */
-            align-items: center; /* Align items center by default */
-            margin-left: 1rem; /* Space between logo and buttons */
+            gap: 1rem; /* Consistent gap */
+            align-items: center;
+            margin-left: 1.5rem; /* Ensure some space from logo */
         }
 
         /* --- Buttons --- */
@@ -141,15 +170,79 @@
         .search-button-container .btn-secondary:hover { background-color: var(--bg-secondary); border-color: var(--text-medium); color: var(--text-dark); }
 
         /* --- Collapsible Section Styles --- */
-        .collapsible-section { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1.5rem; background-color: var(--bg-primary); box-shadow: 0 2px 4px var(--shadow-color); }
-        button.collapsible-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 1.2rem 1.5rem; background-color: transparent; border: none; border-bottom: 1px solid var(--border-color); text-align: left; cursor: pointer; font-family: inherit; border-radius: 8px 8px 0 0; transition: background-color var(--transition-speed) ease-in-out; }
-        .collapsible-section.is-open button.collapsible-header { border-bottom-color: transparent; }
-        button.collapsible-header:hover { background-color: var(--bg-secondary); }
-        .collapsible-title { font-size: 1.4rem; font-weight: 700; color: var(--text-dark); font-family: 'Lato', sans-serif; margin: 0; }
-        .collapsible-icon { font-size: 1.1rem; color: var(--text-medium); transition: transform var(--collapse-transition-speed) ease-in-out; margin-left: 1rem; }
-        .collapsible-section.is-open .collapsible-icon { transform: rotate(180deg); color: var(--accent-primary); }
-        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height var(--collapse-transition-speed) ease-in-out, padding var(--collapse-transition-speed) ease-in-out; padding: 0 1.5rem; background-color: var(--bg-primary); border-radius: 0 0 8px 8px; }
-        .collapsible-section.is-open .collapsible-content { max-height: 1000px; padding: 2rem 1.5rem; border-top: 1px solid var(--border-color); }
+        .collapsible-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            background-color: var(--bg-primary);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            overflow: hidden; /* Prevent content overflow during transition */
+        }
+        button.collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            background-color: transparent;
+            border: none;
+            /* border-bottom: 1px solid var(--border-color); REMOVED - border managed by section */
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            /* border-radius: 8px 8px 0 0; REMOVED - handled by section */
+            transition: background-color var(--transition-speed) ease-in-out;
+        }
+        /* Add bottom border ONLY when closed */
+         .collapsible-section:not(.is-open) button.collapsible-header {
+             border-bottom: 1px solid var(--border-color);
+         }
+
+        button.collapsible-header:hover {
+            background-color: var(--bg-secondary);
+        }
+        .collapsible-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-family: 'Lato', sans-serif;
+            margin: 0;
+        }
+        .collapsible-icon {
+            font-size: 1.1rem;
+            color: var(--text-medium);
+            transition: transform var(--collapse-transition-speed) ease-in-out;
+            margin-left: 1rem;
+        }
+        .collapsible-section.is-open .collapsible-icon {
+            transform: rotate(180deg);
+            color: var(--accent-primary);
+        }
+        .collapsible-content {
+            /* REMOVED max-height */
+            display: grid; /* Use grid for smooth height transition */
+            grid-template-rows: 0fr; /* Start collapsed */
+            transition: grid-template-rows var(--collapse-transition-speed) ease-in-out,
+                        padding-top var(--collapse-transition-speed) ease-in-out,
+                        padding-bottom var(--collapse-transition-speed) ease-in-out;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+             padding-top: 0; /* Start with no top/bottom padding */
+             padding-bottom: 0;
+            background-color: var(--bg-primary);
+            /* border-radius: 0 0 8px 8px; REMOVED - handled by section */
+        }
+        /* Inner wrapper needed for grid transition to work correctly */
+        .collapsible-content-inner {
+             overflow: hidden;
+        }
+
+        .collapsible-section.is-open .collapsible-content {
+            grid-template-rows: 1fr; /* Expand to content height */
+            padding-top: 2rem; /* Add padding when open */
+             padding-bottom: 2rem;
+            border-top: 1px solid var(--border-color); /* Add separator */
+        }
 
         /* --- How It Works Section --- */
         .how-it-works-grid, .how-it-works-grid-standalone { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2.5rem; text-align: center; margin-top: 4rem; }
@@ -166,14 +259,98 @@
         .clear-filter-button-container { text-align: center; margin-top: 2.5rem; }
 
 
-        /* --- Individual Cards --- */
-        .specialty-card, .facility-type-card, .plc-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; transition: all var(--transition-speed) var(--transition-ease); box-shadow: 0 2px 5px var(--shadow-color); display: flex; flex-direction: column; align-items: center; cursor: pointer; min-height: 210px; justify-content: space-between; overflow: hidden; position: relative; }
-        .specialty-card .icon, .facility-type-card .icon, .plc-card .icon { font-size: 2.5rem; color: var(--accent-primary-light); margin-top: 1rem; transition: all 0.3s ease; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .specialty-card h4, .facility-type-card h4, .plc-card h4 { font-size: 1.0rem; font-weight: 600; color: var(--text-dark); line-height: 1.3; padding: 0 0.5rem; margin-top: auto; margin-bottom: 0.5rem; transition: color 0.3s ease; }
-        .plc-photo { width: 100%; height: 110px; object-fit: cover; border-radius: 4px 4px 0 0; display: block; border-bottom: 1px solid var(--border-color); margin-bottom: 0.8rem; transition: transform 0.3s ease; }
-        .plc-card .icon + h4 { margin-top: 0.8rem; }
-        .plc-details-button-container { width: 100%; margin-top: 0.8rem; padding-bottom: 0.2rem; }
-        .plc-details-btn { width: calc(100% - 1rem); margin: 0 auto; }
+        /* --- Individual Cards (Base) --- */
+        .specialty-card, .facility-type-card, .plc-card {
+             background: var(--bg-primary);
+             border: 1px solid var(--border-color);
+             border-radius: 8px;
+             text-align: center;
+             transition: all var(--transition-speed) var(--transition-ease);
+             box-shadow: 0 2px 5px var(--shadow-color);
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             cursor: pointer;
+             justify-content: space-between; /* Adjust content spacing */
+             overflow: hidden;
+             position: relative;
+            padding: 1rem; /* Base padding */
+        }
+
+         /* --- Facility Type Card Specifics (Smaller) --- */
+         .facility-type-card {
+             min-height: 140px; /* Make noticeably shorter */
+             padding: 0.8rem; /* Slightly less padding */
+         }
+         .facility-type-card .icon {
+             font-size: 2.2rem; /* Slightly smaller icon */
+             margin-top: 0.8rem;
+             color: var(--accent-primary-light);
+             transition: all 0.3s ease;
+             flex-grow: 1;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+         }
+        .facility-type-card h4 {
+             font-size: 0.95rem; /* Slightly smaller text */
+             font-weight: 600;
+             color: var(--text-dark);
+             line-height: 1.3;
+             padding: 0 0.5rem;
+             margin-top: auto;
+             margin-bottom: 0.5rem;
+             transition: color 0.3s ease;
+        }
+
+        /* --- PLC Card Specifics (Larger) --- */
+        .plc-card {
+            min-height: 240px; /* Maintain or slightly increase height */
+            padding: 0; /* Remove base padding, handle internally */
+        }
+        .plc-card .icon { /* Icon shown if image fails */
+            font-size: 2.5rem;
+            color: var(--accent-primary-light);
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+         .plc-card h4 {
+            font-size: 1.0rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.3;
+            padding: 0 1rem; /* Padding for title */
+            margin-top: auto; /* Pushes title down */
+            margin-bottom: 0rem; /* Space before button container */
+            transition: color 0.3s ease;
+         }
+         .plc-photo {
+             width: 100%;
+             height: 120px; /* Slightly taller image */
+             object-fit: cover;
+             /* border-radius: 4px 4px 0 0; handled by card */
+             display: block;
+             border-bottom: 1px solid var(--border-color);
+             margin-bottom: 0.8rem;
+             transition: transform 0.3s ease;
+         }
+         /* Adjust title margin if icon is shown instead of photo */
+         .plc-card .icon + h4 { margin-top: 0.8rem; }
+         .plc-details-button-container {
+             width: 100%;
+             margin-top: 0.8rem; /* Space above button */
+             padding: 0 1rem 1rem 1rem; /* Padding around button */
+         }
+         .plc-details-btn {
+             width: 100%; /* Button takes full width within padding */
+             margin: 0 auto;
+         }
+
+        /* --- Shared Hover/Selected Styles --- */
         .specialty-card:hover, .facility-type-card:hover, .plc-card:hover { transform: translateY(-8px) scale(1.03); border-color: var(--accent-primary); box-shadow: 0 8px 18px var(--shadow-color-medium); }
         .specialty-card:hover h4, .facility-type-card:hover h4, .plc-card:hover h4 { color: var(--accent-primary); }
         .specialty-card:hover .icon, .facility-type-card:hover .icon, .plc-card:hover .icon { color: var(--accent-primary); transform: scale(1.18); }
@@ -308,7 +485,10 @@
 
         /* --- Responsive Design --- */
         @media (max-width: 1024px) {
-            /* ... other responsive styles ... */
+             /* Card Grid Adjustments */
+             .featured-facility-types-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; }
+             .featured-plcs-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+
             .doctors-grid { gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
             .doctor-card { padding: 1.1rem; }
             .doctor-photo { width: 70px; height: 70px; }
@@ -323,7 +503,13 @@
         }
 
         @media (max-width: 768px) {
-             /* ... other responsive styles ... */
+             /* Card Grid Adjustments */
+             .featured-facility-types-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+             .featured-plcs-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+             .facility-type-card { min-height: 130px; }
+             .plc-card { min-height: 220px; }
+             .plc-photo { height: 110px; }
+
             .doctors-grid { grid-template-columns: 1fr; gap: 1.2rem;}
             .doctor-photo { width: 65px; height: 65px; }
             .doctor-card-top { gap: 0.8rem; margin-bottom: 0.8rem;}
@@ -340,14 +526,46 @@
             #goToResultsBtn { font-size: 0.85rem; padding: 0.6rem 1rem; bottom: 20px; right: 20px; gap: 0.5rem; }
             .featured-facility-types-section .section-title { font-size: 1.8rem; } /* Non-collapsible title */
             .collapsible-title { font-size: 1.3rem; } /* Smaller collapsible title */
+             .collapsible-header { padding: 1rem 1.2rem; }
+             .collapsible-content { padding-left: 1.2rem; padding-right: 1.2rem; }
+             .collapsible-section.is-open .collapsible-content { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
         }
 
         @media (max-width: 480px) {
-             /* ... other responsive styles ... */
-            .nav-login-buttons { flex-direction: column; align-items: flex-end; gap: 0.5rem; } /* Stack nav login buttons */
-            .nav-login-buttons .btn { width: auto; min-width: 120px; font-size: 0.85rem; padding: 0.5rem 1rem; }
-            /* Optionally hide 'For Providers' on very small screens if needed */
-            /* .nav-login-buttons .btn-secondary { display: none; } */
+             /* --- Navbar Responsive Adjustments --- */
+             .navbar { padding: 0.8rem 5%; } /* Slightly more padding on mobile */
+             .navbar.scrolled { padding: 0.6rem 5%; }
+             .logo { font-size: 1.5rem; gap: 0.4rem; } /* Smaller logo */
+             .logo i { font-size: 1.3rem; }
+             .nav-login-buttons {
+                 flex-direction: column; /* Stack buttons */
+                 align-items: flex-end; /* Align to the right */
+                 gap: 0.6rem; /* Space between stacked buttons */
+                 margin-left: 1rem; /* Ensure some space from logo */
+             }
+             .nav-login-buttons .btn {
+                 width: auto; /* Allow button to size naturally */
+                 min-width: 110px; /* Ensure minimum tappable width */
+                 font-size: 0.85rem; /* Smaller text */
+                 padding: 0.5rem 1rem; /* Adjust padding */
+                 text-align: center; /* Center text */
+             }
+             /* Optionally hide 'For Providers' if really needed, but often better to keep */
+             /* .nav-login-buttons .btn-secondary { display: none; } */
+
+
+             /* Card Grid Adjustments */
+            .featured-facility-types-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; } /* Force 2 columns */
+             .featured-plcs-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; } /* Force 2 columns */
+             .facility-type-card { min-height: 120px; padding: 0.6rem; }
+             .facility-type-card .icon { font-size: 1.8rem; }
+             .facility-type-card h4 { font-size: 0.85rem; }
+             .plc-card { min-height: 190px; }
+             .plc-photo { height: 90px; margin-bottom: 0.5rem; }
+             .plc-card h4 { font-size: 0.9rem; padding: 0 0.6rem; }
+             .plc-details-button-container { padding: 0 0.6rem 0.6rem 0.6rem; margin-top: 0.5rem; }
+             .btn-small.plc-details-btn { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
 
             .doctors-grid { gap: 1rem; }
             .doctor-card { padding: 0.9rem; }
@@ -364,11 +582,11 @@
              .search-button-container { flex-direction: column; align-items: center; max-width: 300px; }
              .search-button-container .btn { width: 100%; max-width: 300px; flex-grow: 0; }
              .collapsible-header { padding: 1rem 1.2rem;}
-            .collapsible-title { font-size: 1.2rem; }
+             .collapsible-title { font-size: 1.2rem; }
              .collapsible-icon { font-size: 1rem;}
-            .collapsible-content { padding: 0 1.2rem;}
-             .collapsible-section.is-open .collapsible-content { padding: 1.5rem 1.2rem; }
-            .featured-facility-types-section .section-title { font-size: 1.5rem; margin-bottom: 2rem;}
+             .collapsible-content { padding-left: 1.2rem; padding-right: 1.2rem; }
+             .collapsible-section.is-open .collapsible-content { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+             .featured-facility-types-section .section-title { font-size: 1.5rem; margin-bottom: 2rem;}
              #goToResultsBtn { /* Slightly smaller floating button */
                 padding: 0.5rem 0.9rem;
                 font-size: 0.8rem;
@@ -403,75 +621,92 @@
 
     <!-- Navbar Start -->
     <nav class="navbar" id="navbar">
-        <div><a href="/" class="logo"><i class="fas fa-heart-pulse"></i> CareConnect</a></div>
-        <!-- NEW Login Buttons Container -->
+        <a href="/" class="logo"><i class="fas fa-heart-pulse"></i> CareConnect</a>
+        <!-- Login Buttons Container -->
         <div class="nav-login-buttons">
-            <button class="btn btn-secondary" onclick="window.location.href='/doctor-login'">For Providers</button>
-            <button class="btn btn-primary" onclick="window.location.href='/patient-login'">Patient Login</button>
+            <button class="btn btn-secondary btn-small" onclick="window.location.href='/doctor-login'">For Providers</button> <!-- Made slightly smaller -->
+            <button class="btn btn-primary btn-small" onclick="window.location.href='/patient-login'">Patient Login</button> <!-- Made slightly smaller -->
         </div>
     </nav>
     <!-- Navbar End -->
 
     <!-- Hero Section Start -->
     <section class="hero-section" id="search-section">
-        <div class="container">
+
              <h1 class="hero-title">Find & Book <span>Clinic Appointments</span>, Effortlessly.</h1>
              <p class="hero-subtitle">Access a network of trusted doctors and specialists near you. Your health journey starts here.</p>
              <div class="typing-effect-container"> <span id="text"></span> </div>
-             <div class="search-area-container reveal-on-scroll reveal-zoom">
-                <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
-                <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors(null, false, true);">
-                    <div class="input-group"> <i class="fas fa-map-location-dot"></i> <select id="province" aria-label="Select Province"> <option value="">All Provinces</option> {% for prov in ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali'] %} <option value="{{ prov }}">{{ prov }}</option> {% endfor %} </select> </div>
-                    <div class="input-group"> <i class="fas fa-map-pin"></i> <select id="governorate" aria-label="Select Governorate"> <option value="">All Governorates</option> {% if governorates %} {% for gov in governorates %} <option value="{{ gov }}">{{ gov }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
-                    <div class="input-group"> <i class="fas fa-stethoscope"></i> <select id="specialization" aria-label="Select Specialization"> <option value="">All Specialties</option> {% if specialties %} {% for spec in specialties %} <option value="{{ spec }}">{{ spec }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
-                    <div class="input-group"> <i class="fas fa-hospital"></i> <select id="facilityType" aria-label="Select Facility Type"> <option value="">All Facility Types</option> {% if facility_types %} {% for f_type in facility_types %} <option value="{{ f_type }}">{{ f_type }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
-                    <div class="input-group"> <i class="fas fa-user-doctor"></i> <input type="text" id="doctorName" placeholder="Doctor, Clinic Name..." aria-label="Doctor or Clinic Name"> </div>
-                </form>
-                <div class="search-button-container">
-                    <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false, true)"><i class="fas fa-search"></i> Find Care</button>
-                    <button type="button" id="clearFiltersBtn" class="btn btn-secondary" onclick="clearAllFilters()"><i class="fas fa-eraser"></i> Clear Filters</button>
-                </div>
-            </div>
-        </div>
+
+                <div class="container"> <!-- Container for search area -->
+                    <!-- Collapsible Clinics/Centers Section -->
+                    <div class="collapsible-section">
+                       <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="plcs-content">
+                           <h3 class="collapsible-title">Explore Clinics & Centers</h3>
+                           <i class="fas fa-chevron-down collapsible-icon"></i>
+                       </button>
+                       <div class="collapsible-content" id="plcs-content">
+                            <!-- Add an inner wrapper for grid transition -->
+                            <div class="collapsible-content-inner">
+                                <h2 class="section-title reveal-on-scroll" style="font-size: 1.6rem; margin-bottom: 2rem;">Explore Facility Types</h2>
+                                <div class="featured-facility-types-grid">
+                                    {% if facility_types %}
+                                       {% for f_type in facility_types %}
+                                            <div class="facility-type-card reveal-on-scroll" data-facility-type="{{ f_type }}" onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" role="button" tabindex="0" aria-pressed="false">
+                                                {% set icon_class = 'fas fa-clinic-medical' %}
+                                                {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %} {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %} {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %} {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %} {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %} {% endif %}
+                                                <i class="{{ icon_class }} icon"></i> <h4>{{ f_type }}</h4>
+                                            </div>
+                                       {% endfor %}
+                                    {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p> {% endif %}
+                                </div>
+
+                                <h2 class="section-title reveal-on-scroll" style="font-size: 1.6rem; margin-top: 3rem; margin-bottom: 2rem;">Featured Clinics</h2>
+                               <div class="featured-plcs-grid">
+                                   {% if plcs %}
+                                       {% for plc in plcs %}
+                                           {% set plc_slug = plc | lower | replace(' ', '_') | replace('&', 'and') | replace('.', '') | replace("'", '') %}
+                                           <div class="plc-card reveal-on-scroll" data-plc-name="{{ plc }}" onclick="setPlcFilterAndSearch('{{ plc }}', this)" role="button" tabindex="0" aria-pressed="false">
+                                                <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}" alt="Photo of {{ plc }}" class="plc-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <i class="fas fa-hospital-user icon" style="display: none;"></i> <!-- Fallback Icon -->
+                                                <h4>{{ plc }}</h4>
+                                                <div class="plc-details-button-container">
+                                                    <a href="{{ url_for('center_details', plc_name=plc) }}" class="btn btn-secondary btn-small plc-details-btn" onclick="event.stopPropagation();"><i class="fas fa-info-circle"></i> View Details</a>
+                                                </div>
+                                            </div>
+                                       {% endfor %}
+                                   {% else %}
+                                       <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p>
+                                   {% endif %}
+                               </div>
+                               <div class="clear-filter-button-container">
+                                   <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button>
+                               </div>
+                            </div> <!-- End .collapsible-content-inner -->
+                        </div> <!-- End .collapsible-content -->
+                   </div> <!-- End .collapsible-section -->
+
+                    <!-- Doctor Search Form Area -->
+                    <div ">
+                        <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.6rem;">Find Your Doctor</h2>
+                        <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors(null, false, true);">
+                            <div class="input-group"> <i class="fas fa-map-location-dot"></i> <select id="province" aria-label="Select Province"> <option value="">All Provinces</option> {% for prov in ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali'] %} <option value="{{ prov }}">{{ prov }}</option> {% endfor %} </select> </div>
+                            <div class="input-group"> <i class="fas fa-map-pin"></i> <select id="governorate" aria-label="Select Governorate"> <option value="">All Governorates</option> {% if governorates %} {% for gov in governorates %} <option value="{{ gov }}">{{ gov }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
+                            <div class="input-group"> <i class="fas fa-stethoscope"></i> <select id="specialization" aria-label="Select Specialization"> <option value="">All Specialties</option> {% if specialties %} {% for spec in specialties %} <option value="{{ spec }}">{{ spec }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
+                            <div class="input-group"> <i class="fas fa-hospital"></i> <select id="facilityType" aria-label="Select Facility Type"> <option value="">All Facility Types</option> {% if facility_types %} {% for f_type in facility_types %} <option value="{{ f_type }}">{{ f_type }}</option> {% endfor %} {% else %} <option value="" disabled>Loading...</option> {% endif %} </select> </div>
+                            <div class="input-group"> <i class="fas fa-user-doctor"></i> <input type="text" id="doctorName" placeholder="Doctor, Clinic Name..." aria-label="Doctor or Clinic Name"> </div>
+                        </form>
+                        <div class="search-button-container">
+                            <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false, true)"><i class="fas fa-search"></i> Find Care</button>
+                            <button type="button" id="clearFiltersBtn" class="btn btn-secondary" onclick="clearAllFilters()"><i class="fas fa-eraser"></i> Clear Filters</button>
+                        </div>
+                    </div>
+                </div> <!-- End .container for search -->
    </section>
     <!-- Hero Section End -->
 
-     <!-- Featured Facility Types Section Start (Non-Collapsible Grid) -->
-    <section class="featured-facility-types-section section-padding-sm">
-        <div class="container">
-             <h2 class="section-title reveal-on-scroll">Explore Facility Types</h2>
-             <div class="featured-facility-types-grid">
-                 {% if facility_types %}
-                    {% for f_type in facility_types %}
-                         <div class="facility-type-card reveal-on-scroll" data-facility-type="{{ f_type }}" onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" role="button" tabindex="0" aria-pressed="false">
-                             {% set icon_class = 'fas fa-clinic-medical' %}
-                             {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %} {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %} {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %} {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %} {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %} {% endif %}
-                             <i class="{{ icon_class }} icon"></i> <h4>{{ f_type }}</h4>
-                         </div>
-                    {% endfor %}
-                 {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p> {% endif %}
-             </div>
-             <div class="clear-filter-button-container reveal-on-scroll">
-                 <button class="btn btn-secondary" onclick="clearFacilityTypeFilterAndSearch()">View All Facility Types</button>
-            </div>
-         </div>
-    </section>
-    <!-- Featured Facility Types Section End -->
-
-
-    <!-- Featured PLCs Section Start (Collapsible) -->
-    <section class="featured-plcs-section section-padding-sm">
-        <div class="container">
-             <div class="collapsible-section">
-                <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="plcs-content">
-                    <h3 class="collapsible-title">Explore Clinics & Centers</h3> <i class="fas fa-chevron-down collapsible-icon"></i>
-                </button>
-                 <div class="collapsible-content" id="plcs-content">
-                    <div class="featured-plcs-grid"> {% if plcs %} {% for plc in plcs %} {% set plc_slug = plc | lower | replace(' ', '_') | replace('&', 'and') | replace('.', '') | replace("'", '') %} <div class="plc-card reveal-on-scroll" data-plc-name="{{ plc }}" onclick="setPlcFilterAndSearch('{{ plc }}', this)" role="button" tabindex="0" aria-pressed="false"> <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}" alt="Photo of {{ plc }}" class="plc-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"> <i class="fas fa-hospital-user icon" style="display: none;"></i> <h4>{{ plc }}</h4> <div class="plc-details-button-container"> <a href="{{ url_for('center_details', plc_name=plc) }}" class="btn btn-secondary btn-small plc-details-btn" onclick="event.stopPropagation();"><i class="fas fa-info-circle"></i> View Details</a> </div> </div> {% endfor %} {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p> {% endif %} </div>
-                    <div class="clear-filter-button-container"> <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button> </div>
-                 </div>
-            </div>
-        </div>
+    <!-- Featured PLCs Section Placeholder (Content now inside collapsible) -->
+    <section class="featured-plcs-section section-padding-sm" style="padding-top: 0; padding-bottom: 0; height: 0; overflow: hidden;">
+        <!-- Content moved into the collapsible section above -->
     </section>
     <!-- Featured PLCs Section End -->
 
@@ -621,17 +856,28 @@
         if (copyrightYearEl) { copyrightYearEl.textContent = new Date().getFullYear(); }
 
 
-        // --- Collapsible Section Logic ---
+        // --- Collapsible Section Logic (Using Grid for Smooth Height) ---
         collapsibleHeaders.forEach(header => {
             header.addEventListener('click', () => {
                 const section = header.closest('.collapsible-section');
-                const content = section.querySelector('.collapsible-content');
+                if (!section) return;
+                // const content = section.querySelector('.collapsible-content'); // We target the section directly
                 const icon = header.querySelector('.collapsible-icon');
                 const isOpen = section.classList.contains('is-open');
+
                 header.setAttribute('aria-expanded', !isOpen);
-                if (isOpen) { section.classList.remove('is-open'); icon.classList.replace('fa-chevron-up', 'fa-chevron-down'); }
-                else { section.classList.add('is-open'); icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                    if (intersectionObserver) { content.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(el => intersectionObserver.observe(el)); }
+
+                if (isOpen) {
+                    section.classList.remove('is-open');
+                    if(icon) icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                } else {
+                    section.classList.add('is-open');
+                    if(icon) icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                    // Re-observe newly visible elements inside the content
+                    const contentInner = section.querySelector('.collapsible-content-inner');
+                    if (intersectionObserver && contentInner) {
+                         contentInner.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(el => intersectionObserver.observe(el));
+                    }
                 }
             });
         });
@@ -699,7 +945,7 @@
             if (provinceSelect) provinceSelect.value = ''; if (governorateSelect) governorateSelect.value = ''; if (specializationSelect) specializationSelect.value = ''; if (facilityTypeSelect) facilityTypeSelect.value = ''; if (doctorNameInput) doctorNameInput.value = '';
             currentSelectedFacilityType = null; currentSelectedPlcName = null;
             updateCardSelection(null, 'facility-type-card'); updateCardSelection(null, 'plc-card');
-            filterPlcCardsByFacilityType(null);
+            filterPlcCardsByFacilityType(null); // Show all PLC cards
             searchDoctors(null, false, false);
              const searchArea = document.getElementById('search-section');
              if(searchArea) { setTimeout(() => { searchArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
@@ -741,20 +987,128 @@
                     card.innerHTML = `<div class="doctor-card-top"> <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=150x150';"> <div class="doctor-primary-info"> <h3>${name}</h3> <p class="specialization">${spec}</p> ${ratingHTML} </div> </div> <div class="doctor-info"> <div class="doctor-info-columns"> <div class="doctor-info-left"> ${detailsLeftHTML} </div> <div class="vertical-divider"></div> <div class="doctor-info-right"> ${availabilityRightHTML} </div> </div> <button class="btn btn-primary book-btn" onclick="window.location.href='${bookingUrl}'"> <i class="far fa-calendar-check"></i> Book Now </button> </div>`;
                     resultsContainer.appendChild(card);
                 });
-                setupScrollObserver();
-                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50);
+                setupScrollObserver(); // Re-setup observer for new cards
+                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50); // Fade in results
             }
         }
 
         // --- Card Selection & Filtering Helpers ---
-        function updateCardSelection(selectedCard, categoryClass) { document.querySelectorAll(`.${categoryClass}`).forEach(card => { card.classList.remove('card-selected'); card.setAttribute('aria-pressed', 'false'); if (card.classList.contains('card-selected')) card.style.transition = ''; }); if (selectedCard && selectedCard.classList.contains(categoryClass)) { selectedCard.classList.add('card-selected'); selectedCard.setAttribute('aria-pressed', 'true'); } }
-        function filterPlcCardsByFacilityType(selectedType) { const plcCards = document.querySelectorAll('.plc-card'); let visibleCount = 0; plcCards.forEach(card => { const plcName = card.getAttribute('data-plc-name'); if (!plcName) { card.style.display = 'none'; return; } const plcData = allDoctorsData.find(doc => doc.plc === plcName); const plcFacType = plcData ? plcData.facility_type : null; if (!selectedType || (plcFacType && plcFacType === selectedType)) { card.style.display = 'flex'; visibleCount++; } else { card.style.display = 'none'; } }); console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`); }
+        function updateCardSelection(selectedCard, categoryClass) {
+            document.querySelectorAll(`.${categoryClass}`).forEach(card => {
+                card.classList.remove('card-selected');
+                card.setAttribute('aria-pressed', 'false');
+            });
+            if (selectedCard && selectedCard.classList.contains(categoryClass)) {
+                 selectedCard.classList.add('card-selected');
+                 selectedCard.setAttribute('aria-pressed', 'true');
+            }
+        }
+
+        function filterPlcCardsByFacilityType(selectedType) {
+            const plcCards = document.querySelectorAll('.plc-card');
+            let visibleCount = 0;
+            plcCards.forEach(card => {
+                const plcName = card.getAttribute('data-plc-name');
+                if (!plcName) { card.style.display = 'none'; return; } // Should not happen
+
+                // Find the facility type associated with this PLC (assumes doctors data has PLC info)
+                const plcData = allDoctorsData.find(doc => doc.plc === plcName);
+                const plcFacType = plcData ? plcData.facility_type : null;
+
+                if (!selectedType || (plcFacType && plcFacType === selectedType)) {
+                     card.style.display = 'flex'; // Use flex as it's the default display for these cards
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`);
+        }
+
         // ** Facility Type Card Click: NO SCROLL **
-        function setFacilityTypeFilterAndSearch(type, cardElement) { console.log(`Set Facility Type: ${type}`); if (cardElement?.classList.contains('card-selected')) { clearFacilityTypeFilterAndSearch(); return; } currentSelectedFacilityType = type; currentSelectedPlcName = null; updateCardSelection(cardElement, 'facility-type-card'); updateCardSelection(null, 'plc-card'); if (facilityTypeSelect) facilityTypeSelect.value = type; if (doctorNameInput) doctorNameInput.value = ''; filterPlcCardsByFacilityType(type); searchDoctors(null, false, false); } // SCROLL = false
-        function clearFacilityTypeFilterAndSearch() { console.log("Clear Facility Type Filter"); currentSelectedFacilityType = null; updateCardSelection(null, 'facility-type-card'); if (facilityTypeSelect) facilityTypeSelect.value = ""; filterPlcCardsByFacilityType(null); searchDoctors(null, false, false); }
+        function setFacilityTypeFilterAndSearch(type, cardElement) {
+            console.log(`Set Facility Type: ${type}`);
+            if (cardElement?.classList.contains('card-selected')) {
+                 // Already selected, deselect it
+                clearFacilityTypeFilterAndSearch();
+                return;
+            }
+            currentSelectedFacilityType = type;
+            currentSelectedPlcName = null; // Clear selected PLC
+            updateCardSelection(cardElement, 'facility-type-card');
+            updateCardSelection(null, 'plc-card'); // Deselect any PLC card
+
+            if (facilityTypeSelect) facilityTypeSelect.value = type; // Sync dropdown
+            if (doctorNameInput) doctorNameInput.value = ''; // Clear name/PLC input
+
+            filterPlcCardsByFacilityType(type); // Filter PLC cards visually
+            searchDoctors(null, false, false); // Trigger doctor search (NO SCROLL)
+        }
+
+        function clearFacilityTypeFilterAndSearch() {
+             console.log("Clear Facility Type Filter");
+             currentSelectedFacilityType = null;
+             updateCardSelection(null, 'facility-type-card');
+             if (facilityTypeSelect) facilityTypeSelect.value = "";
+             filterPlcCardsByFacilityType(null); // Show all PLC cards
+             searchDoctors(null, false, false); // Trigger search
+        }
+
         // ** PLC Card Click: SCROLL **
-        function setPlcFilterAndSearch(plcName, cardElement) { console.log(`Set PLC: ${plcName}`); if (!plcName || !cardElement) return; if (cardElement.classList.contains('card-selected')) { clearPlcFilterAndSearch(); return; } currentSelectedPlcName = plcName; const plcData = allDoctorsData.find(doc => doc.plc === plcName); const assocFacType = plcData ? plcData.facility_type : null; currentSelectedFacilityType = assocFacType; updateCardSelection(cardElement, 'plc-card'); const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null; updateCardSelection(facCard, 'facility-type-card'); if (doctorNameInput) doctorNameInput.value = plcName; if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || ''; if (cardElement.style.display === 'none') { /* Open collapsible if needed */ const plcSection = cardElement.closest('.collapsible-section'); if (plcSection && !plcSection.classList.contains('is-open')) { plcSection.querySelector('.collapsible-header').click(); } /* Show card if it was hidden by facility filter - unlikely now but keep check */ cardElement.style.display = 'flex'; } searchDoctors(null, false, true); } // SCROLL = true
-        function clearPlcFilterAndSearch() { console.log("Clear PLC Filter"); currentSelectedPlcName = null; updateCardSelection(null, 'plc-card'); if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; } filterPlcCardsByFacilityType(currentSelectedFacilityType); searchDoctors(null, false, false); }
+        function setPlcFilterAndSearch(plcName, cardElement) {
+             console.log(`Set PLC: ${plcName}`);
+             if (!plcName || !cardElement) return;
+
+             if (cardElement.classList.contains('card-selected')) {
+                 // Already selected, deselect it
+                 clearPlcFilterAndSearch();
+                 return;
+            }
+
+            currentSelectedPlcName = plcName;
+
+            // Find associated facility type to sync filters
+            const plcData = allDoctorsData.find(doc => doc.plc === plcName);
+            const assocFacType = plcData ? plcData.facility_type : null;
+            currentSelectedFacilityType = assocFacType; // Update global state
+
+            updateCardSelection(cardElement, 'plc-card'); // Select this PLC card
+
+            // Select corresponding facility type card (if exists and type known)
+            const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null;
+            updateCardSelection(facCard, 'facility-type-card');
+
+            // Sync dropdowns and inputs
+             if (doctorNameInput) doctorNameInput.value = plcName;
+             if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || '';
+
+             // Ensure the collapsible section is open if the card was hidden
+             if (cardElement.style.display === 'none') {
+                const plcSection = cardElement.closest('.collapsible-section');
+                if (plcSection && !plcSection.classList.contains('is-open')) {
+                    plcSection.querySelector('.collapsible-header').click();
+                }
+                cardElement.style.display = 'flex'; // Make sure it's visible now
+             }
+
+            searchDoctors(null, false, true); // Trigger search (WITH SCROLL)
+        }
+
+        function clearPlcFilterAndSearch() {
+             console.log("Clear PLC Filter");
+             currentSelectedPlcName = null;
+             updateCardSelection(null, 'plc-card');
+
+             // Clear name input ONLY if it currently matches a known PLC name
+             if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
+                 doctorNameInput.value = "";
+             }
+
+             // Keep current facility type filter active unless it was cleared too
+             filterPlcCardsByFacilityType(currentSelectedFacilityType);
+             searchDoctors(null, false, false); // Trigger search (NO SCROLL)
+        }
+
 
         // --- Typing Effect ---
         const textsToType = ["Need a specialist?", "Book check-ups online.", "Access verified doctors.", "Your health, scheduled simply."]; let textIndex = 0; let charIndex = 0; let isDeleting = false; let typingTimeout; const typeSpeed = 90; const deleteSpeed = 50; const pauseBeforeDelete = 2200; const pauseBeforeType = 300;
@@ -764,7 +1118,55 @@
         function animateCounter(element) { if (!element) return; const targetStr = element.dataset.target; if (element.dataset.animated === 'true' || !targetStr) return; const target = parseInt(targetStr, 10); if (isNaN(target)) return; element.dataset.animated = 'true'; if (target === 0) { element.textContent = '0'; return; } let startTimestamp = null; const duration = COUNTER_ANIMATION_DURATION; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const elapsed = timestamp - startTimestamp; const progress = Math.min(elapsed / duration, 1); const easedProgress = 1 - Math.pow(1 - progress, 3); const currentValue = Math.floor(easedProgress * target); element.textContent = currentValue.toLocaleString(); if (progress < 1) { window.requestAnimationFrame(step); } else { element.textContent = target.toLocaleString(); } }; window.requestAnimationFrame(step); }
 
         // --- Intersection Observer ---
-        function setupScrollObserver() { if (intersectionObserver) { intersectionObserver.disconnect(); } const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)'); if (elements.length === 0) return; const options = { root: null, threshold: 0.1, rootMargin: '0px 0px -30px 0px' }; const callback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { const el = entry.target; el.classList.add('is-visible'); if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') { animateCounter(el); } else if (el.classList.contains('plc-card')) { const img = el.querySelector('img.plc-photo'); const icon = el.querySelector('i.icon'); if (img && icon && img.style.display !== 'none' && (!img.complete || img.naturalHeight === 0 || img.naturalWidth === 0)) { console.warn(`Image failed: ${img.alt || 'Unknown'}. Showing icon.`); img.style.display = 'none'; icon.style.display = 'flex'; } } observer.unobserve(el); } }); }; intersectionObserver = new IntersectionObserver(callback, options); elements.forEach(el => { el.style.opacity = '0'; intersectionObserver.observe(el); }); }
+        function setupScrollObserver() {
+            if (intersectionObserver) {
+                 intersectionObserver.disconnect(); // Clear previous observations
+            }
+            const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
+            if (elements.length === 0) {
+                 console.log("Scroll Observer: No elements to observe.");
+                 return;
+            }
+             console.log(`Scroll Observer: Setting up for ${elements.length} elements.`);
+
+            const options = {
+                root: null, // viewport
+                 threshold: 0.1, // 10% visible
+                 rootMargin: '0px 0px -30px 0px' // Trigger slightly before fully in view
+            };
+
+            const callback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        el.classList.add('is-visible'); // Trigger animation
+
+                        // Specific actions for element types
+                         if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') {
+                            animateCounter(el);
+                        } else if (el.classList.contains('plc-card')) {
+                             // Check for broken images within PLC cards
+                             const img = el.querySelector('img.plc-photo');
+                             const icon = el.querySelector('i.icon');
+                             if (img && icon && img.style.display !== 'none' && (!img.complete || img.naturalHeight === 0 || img.naturalWidth === 0)) {
+                                 console.warn(`Image failed/not loaded: ${img.alt || 'Unknown PLC'}. Showing fallback icon.`);
+                                 img.style.display = 'none';
+                                 icon.style.display = 'flex';
+                             }
+                        }
+
+                        observer.unobserve(el); // Stop observing once visible
+                     }
+                });
+            };
+
+            intersectionObserver = new IntersectionObserver(callback, options);
+            elements.forEach(el => {
+                // Ensure elements start invisible for the animation
+                 // el.style.opacity = '0'; // CSS already handles this with .reveal-on-scroll
+                 intersectionObserver.observe(el);
+            });
+        }
 
         // --- Initial Page Load Logic ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -774,32 +1176,141 @@
             if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
             if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
             if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced);
-            // if (clearFiltersButton) clearFiltersButton.addEventListener('click', clearAllFilters); // Handler in HTML
-            if (facilityTypeSelect) { facilityTypeSelect.addEventListener('change', (e) => { const selectedValue = e.target.value; currentSelectedFacilityType = selectedValue; const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null; updateCardSelection(matchingCard, 'facility-type-card'); updateCardSelection(null, 'plc-card'); currentSelectedPlcName = null; if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; } filterPlcCardsByFacilityType(selectedValue); searchDoctors(e, false, false); }); }
-            if (doctorNameInput) { doctorNameInput.addEventListener('keypress', function(event) { if (event.key === 'Enter') { event.preventDefault(); searchDoctorsDebounced(); clearTimeout(searchTimeoutId); } }); }
-            if (textElement && textsToType.length > 0) { setTimeout(type, pauseBeforeType + 500); }
+            // clearFiltersButton listener is in HTML via onclick
 
-            // Handle URL Params & Initial Search
+            // Facility Type Dropdown Syncs with Cards & Filters
+             if (facilityTypeSelect) {
+                facilityTypeSelect.addEventListener('change', (e) => {
+                    const selectedValue = e.target.value;
+                     currentSelectedFacilityType = selectedValue; // Update state
+                     const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null;
+
+                    updateCardSelection(matchingCard, 'facility-type-card'); // Sync card selection
+                     updateCardSelection(null, 'plc-card'); // Deselect any PLC card
+                     currentSelectedPlcName = null; // Clear selected PLC name
+
+                    // Clear name input if it was a PLC name
+                     if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
+                        doctorNameInput.value = "";
+                    }
+
+                    filterPlcCardsByFacilityType(selectedValue); // Filter PLC cards visually
+                     searchDoctors(e, false, false); // Trigger search (NO SCROLL)
+                 });
+            }
+
+            // Enter key triggers search in name input
+             if (doctorNameInput) {
+                 doctorNameInput.addEventListener('keypress', function(event) {
+                     if (event.key === 'Enter') {
+                         event.preventDefault(); // Prevent form submission
+                         clearTimeout(searchTimeoutId); // Clear any pending debounced search
+                         searchDoctors(null, false, true); // Trigger immediate search (WITH SCROLL)
+                     }
+                 });
+             }
+
+            // Start typing effect
+             if (textElement && textsToType.length > 0) {
+                 setTimeout(type, pauseBeforeType + 500); // Initial delay
+             }
+
+            // Handle URL Params & Initial Search/Display
              try {
-                 const urlParams = new URLSearchParams(window.location.search); let triggeredSearch = false;
-                function setDropdown(param, el, dataArray) { const v = urlParams.get(param); if (v && el && dataArray && dataArray.includes(v)) { el.value = v; console.log(`Set ${param} from URL: ${v}`); return v; } return null; }
-                 const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']); const initGov = setDropdown('governorate', governorateSelect, allGovernorates); const initSpec = setDropdown('specialization', specializationSelect, allSpecialties); const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes); const initName = urlParams.get('name'); let plcSetFromUrl = false;
-                 if (initName && allPlcs && allPlcs.includes(initName)) { const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`); if (plcCard) { /* Open collapsible if needed */ const plcSection = plcCard.closest('.collapsible-section'); if (plcSection && !plcSection.classList.contains('is-open')) plcSection.querySelector('.collapsible-header').click(); setTimeout(() => { plcCard.click(); /* Clicks trigger search w/ scroll */ }, 50); triggeredSearch = true; plcSetFromUrl = true; } }
-                 else if (initFac) { const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`); if (facCard) { facCard.click(); /* Click facility triggers search NO scroll */ triggeredSearch = true; /* Count as search done */ } else { currentSelectedFacilityType = initFac; filterPlcCardsByFacilityType(initFac); } }
-                 else if (!plcSetFromUrl) { filterPlcCardsByFacilityType(null); }
-                 if (initName && !plcSetFromUrl && doctorNameInput) { doctorNameInput.value = initName; }
-                 if (!triggeredSearch && (initProv || initGov || initSpec || initFac || initName) ) {
-                     console.log(`Performing initial search due to non-card URL params`);
-                      searchDoctors(null, true, false); // No scroll for direct URL params
-                  } else if (!triggeredSearch) { // Only run default if nothing set in URL
-                     console.log("Performing initial default doctor display...");
-                      searchDoctors(null, true, false);
-                  } else { console.log("Initial search was (or will be) triggered by URL parameter card selection."); }
-             } catch (e) { console.error("Error processing URL parameters:", e); searchDoctors(null, true, false); filterPlcCardsByFacilityType(null); }
+                 const urlParams = new URLSearchParams(window.location.search);
+                 let triggeredSearchByCard = false; // Flag to see if a card click handled the initial search
 
+                 // Function to set dropdown from URL param
+                 function setDropdown(param, el, dataArray) {
+                     const v = urlParams.get(param);
+                     if (v && el && dataArray && dataArray.includes(v)) {
+                         el.value = v;
+                         console.log(`Set ${param} from URL: ${v}`);
+                         return v; // Return the value if set
+                     }
+                     return null;
+                 }
 
-            // Setup Scroll Observer
-            setTimeout(() => { console.log("Setting up scroll observer..."); setupScrollObserver(); }, 100);
+                 // Set dropdowns first
+                 const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']);
+                 const initGov = setDropdown('governorate', governorateSelect, allGovernorates);
+                 const initSpec = setDropdown('specialization', specializationSelect, allSpecialties);
+                 const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes);
+                 const initName = urlParams.get('name');
+
+                let plcSetFromUrl = false;
+
+                // Priority: If 'name' matches a PLC, click its card
+                 if (initName && allPlcs && allPlcs.includes(initName)) {
+                     const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`);
+                     if (plcCard) {
+                         const plcSection = plcCard.closest('.collapsible-section');
+                         // Open collapsible if needed, then click after a short delay
+                         if (plcSection && !plcSection.classList.contains('is-open')) {
+                             plcSection.querySelector('.collapsible-header').click();
+                         }
+                         setTimeout(() => {
+                             plcCard.click(); // Triggers search WITH scroll via setPlcFilterAndSearch
+                             console.log("Initial search triggered by PLC card click from URL.");
+                         }, 100); // Delay to allow collapsible animation
+                         triggeredSearchByCard = true;
+                         plcSetFromUrl = true; // Mark that PLC name was handled
+                     }
+                 }
+
+                 // Else if 'facility_type' is set, click its card (if no PLC name match)
+                 if (!triggeredSearchByCard && initFac) {
+                     const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`);
+                     if (facCard) {
+                        const facSection = facCard.closest('.collapsible-section');
+                         if (facSection && !facSection.classList.contains('is-open')) {
+                             facSection.querySelector('.collapsible-header').click();
+                         }
+                        setTimeout(() => {
+                              facCard.click(); // Triggers search WITHOUT scroll via setFacilityTypeFilterAndSearch
+                              console.log("Initial search triggered by Facility Type card click from URL.");
+                        }, 100);
+                         triggeredSearchByCard = true;
+                     } else {
+                         // Card not found, but filter PLCs anyway
+                         currentSelectedFacilityType = initFac;
+                         filterPlcCardsByFacilityType(initFac);
+                     }
+                 }
+
+                 // If no card click triggered, ensure PLC cards are filtered based on facility type (if any)
+                 if (!triggeredSearchByCard) {
+                     filterPlcCardsByFacilityType(initFac); // Filter based on URL param if present
+                 }
+
+                 // Set name input if it wasn't handled as a PLC card click
+                 if (initName && !plcSetFromUrl && doctorNameInput) {
+                     doctorNameInput.value = initName;
+                 }
+
+                 // Perform initial search IF NOT already triggered by a card click AND there were URL params
+                 if (!triggeredSearchByCard && (initProv || initGov || initSpec || initFac || initName)) {
+                     console.log(`Performing initial search due to non-card URL params present.`);
+                     searchDoctors(null, true, false); // Initial search, NO SCROLL
+                 } else if (!triggeredSearchByCard) { // Only run default display if nothing set in URL at all
+                     console.log("Performing initial default doctor display (no relevant URL params).");
+                     searchDoctors(null, true, false); // Initial display, NO SCROLL
+                 } else {
+                     console.log("Initial search was (or will be) triggered by URL parameter card selection.");
+                 }
+
+             } catch (e) {
+                 console.error("Error processing URL parameters:", e);
+                 // Fallback to default display on error
+                 filterPlcCardsByFacilityType(null);
+                 searchDoctors(null, true, false);
+             }
+
+            // Setup Scroll Observer after initial setup/potential search
+             setTimeout(() => {
+                 console.log("Setting up scroll observer...");
+                 setupScrollObserver();
+             }, 300); // Delay slightly to allow initial content render
 
             console.log("Initialization complete.");
         });
