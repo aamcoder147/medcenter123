@@ -37,6 +37,7 @@
             --scroll-animation-duration: 0.6s;
             --stagger-delay: 0.12s;
             --counter-animation-duration: 1500ms;
+            --collapse-transition-speed: 0.4s; /* For collapsible sections */
         }
 
         /* --- Base & Global Styles --- */
@@ -68,7 +69,7 @@
         *:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.25); border-radius: 4px; }
         select:focus, input[type="text"]:focus { outline: none; }
         select:focus-visible, input[type="text"]:focus-visible { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.15); }
-        .btn:focus-visible { box-shadow: 0 2px 4px var(--shadow-color), 0 0 0 3px rgba(0, 122, 122, 0.25); }
+        .btn:focus-visible, button.collapsible-header:focus-visible { box-shadow: 0 2px 4px var(--shadow-color), 0 0 0 3px rgba(0, 122, 122, 0.25); } /* Added collapsible header focus */
         .specialty-card:focus-visible, .facility-type-card:focus-visible, .plc-card:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; box-shadow: 0 8px 15px var(--shadow-color-medium), 0 0 0 3px rgba(0, 122, 122, 0.15); }
         .doctor-card:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; box-shadow: 0 8px 15px var(--shadow-color-strong), 0 0 0 3px rgba(0, 122, 122, 0.15); }
 
@@ -128,6 +129,73 @@
         .search-button-container { display: flex; justify-content: center; width: 100%; margin-top: 1rem; gap: 1rem; }
         .search-button-container .btn.search-btn { flex-basis: 220px; flex-grow: 0; width: auto; padding: 0.8rem 2rem; font-size: 1.05rem; }
 
+        /* --- Collapsible Section Styles --- */
+        .collapsible-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 1.5rem; /* Space between collapsible sections */
+            background-color: var(--bg-primary); /* Give it a background */
+             box-shadow: 0 2px 4px var(--shadow-color);
+        }
+        button.collapsible-header { /* Make header clickable button */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            background-color: transparent; /* Button bg is transparent */
+            border: none; /* No button border */
+            border-bottom: 1px solid var(--border-color); /* Separator when closed */
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit; /* Use body font */
+            border-radius: 8px 8px 0 0; /* Match container top corners */
+            transition: background-color var(--transition-speed) ease-in-out;
+        }
+        .collapsible-section.is-open button.collapsible-header {
+             border-bottom-color: transparent; /* Hide border when open */
+        }
+         button.collapsible-header:hover {
+             background-color: var(--bg-secondary);
+         }
+
+        .collapsible-title {
+            font-size: 1.4rem; /* Title size */
+            font-weight: 700;
+            color: var(--text-dark);
+            font-family: 'Lato', sans-serif;
+            margin: 0; /* Remove default margin */
+        }
+        .collapsible-icon {
+            font-size: 1.1rem;
+            color: var(--text-medium);
+            transition: transform var(--collapse-transition-speed) ease-in-out;
+             margin-left: 1rem;
+        }
+        .collapsible-section.is-open .collapsible-icon {
+            transform: rotate(180deg);
+            color: var(--accent-primary);
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--collapse-transition-speed) ease-in-out,
+                        padding var(--collapse-transition-speed) ease-in-out;
+             padding: 0 1.5rem; /* Horizontal padding only when closed */
+             background-color: var(--bg-primary); /* Content has background */
+             border-radius: 0 0 8px 8px; /* Match container bottom corners */
+        }
+        .collapsible-section.is-open .collapsible-content {
+             max-height: 1000px; /* Arbitrary large height */
+             padding: 2rem 1.5rem; /* Vertical padding when open */
+             border-top: 1px solid var(--border-color); /* Add top border when open */
+        }
+        .clear-filter-button-container { /* Container for the "View All" button */
+             text-align: center;
+             margin-top: 2.5rem;
+        }
+        /* --- End Collapsible --- */
+
         /* --- How It Works Section --- */
         .how-it-works-grid, .how-it-works-grid-standalone { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2.5rem; text-align: center; margin-top: 4rem; }
         .how-it-works-step { padding: 2rem; transition: transform 0.3s ease, box-shadow 0.3s ease; background: var(--bg-primary); border-radius: 8px; box-shadow: 0 4px 8px var(--shadow-color); border: 1px solid var(--border-color); }
@@ -138,7 +206,7 @@
         .how-it-works-step:hover .icon { transform: scale(1.15) rotate(-8deg); color: var(--accent-primary-dark); }
         .how-it-works-section { border-top: 1px solid var(--border-color); }
 
-        /* --- Featured Sections (Specialties, Facility Types, PLCs) --- */
+        /* --- Featured Sections (Grids inside Collapsible Content) --- */
         .featured-specialties-grid, .featured-facility-types-grid, .featured-plcs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.8rem; }
 
         /* --- Individual Card Styles (Specialty, Facility Type, PLC) --- */
@@ -209,8 +277,8 @@
         /* --- Doctors Grid --- */
         .doctors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.8rem; align-items: stretch; /* Make cards fill height */ }
 
-        /* --- UPDATED Doctor Card (Layout Refined) --- */
-        .doctor-card { background: var(--bg-primary); border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.2rem; transition: transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease), border-color var(--transition-speed) var(--transition-ease); box-shadow: 0 4px 10px var(--shadow-color); height: 100%; /* Ensure cards take full height */ }
+        /* --- UPDATED Doctor Card --- */
+        .doctor-card { cursor: pointer; background: var(--bg-primary); border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.2rem; transition: transform var(--transition-speed) var(--transition-ease), box-shadow var(--transition-speed) var(--transition-ease), border-color var(--transition-speed) var(--transition-ease); box-shadow: 0 4px 10px var(--shadow-color); height: 100%; }
         .doctor-card:hover { transform: translateY(-6px); border-color: var(--accent-primary-light); box-shadow: 0 10px 20px var(--shadow-color-medium); }
         .doctor-card-top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; width: 100%; }
         .doctor-photo { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; display: block; flex-shrink: 0; border: 2px solid var(--border-color); transition: border-color var(--transition-speed) var(--transition-ease), transform var(--transition-speed) var(--transition-ease); }
@@ -226,69 +294,29 @@
         .doctor-primary-info .rating-display .review-count { color: var(--text-medium); font-size: 0.8rem; }
         .doctor-primary-info .rating-display .no-reviews { font-style: italic; color: var(--text-medium); font-size: 0.8rem; }
 
-        /* --- Doctor Info Section (Bottom - Details & Availability Columns) --- */
-        .doctor-info {
-            padding-top: 1rem; /* Add space above bottom section */
-            border-top: 1px solid var(--border-color); /* Visual separator */
-            width: 100%;
-            display: flex;
-            flex-direction: column; /* Stack columns container and button */
-            flex-grow: 1; /* Allow this section to grow */
-            margin-top: auto; /* Push towards bottom */
-        }
-
-        /* --- Columns Container --- */
-        .doctor-info-columns {
-            display: flex;
-            flex-direction: row; /* Side-by-side columns */
-            width: 100%;
-            gap: 1rem; /* Space between columns/divider */
-            margin-bottom: 1rem; /* Space before button */
-            flex-grow: 1; /* Allow columns to fill available space */
-        }
-
-        /* --- Left Column (Details) --- */
-        .doctor-info-left {
-            flex: 1 1 55%; /* Give slightly more space to details, allow shrinking */
-            display: flex;
-            flex-direction: column;
-            min-width: 0; /* Prevent overflow */
-        }
-        .doctor-details { font-size: 0.85rem; color: var(--text-medium); line-height: 1.5; margin-bottom: 0; /* Removed bottom margin */ width: 100%; text-align: left; }
+        /* --- Doctor Info Section (Bottom - Columns & Button) --- */
+        .doctor-info { padding-top: 1rem; border-top: 1px solid var(--border-color); width: 100%; display: flex; flex-direction: column; flex-grow: 1; margin-top: auto; }
+        .doctor-info-columns { display: flex; width: 100%; gap: 1rem; margin-bottom: 1rem; flex-grow: 1; }
+        .doctor-info-left { flex: 1 1 55%; display: flex; flex-direction: column; min-width: 0; }
+        .doctor-details { font-size: 0.85rem; color: var(--text-medium); line-height: 1.5; margin-bottom: 0; width: 100%; text-align: left; }
         .doctor-details p { margin-bottom: 0.4rem; display: flex; align-items: center; justify-content: flex-start; }
         .doctor-details i { margin-right: 0.6rem; color: var(--accent-primary-light); width: 1.3em; text-align: center; transition: color var(--transition-speed) var(--transition-ease); flex-shrink: 0; }
         .doctor-card:hover .doctor-details i { color: var(--accent-primary); }
         .doctor-details i.fa-map-pin, .doctor-details i.fa-map-marker-alt, .doctor-details i.fa-hospital, .doctor-details i.fa-clinic-medical { color: var(--accent-primary); }
-        .doctor-details p:last-child { margin-bottom: 0; } /* Remove margin from last detail item */
-
-
-        /* --- Vertical Divider --- */
-        .vertical-divider {
-             border-left: 1px solid var(--border-color);
-             align-self: stretch; /* Make it stretch to the height of the column container */
-             margin: 0 0.2rem; /* Small horizontal margin */
-        }
-
-        /* --- Right Column (Availability) --- */
-        .doctor-info-right {
-            flex: 1 1 40%; /* Take remaining space, allow shrinking */
-            display: flex;
-            flex-direction: column;
-             min-width: 0; /* Prevent overflow */
-        }
-        .availability-details { font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0; /* Reset margin */ width: 100%; text-align: left; }
+        .doctor-details p:last-child { margin-bottom: 0; }
+        .vertical-divider { border-left: 1px solid var(--border-color); align-self: stretch; margin: 0 0.2rem; }
+        .doctor-info-right { flex: 1 1 40%; display: flex; flex-direction: column; min-width: 0; }
+        .availability-details { font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0; width: 100%; text-align: left; }
         .availability-details .availability-title { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem; }
         .availability-details .availability-title i { color: var(--accent-primary); font-size: 1em; }
-        .availability-details p { margin-bottom: 0.3rem; padding-left: 0; /* Removed indent */ line-height: 1.4; } /* Style for each availability line */
+        .availability-details p { margin-bottom: 0.3rem; padding-left: 0; line-height: 1.4; }
         .availability-details p:last-child { margin-bottom: 0; }
-
-        /* --- Booking button (Below Columns) --- */
-        .book-btn { margin-top: 1rem; /* Space below columns */ width: auto; font-size: 0.9rem; padding: 0.5rem 1.2rem; align-self: flex-start; /* Or center: align-self: center; */ }
-
+        .book-btn { margin-top: auto; /* Push button to bottom */ padding-top: 0.8rem; /* Ensure space above if content is short */ width: auto; font-size: 0.9rem; padding: 0.5rem 1.2rem; align-self: flex-start; }
 
         /* --- No Results Message --- */
         #noResultsMessage { color: var(--text-medium); text-align: center; padding: 6rem 1rem; font-size: 1.15rem; display: none; }
         #noResultsMessage i { display: block; font-size: 4rem; margin-bottom: 1.5rem; color: var(--border-color-strong); animation: zoomIn 0.8s ease-out; }
+        #noResultsMessage p { line-height: 1.6; }
 
         /* --- Footer --- */
         .footer { background: #1A202C; color: #a0aec0; padding: 5rem 5% 2rem; margin-top: 0; border-top: 5px solid var(--accent-primary); }
@@ -318,6 +346,47 @@
         .flash-message.info::before { content: '\f05a'; color: var(--info); }
         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
 
+        /* --- Floating 'Go to Results' Button --- */
+        #goToResultsBtn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 999;
+            background-color: var(--accent-primary-dark);
+            color: var(--text-light);
+            border: none;
+            border-radius: 50%; /* Circular */
+            width: 55px;
+            height: 55px;
+            font-size: 1.4rem; /* Icon size */
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 50, 50, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.8);
+            transition: opacity var(--transition-speed) var(--transition-ease),
+                        visibility var(--transition-speed) var(--transition-ease),
+                        transform var(--transition-speed) var(--transition-ease),
+                        background-color var(--transition-speed) var(--transition-ease);
+        }
+        #goToResultsBtn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        #goToResultsBtn:hover {
+            background-color: var(--accent-primary);
+            transform: scale(1.1);
+        }
+        #goToResultsBtn:focus-visible { /* Ensure focus style is visible */
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 3px;
+            box-shadow: 0 4px 12px rgba(0, 50, 50, 0.25), 0 0 0 3px rgba(0, 122, 122, 0.25);
+        }
+
 
         /* --- Responsive Design --- */
         @media (max-width: 1024px) {
@@ -331,20 +400,18 @@
             .search-form { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
             .site-reviews-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
             .search-button-container .btn.search-btn { flex-basis: 200px; }
-            .doctors-grid { gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } /* Adjust grid */
+            .doctors-grid { gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } /* Increase min-width slightly */
 
-            /* Doctor Card Tablet Adjustments */
-            .doctor-card { padding: 1rem; }
+            /* Doctor Card Tablet */
+            .doctor-card { padding: 1.1rem; }
             .doctor-photo { width: 70px; height: 70px; }
-            .doctor-card-top { gap: 0.9rem; margin-bottom: 0.8rem;}
+            .doctor-card-top { gap: 0.9rem; margin-bottom: 0.9rem;}
             .doctor-primary-info h3 { font-size: 1.1rem;}
-            .doctor-info { padding-top: 0.8rem;}
-            .doctor-info-columns { gap: 0.8rem; }
-            .doctor-info-left { flex-basis: 50%; }
-            .doctor-info-right { flex-basis: 45%; }
-            .doctor-details { font-size: 0.8rem;}
-            .availability-details { font-size: 0.8rem; }
-            .book-btn { font-size: 0.85rem; padding: 0.4rem 1rem; margin-top: 0.8rem; }
+            .doctor-info { padding-top: 0.9rem;}
+            .doctor-info-columns { gap: 1rem; } /* Increase gap slightly */
+            .doctor-details { font-size: 0.83rem;} /* Slightly larger */
+            .availability-details { font-size: 0.83rem; }
+            .book-btn { font-size: 0.88rem; }
         }
 
         @media (max-width: 768px) {
@@ -371,16 +438,19 @@
             #site-review-form-section .form-container { padding: 2.5rem 1.5rem; }
             .trust-factors-grid { grid-template-columns: 1fr; }
 
-             /* Doctor Card Mobile Adjustments: Stack columns */
+             /* Doctor Card Mobile: Stack columns */
             .doctor-photo { width: 65px; height: 65px; }
-            .doctor-card-top { gap: 0.8rem; margin-bottom: 0.8rem;} /* Keep top row layout */
+            .doctor-card-top { gap: 0.8rem; margin-bottom: 0.8rem;}
             .doctor-primary-info h3 { font-size: 1.05rem;}
             .doctor-info { padding-top: 0.8rem; }
             .doctor-info-columns { flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; } /* Stack columns */
             .doctor-info-left, .doctor-info-right { flex-basis: auto; width: 100%; } /* Reset basis */
             .vertical-divider { display: none; } /* Hide divider */
-             .availability-details { margin-top: 0; } /* Remove top margin if stacked */
+             .availability-details { margin-top: 0.2rem; } /* Adjust top margin when stacked */
+             .doctor-details { margin-bottom: 0.5rem;} /* Space before availability */
             .book-btn { align-self: center; margin-top: 1rem; } /* Center button */
+
+             #goToResultsBtn { width: 50px; height: 50px; font-size: 1.2rem; bottom: 20px; right: 20px;}
         }
 
         @media (max-width: 480px) {
@@ -397,15 +467,15 @@
             /* --- RESPONSIVE DOCTOR CARD (Small screens) --- */
              .doctor-card { padding: 0.9rem; }
              .doctor-card-top { gap: 0.7rem; margin-bottom: 0.7rem; }
-             .doctor-photo { width: 60px; height: 60px; } /* Even smaller photo */
+             .doctor-photo { width: 60px; height: 60px; }
              .doctor-primary-info h3 { font-size: 1rem; }
              .doctor-primary-info .specialization { font-size: 0.8rem; margin-bottom: 0.3rem; }
              .doctor-primary-info .rating-display { font-size: 0.8rem; }
-             .doctor-info { padding-top: 0.7rem;} /* Adjust space */
-             .doctor-info-columns { gap: 0.6rem; } /* Tighter gap when stacked */
+             .doctor-info { padding-top: 0.7rem;}
+             .doctor-info-columns { gap: 0.6rem; }
              .doctor-details { font-size: 0.8rem; }
              .availability-details { font-size: 0.8rem; }
-             .book-btn { font-size: 0.85rem; padding: 0.4rem 1rem; }
+             .book-btn { font-size: 0.85rem; padding: 0.4rem 1rem; margin-top: 0.8rem; }
              /* End Responsive Doctor Card */
 
             .stat-number { font-size: 2.4rem; }
@@ -433,6 +503,12 @@
             .section-padding { padding: 2.5rem 0; }
             .section-padding-sm { padding: 1.5rem 0; }
             .flash-messages { width: 90%; left: 5%; right: 5%; top: 70px; }
+
+            .collapsible-header { padding: 1rem 1.2rem;}
+            .collapsible-title { font-size: 1.2rem; }
+            .collapsible-icon { font-size: 1rem;}
+            .collapsible-content { padding: 0 1.2rem;}
+             .collapsible-section.is-open .collapsible-content { padding: 1.5rem 1.2rem; }
         }
 
     </style>
@@ -464,13 +540,12 @@
 
     <!-- Hero Section Start -->
     <section class="hero-section" id="search-section">
-        <div class="container">
-             <h1 class="hero-title">Find & Book <span>Clinic Appointments</span>, Effortlessly.</h1>
+            <h1 class="hero-title">Find & Book <span>Clinic Appointments</span>, Effortlessly.</h1>
              <p class="hero-subtitle">Access a network of trusted doctors and specialists near you. Your health journey starts here.</p>
              <div class="typing-effect-container"> <span id="text"></span> </div>
-             <div class="search-area-container reveal-on-scroll reveal-zoom">
+
                 <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Find Your Doctor</h2>
-                <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors();">
+                <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors(null, false, true);"> 
                     <div class="input-group">
                         <i class="fas fa-map-location-dot"></i>
                         <select id="province" aria-label="Select Province">
@@ -505,50 +580,60 @@
                     </div>
                 </form>
                 <div class="search-button-container">
-                    <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false)"><i class="fas fa-search"></i> Find Care</button>
+                    <button type="button" class="btn btn-primary search-btn" onclick="searchDoctors(null, false, true)"> {/* Set triggerScroll=true */}
+                         <i class="fas fa-search"></i> Find Care
+                    </button>
                 </div>
             </div>
         </div>
    </section>
     <!-- Hero Section End -->
 
-    <!-- Featured Facility Types Section Start -->
+    <!-- Featured Facility Types Section Start (Collapsible) -->
     <section class="featured-facility-types-section section-padding-sm">
         <div class="container">
-             <h2 class="section-title reveal-on-scroll">Explore Facility Types</h2>
-             <div class="featured-facility-types-grid">
-                 {% if facility_types %}
-                    {% for f_type in facility_types %}
-                         <div class="facility-type-card reveal-on-scroll" data-facility-type="{{ f_type }}" onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" role="button" tabindex="0" aria-pressed="false">
-                             {% set icon_class = 'fas fa-clinic-medical' %}
-                             {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %} {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %} {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %} {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %} {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %} {% endif %}
-                             <i class="{{ icon_class }} icon"></i> <h4>{{ f_type }}</h4>
-                         </div>
-                    {% endfor %}
-                 {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p> {% endif %}
-             </div>
-             <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll"> <button class="btn btn-secondary" onclick="clearFacilityTypeFilterAndSearch()">View All Facility Types</button> </div>
-         </div>
-    </section>
-    <!-- Featured Facility Types Section End -->
+             <div class="collapsible-section">
+                <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="facility-types-content">
+                     <h3 class="collapsible-title">Explore Facility Types</h3>
+                     <i class="fas fa-chevron-down collapsible-icon"></i>
+                </button>
+                 <div class="collapsible-content" id="facility-types-content">
+                     <div class="featured-facility-types-grid">
+                         {% if facility_types %}
+                            {% for f_type in facility_types %}
+                                 <div class="facility-type-card reveal-on-scroll" data-facility-type="{{ f_type }}" onclick="setFacilityTypeFilterAndSearch('{{ f_type }}', this)" role="button" tabindex="0" aria-pressed="false">
+                                     {% set icon_class = 'fas fa-clinic-medical' %}
+                                     {% if 'hospital' in f_type|lower %}{% set icon_class = 'fas fa-hospital' %} {% elif 'clinic' in f_type|lower %}{% set icon_class = 'fas fa-clinic-medical' %} {% elif 'center' in f_type|lower or 'centre' in f_type|lower or 'hub' in f_type|lower %}{% set icon_class = 'fas fa-building' %} {% elif 'post' in f_type|lower %}{% set icon_class = 'fas fa-plus-square' %} {% elif 'lab' in f_type|lower %}{% set icon_class = 'fas fa-flask-vial' %} {% endif %}
+                                     <i class="{{ icon_class }} icon"></i> <h4>{{ f_type }}</h4>
+                                 </div>
+                            {% endfor %}
+                         {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load facility types.</p> {% endif %}
+                     </div>
+                     <div class="clear-filter-button-container"> <button class="btn btn-secondary" onclick="clearFacilityTypeFilterAndSearch()">View All Facility Types</button> </div>
+                 </div>
+            </div>
 
-    <!-- Featured PLCs (Places/Clinics) Section Start -->
-    <section class="featured-plcs-section section-padding-sm">
-        <div class="container">
-            <h2 class="section-title reveal-on-scroll">Explore Clinics & Centers</h2>
-            <div class="featured-plcs-grid">
-                {% if plcs %}
-                   {% for plc in plcs %}
-                       {% set plc_slug = plc | lower | replace(' ', '_') | replace('&', 'and') | replace('.', '') | replace("'", '') %}
-                       <div class="plc-card reveal-on-scroll" data-plc-name="{{ plc }}" onclick="setPlcFilterAndSearch('{{ plc }}', this)" role="button" tabindex="0" aria-pressed="false">
-                           <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}" alt="Photo of {{ plc }}" class="plc-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                           <i class="fas fa-hospital-user icon" style="display: none;"></i> <h4>{{ plc }}</h4>
-                           <div class="plc-details-button-container"> <a href="{{ url_for('center_details', plc_name=plc) }}" class="btn btn-secondary btn-small plc-details-btn" onclick="event.stopPropagation();"><i class="fas fa-info-circle"></i> View Details</a> </div>
-                       </div>
-                   {% endfor %}
-               {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p> {% endif %}
-           </div>
-           <div style="text-align: center; margin-top: 2.5rem;" class="reveal-on-scroll"> <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button> </div>
+             <div class="collapsible-section">
+                <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="plcs-content">
+                    <h3 class="collapsible-title">Explore Clinics & Centers</h3>
+                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                </button>
+                 <div class="collapsible-content" id="plcs-content">
+                    <div class="featured-plcs-grid">
+                         {% if plcs %}
+                            {% for plc in plcs %}
+                                {% set plc_slug = plc | lower | replace(' ', '_') | replace('&', 'and') | replace('.', '') | replace("'", '') %}
+                                <div class="plc-card reveal-on-scroll" data-plc-name="{{ plc }}" onclick="setPlcFilterAndSearch('{{ plc }}', this)" role="button" tabindex="0" aria-pressed="false">
+                                    <img src="{{ url_for('static', filename='plc_photos/' + plc_slug + '.jpg') }}" alt="Photo of {{ plc }}" class="plc-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <i class="fas fa-hospital-user icon" style="display: none;"></i> <h4>{{ plc }}</h4>
+                                    <div class="plc-details-button-container"> <a href="{{ url_for('center_details', plc_name=plc) }}" class="btn btn-secondary btn-small plc-details-btn" onclick="event.stopPropagation();"><i class="fas fa-info-circle"></i> View Details</a> </div>
+                                </div>
+                            {% endfor %}
+                        {% else %} <p class="section-subtitle" style="grid-column: 1 / -1;">Could not load clinics.</p> {% endif %}
+                    </div>
+                    <div class="clear-filter-button-container"> <button class="btn btn-secondary" onclick="clearPlcFilterAndSearch()">View All Clinics & Centers</button> </div>
+                 </div>
+            </div>
         </div>
     </section>
     <!-- Featured PLCs Section End -->
@@ -558,7 +643,10 @@
         <div class="container">
             <h2 class="section-title" id="resultsTitle" style="display: none;">Available Doctors</h2>
             <div class="doctors-grid" id="resultsContainer" aria-live="polite"></div>
-            <div id="noResultsMessage" style="display: none;"> <i class="fas fa-user-times"></i> <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p> </div>
+            <div id="noResultsMessage" style="display: none;" aria-live="assertive"> {/* Added aria-live */}
+                 <i class="fas fa-user-times"></i>
+                 <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p>
+            </div>
          </div>
     </section>
     <!-- Doctors Results Section End -->
@@ -655,17 +743,25 @@
     </footer>
     <!-- Footer End -->
 
+    <!-- Floating "Go to Results" Button -->
+     <button id="goToResultsBtn" aria-label="Go to Search Results" title="Go to Search Results">
+         <i class="fas fa-arrow-down"></i>
+     </button>
+
+
     <!-- JavaScript Start -->
     <script>
         /**
          * CareConnect Frontend Script
-         * Handles: Navbar scroll, Dynamic content (Doctors), Card selections, Animations, Forms, Initialization.
+         * Handles: Navbar scroll, Dynamic content (Doctors), Card selections, Animations, Forms, Initialization, Collapsible Sections, Floating Button.
          */
 
+        // --- Constants & Global Variables ---
         const SCROLL_THRESHOLD = 50;
         const STAGGER_BASE_DELAY = 120;
         const COUNTER_ANIMATION_DURATION = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--counter-animation-duration').trim() || '1500', 10);
         const DEBOUNCE_DELAY = 400;
+        const GO_TO_RESULTS_SCROLL_OFFSET = 150; // How far past hero to show button
 
         let intersectionObserver;
         let searchTimeoutId = null;
@@ -673,6 +769,7 @@
         let currentSelectedPlcName = null;
         let isInitialLoadSearch = true;
 
+        // --- Backend Data ---
         const allDoctorsData = {{ doctors | default([]) | tojson | safe }};
         const allGovernorates = {{ governorates | tojson | safe if governorates else '[]' }};
         const allSpecialties = {{ specialties | tojson | safe if specialties else '[]' }};
@@ -680,12 +777,14 @@
         const allPlcs = {{ plcs | tojson | safe if plcs else '[]' }};
         const pageStats = {{ stats | tojson | safe if stats else '{}' }};
 
+        // --- DOM Element References ---
         const navbar = document.getElementById('navbar');
         const copyrightYearEl = document.getElementById('copyright-year');
         const resultsContainer = document.getElementById('resultsContainer');
         const noResultsMessage = document.getElementById('noResultsMessage');
         const resultsTitle = document.getElementById('resultsTitle');
         const resultsSection = document.getElementById('doctors-results');
+        const heroSection = document.getElementById('search-section'); // Get hero section
         const textElement = document.getElementById("text");
         const doctorNameInput = document.getElementById('doctorName');
         const facilityTypeSelect = document.getElementById('facilityType');
@@ -694,25 +793,95 @@
         const provinceSelect = document.getElementById('province');
         const searchButton = document.querySelector('.search-btn');
         const clearFiltersButton = document.getElementById('clearFiltersBtn');
+        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+        const goToResultsBtn = document.getElementById('goToResultsBtn');
 
+
+        // --- Navbar Scroll Effect & Copyright Year ---
         if (navbar) { window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > SCROLL_THRESHOLD)); }
         if (copyrightYearEl) { copyrightYearEl.textContent = new Date().getFullYear(); }
 
-        function searchDoctorsDebounced() { clearTimeout(searchTimeoutId); searchTimeoutId = setTimeout(() => searchDoctors(null, false), DEBOUNCE_DELAY); }
 
-        function searchDoctors(event = null, isInitial = false) {
+        // --- Collapsible Section Logic ---
+        collapsibleHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const section = header.closest('.collapsible-section');
+                const content = section.querySelector('.collapsible-content');
+                const icon = header.querySelector('.collapsible-icon');
+                const isOpen = section.classList.contains('is-open');
+
+                // Set ARIA attribute
+                header.setAttribute('aria-expanded', !isOpen);
+
+                if (isOpen) {
+                    // Close the section
+                     section.classList.remove('is-open');
+                     icon.classList.remove('fa-chevron-up');
+                     icon.classList.add('fa-chevron-down');
+                } else {
+                    // Open the section
+                     section.classList.add('is-open');
+                     icon.classList.remove('fa-chevron-down');
+                     icon.classList.add('fa-chevron-up');
+                    // Ensure reveal-on-scroll animations inside are observed
+                    if (intersectionObserver) {
+                         content.querySelectorAll('.reveal-on-scroll:not(.is-visible)').forEach(el => {
+                            intersectionObserver.observe(el);
+                        });
+                     }
+                }
+            });
+        });
+
+
+         // --- Floating "Go to Results" Button Logic ---
+         function checkScrollForGoToBtn() {
+             if (!goToResultsBtn || !heroSection) return;
+             const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
+             if (window.scrollY > heroBottom + GO_TO_RESULTS_SCROLL_OFFSET) {
+                 goToResultsBtn.classList.add('visible');
+             } else {
+                 goToResultsBtn.classList.remove('visible');
+             }
+         }
+         if (goToResultsBtn) {
+            window.addEventListener('scroll', checkScrollForGoToBtn, { passive: true }); // Efficient scroll listener
+             goToResultsBtn.addEventListener('click', () => {
+                if (resultsSection) {
+                     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 }
+            });
+         }
+
+
+        // --- Debounced Search Function ---
+        function searchDoctorsDebounced() {
+             clearTimeout(searchTimeoutId);
+             // Set triggerScroll to false for debounced searches
+             searchTimeoutId = setTimeout(() => searchDoctors(null, false, false), DEBOUNCE_DELAY);
+         }
+
+
+        // --- Doctor Search/Filter (Core Logic with Scroll Control) ---
+        /**
+         * Filters and displays doctors.
+         * @param {Event|null} event - The originating event (optional).
+         * @param {boolean} isInitial - Is this the initial page load search?
+         * @param {boolean} triggerScroll - Should scrolling to results be triggered? Defaults to false.
+         */
+        function searchDoctors(event = null, isInitial = false, triggerScroll = false) {
             if (searchButton && searchButton.disabled && !isInitial) return;
             if (searchButton) { searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...'; searchButton.disabled = true; }
             if (clearFiltersButton) clearFiltersButton.disabled = true;
 
-            isInitialLoadSearch = isInitial;
+            isInitialLoadSearch = isInitial; // Update global flag
             const province = provinceSelect?.value || '';
             const governorate = governorateSelect?.value || '';
             const specialization = specializationSelect?.value || '';
             const facilityType = facilityTypeSelect?.value || '';
             const nameQuery = doctorNameInput?.value.toLowerCase().trim() || '';
 
-            console.log("Searching with:", { province, governorate, specialization, facilityType, nameQuery });
+            console.log(`Searching with (scroll=${triggerScroll}):`, { province, governorate, specialization, facilityType, nameQuery });
 
             requestAnimationFrame(() => {
                  const filteredDoctors = allDoctorsData.filter(doctor => {
@@ -725,22 +894,36 @@
                  displayResults(filteredDoctors);
                  if (searchButton) { searchButton.innerHTML = '<i class="fas fa-search"></i> Find Care'; searchButton.disabled = false; }
                  if (clearFiltersButton) clearFiltersButton.disabled = false;
-                 if (!isInitialLoadSearch && filteredDoctors.length > 0 && resultsSection) { setTimeout(() => { resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); }, 150); }
+
+                 // Conditional Scroll to Results
+                 if (!isInitialLoadSearch && triggerScroll && filteredDoctors.length > 0 && resultsSection) {
+                    console.log("Scrolling to results triggered...");
+                     setTimeout(() => { resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); }, 150);
+                 } else if (triggerScroll && filteredDoctors.length === 0 && noResultsMessage) {
+                    // Optional: scroll to the 'no results' message if triggered and empty
+                    console.log("Scrolling to 'No Results' triggered...");
+                     setTimeout(() => { noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+                 }
                  isInitialLoadSearch = false;
             });
         }
 
+
+        // --- Clear All Search Filters ---
         function clearAllFilters() {
             console.log("Clearing all search filters.");
             if (provinceSelect) provinceSelect.value = ''; if (governorateSelect) governorateSelect.value = ''; if (specializationSelect) specializationSelect.value = ''; if (facilityTypeSelect) facilityTypeSelect.value = ''; if (doctorNameInput) doctorNameInput.value = '';
             currentSelectedFacilityType = null; currentSelectedPlcName = null;
             updateCardSelection(null, 'facility-type-card'); updateCardSelection(null, 'plc-card');
             filterPlcCardsByFacilityType(null);
-            searchDoctors(null, false);
+            // Trigger search WITHOUT scroll
+            searchDoctors(null, false, false);
             const searchArea = document.getElementById('search-section');
             if(searchArea) { setTimeout(() => { searchArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
         }
 
+
+        // --- Star Rating HTML Generator ---
         function getStarsHTML(rating) {
              if (rating === null || typeof rating !== 'number' || rating < 0 || rating > 5) return '<span class="stars"><i class="far fa-star"></i>'.repeat(5) + '</span>';
              rating = Math.max(0, Math.min(5, rating));
@@ -749,12 +932,15 @@
              html += '<i class="fas fa-star"></i>'.repeat(full); html += half ? '<i class="fas fa-star-half-alt"></i>' : ''; html += '<i class="far fa-star"></i>'.repeat(empty); html += '</span>'; return html;
         }
 
+
+        // --- Display Search Results ---
         function displayResults(doctors) {
             if (!resultsContainer || !noResultsMessage || !resultsTitle) { console.error("Missing display elements for results."); return; }
             resultsContainer.innerHTML = ''; resultsContainer.style.opacity = '0';
 
             if (!Array.isArray(doctors) || doctors.length === 0) {
                 noResultsMessage.style.display = 'block'; resultsContainer.style.display = 'none'; resultsTitle.style.display = 'none';
+                 checkScrollForGoToBtn(); // Re-check button visibility
             } else {
                 noResultsMessage.style.display = 'none'; resultsContainer.style.display = 'grid'; resultsTitle.style.display = 'block';
                 resultsTitle.textContent = `Found ${doctors.length} Doctor${doctors.length !== 1 ? 's' : ''}`;
@@ -764,31 +950,19 @@
                     const card = document.createElement('div');
                     card.className = 'doctor-card reveal-on-scroll'; card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
 
-                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=150x150`; // Match CSS size (75px)
-                    const name = doctor.name || 'Doctor Name Unavailable';
-                    const spec = doctor.specialization || 'General Practice';
-                    const ratingValue = doctor.average_rating;
-                    const reviewCount = doctor.review_count || 0;
-                    const prov = doctor.province || '';
-                    const gov = doctor.governorate || '';
-                    const facType = doctor.facility_type || 'N/A';
-                    const avail = doctor.availability1shortform || null;
-                    const clinic = doctor.plc || null;
-                    const bookingUrl = `/booking/${doctor.id}`;
+                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=150x150`;
+                    const name = doctor.name || 'Doctor Name Unavailable'; const spec = doctor.specialization || 'General Practice'; const ratingValue = doctor.average_rating; const reviewCount = doctor.review_count || 0; const prov = doctor.province || ''; const gov = doctor.governorate || ''; const facType = doctor.facility_type || 'N/A'; const avail = doctor.availability1shortform || null; const clinic = doctor.plc || null; const bookingUrl = `/booking/${doctor.id}`;
 
-                    // Rating HTML
                     let ratingHTML = '';
                     if (reviewCount > 0 && typeof ratingValue === 'number') { ratingHTML = `<div class="rating-display">${getStarsHTML(ratingValue)} <span class="review-count">(${reviewCount} review${reviewCount !== 1 ? 's' : ''})</span></div>`; }
                     else { ratingHTML = `<div class="rating-display"><span class="review-count no-reviews"><i class="far fa-star" style="color: var(--text-medium); margin-right: 4px;"></i>No reviews yet</span></div>`; }
 
-                    // Details HTML (Left Column)
                     let detailsLeftHTML = `<div class="doctor-details">`;
                     if (prov || gov) { detailsLeftHTML += `<p><i class="fas fa-map-marker-alt"></i> ${prov}${prov && gov ? ', ' : ''}${gov}</p>`; }
                     if (clinic) { detailsLeftHTML += `<p><i class="fas fa-clinic-medical"></i> ${clinic}</p>`; }
                     detailsLeftHTML += `<p><i class="fas fa-hospital"></i> Facility: ${facType}</p>`;
                     detailsLeftHTML += `</div>`;
 
-                    // Availability HTML (Right Column)
                     let availabilityRightHTML = '';
                     if (avail && avail.trim() !== '') {
                         const availabilityLines = avail.split(',').map(part => part.trim()).filter(part => part !== '').map(part => `<p>${part}</p>`).join('');
@@ -796,8 +970,6 @@
                          else { availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Click Book Now for details</p></div>`; }
                     } else { availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Not specified</p></div>`; }
 
-
-                    // --- NEW HTML Structure with Columns ---
                     card.innerHTML = `
                          <div class="doctor-card-top">
                              <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=150x150';">
@@ -807,7 +979,7 @@
                                  ${ratingHTML}
                              </div>
                          </div>
-                         <div class="doctor-info"> {# Bottom section container #}
+                         <div class="doctor-info">
                              <div class="doctor-info-columns">
                                  <div class="doctor-info-left">
                                      ${detailsLeftHTML}
@@ -821,21 +993,19 @@
                                  <i class="far fa-calendar-check"></i> Book Now
                              </button>
                          </div>`;
-                    // --- End NEW HTML Structure ---
 
                     resultsContainer.appendChild(card);
                 });
                 setupScrollObserver();
-                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50);
+                setTimeout(() => { resultsContainer.style.opacity = '1'; checkScrollForGoToBtn(); }, 50);
             }
         }
 
-
+        // --- Card Selection & Filtering Helpers ---
         function updateCardSelection(selectedCard, categoryClass) {
             document.querySelectorAll(`.${categoryClass}`).forEach(card => { card.classList.remove('card-selected'); card.setAttribute('aria-pressed', 'false'); if (card.classList.contains('card-selected')) card.style.transition = ''; });
             if (selectedCard && selectedCard.classList.contains(categoryClass)) { selectedCard.classList.add('card-selected'); selectedCard.setAttribute('aria-pressed', 'true'); }
         }
-
         function filterPlcCardsByFacilityType(selectedType) {
              const plcCards = document.querySelectorAll('.plc-card'); let visibleCount = 0;
              plcCards.forEach(card => {
@@ -846,19 +1016,22 @@
              });
              console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`);
         }
-
         function setFacilityTypeFilterAndSearch(type, cardElement) {
              console.log(`Set Facility Type: ${type}`);
              if (cardElement?.classList.contains('card-selected')) { clearFacilityTypeFilterAndSearch(); return; }
              currentSelectedFacilityType = type; currentSelectedPlcName = null;
              updateCardSelection(cardElement, 'facility-type-card'); updateCardSelection(null, 'plc-card');
              if (facilityTypeSelect) facilityTypeSelect.value = type; if (doctorNameInput) doctorNameInput.value = '';
-             filterPlcCardsByFacilityType(type); searchDoctors(null, false);
+             filterPlcCardsByFacilityType(type);
+             // Trigger search WITH scroll, as it's an explicit filter action
+             searchDoctors(null, false, true);
          }
         function clearFacilityTypeFilterAndSearch() {
             console.log("Clear Facility Type Filter"); currentSelectedFacilityType = null;
             updateCardSelection(null, 'facility-type-card'); if (facilityTypeSelect) facilityTypeSelect.value = "";
-            filterPlcCardsByFacilityType(null); searchDoctors(null, false);
+            filterPlcCardsByFacilityType(null);
+             // Trigger search WITHOUT scroll
+            searchDoctors(null, false, false);
         }
         function setPlcFilterAndSearch(plcName, cardElement) {
             console.log(`Set PLC: ${plcName}`); if (!plcName || !cardElement) return;
@@ -869,14 +1042,18 @@
              const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null; updateCardSelection(facCard, 'facility-type-card');
              if (doctorNameInput) doctorNameInput.value = plcName; if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || '';
              if (cardElement.style.display === 'none') { cardElement.style.display = 'flex'; }
-             searchDoctors(null, false);
+              // Trigger search WITH scroll
+             searchDoctors(null, false, true);
          }
          function clearPlcFilterAndSearch() {
              console.log("Clear PLC Filter"); currentSelectedPlcName = null; updateCardSelection(null, 'plc-card');
              if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; }
-             filterPlcCardsByFacilityType(currentSelectedFacilityType); searchDoctors(null, false);
+             filterPlcCardsByFacilityType(currentSelectedFacilityType);
+             // Trigger search WITHOUT scroll
+             searchDoctors(null, false, false);
          }
 
+        // --- Typing Effect ---
         const textsToType = ["Need a specialist?", "Book check-ups online.", "Access verified doctors.", "Your health, scheduled simply."];
         let textIndex = 0; let charIndex = 0; let isDeleting = false; let typingTimeout;
         const typeSpeed = 90; const deleteSpeed = 50; const pauseBeforeDelete = 2200; const pauseBeforeType = 300;
@@ -889,12 +1066,14 @@
             textElement.style.animationPlayState = 'running'; typingTimeout = setTimeout(type, typeDelay);
         }
 
+        // --- Animated Counter for Stats Section ---
         function animateCounter(element) {
              if (!element) return; const targetStr = element.dataset.target; if (element.dataset.animated === 'true' || !targetStr) return; const target = parseInt(targetStr, 10); if (isNaN(target)) return; element.dataset.animated = 'true'; if (target === 0) { element.textContent = '0'; return; }
              let startTimestamp = null; const duration = COUNTER_ANIMATION_DURATION;
              const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const elapsed = timestamp - startTimestamp; const progress = Math.min(elapsed / duration, 1); const easedProgress = 1 - Math.pow(1 - progress, 3); const currentValue = Math.floor(easedProgress * target); element.textContent = currentValue.toLocaleString(); if (progress < 1) { window.requestAnimationFrame(step); } else { element.textContent = target.toLocaleString(); } }; window.requestAnimationFrame(step);
          }
 
+        // --- Intersection Observer for Scroll Animations ---
         function setupScrollObserver() {
             if (intersectionObserver) { intersectionObserver.disconnect(); }
              const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)'); if (elements.length === 0) return;
@@ -903,25 +1082,58 @@
              intersectionObserver = new IntersectionObserver(callback, options); elements.forEach(el => { el.style.opacity = '0'; intersectionObserver.observe(el); });
         }
 
+        // --- Initial Page Load Logic ---
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Initializing...");
-            if (provinceSelect) provinceSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false)); if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced); if (clearFiltersButton) clearFiltersButton.addEventListener('click', clearAllFilters);
-            if (facilityTypeSelect) { facilityTypeSelect.addEventListener('change', (e) => { const selectedValue = e.target.value; currentSelectedFacilityType = selectedValue; const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null; updateCardSelection(matchingCard, 'facility-type-card'); updateCardSelection(null, 'plc-card'); currentSelectedPlcName = null; if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; } filterPlcCardsByFacilityType(selectedValue); searchDoctors(e, false); }); }
+
+            // --- Attach Event Listeners ---
+            // Search form changes trigger search WITHOUT scroll
+            if (provinceSelect) provinceSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
+            if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
+            if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
+            if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced); // Debounced already sets scroll=false
+            if (clearFiltersButton) clearFiltersButton.addEventListener('click', clearAllFilters); // clearAllFilters handles scroll itself
+            if (facilityTypeSelect) {
+                 facilityTypeSelect.addEventListener('change', (e) => {
+                     const selectedValue = e.target.value;
+                     currentSelectedFacilityType = selectedValue;
+                     const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null;
+                     updateCardSelection(matchingCard, 'facility-type-card'); updateCardSelection(null, 'plc-card');
+                     currentSelectedPlcName = null;
+                     if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) { doctorNameInput.value = ""; }
+                     filterPlcCardsByFacilityType(selectedValue);
+                     // Trigger search WITHOUT scroll
+                     searchDoctors(e, false, false);
+                 });
+            }
             if (doctorNameInput) { doctorNameInput.addEventListener('keypress', function(event) { if (event.key === 'Enter') { event.preventDefault(); searchDoctorsDebounced(); clearTimeout(searchTimeoutId); } }); }
+
+            // Start typing effect
             if (textElement && textsToType.length > 0) { setTimeout(type, pauseBeforeType + 500); }
 
+            // Handle URL Params & Initial Search
             try {
                 const urlParams = new URLSearchParams(window.location.search); let runInitial = false;
                 function setDropdown(param, el, dataArray) { const v = urlParams.get(param); if (v && el && dataArray && dataArray.includes(v)) { el.value = v; console.log(`Set ${param} from URL: ${v}`); runInitial = true; return v; } return null; }
                 const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']); const initGov = setDropdown('governorate', governorateSelect, allGovernorates); const initSpec = setDropdown('specialization', specializationSelect, allSpecialties); const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes); const initName = urlParams.get('name'); let plcSetFromUrl = false;
-                if (initName && allPlcs && allPlcs.includes(initName)) { const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`); if (plcCard) { setPlcFilterAndSearch(initName, plcCard); plcSetFromUrl = true; runInitial = true; } }
-                else if (initFac) { const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`); if (facCard) { setFacilityTypeFilterAndSearch(initFac, facCard); } else { currentSelectedFacilityType = initFac; filterPlcCardsByFacilityType(initFac); runInitial = true; } }
+                if (initName && allPlcs && allPlcs.includes(initName)) { const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`); if (plcCard) { setPlcFilterAndSearch(initName, plcCard); plcSetFromUrl = true; runInitial = true; } } // setPlc triggers search WITH scroll
+                else if (initFac) { const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`); if (facCard) { setFacilityTypeFilterAndSearch(initFac, facCard); runInitial = true; } // setFacility triggers search WITH scroll
+                 else { currentSelectedFacilityType = initFac; filterPlcCardsByFacilityType(initFac); runInitial = true; /* Needs manual search if card not found */ } }
                 else if (!plcSetFromUrl) { filterPlcCardsByFacilityType(null); }
                 if (initName && !plcSetFromUrl && doctorNameInput) { doctorNameInput.value = initName; runInitial = true; }
-                console.log("Performing initial doctor display/search..."); searchDoctors(null, true);
-            } catch (e) { console.error("Error processing URL parameters:", e); searchDoctors(null, true); filterPlcCardsByFacilityType(null); }
+                 // Perform initial search (unless already triggered by URL param card selection)
+                 if (!runInitial) { console.log("Performing initial default doctor display..."); searchDoctors(null, true, false); }
+                 else { console.log("Initial search triggered by URL parameters."); }
+            } catch (e) { console.error("Error processing URL parameters:", e); searchDoctors(null, true, false); filterPlcCardsByFacilityType(null); }
 
-            setTimeout(() => { console.log("Setting up scroll observer..."); setupScrollObserver(); }, 100);
+
+            // Setup Scroll Observer and initial Go To Results Button check
+            setTimeout(() => {
+                 console.log("Setting up scroll observer...");
+                 setupScrollObserver();
+                 checkScrollForGoToBtn(); // Initial check for button visibility
+             }, 100);
+
             console.log("Initialization complete.");
         });
     </script>
