@@ -330,81 +330,8 @@
              </section> {# End doctor-profile-section #}
 
 
-           
-
-        {# --- Right Column (Booking Form) --- #}
-        <div class="form-column">
-             <section class="form-section-wrapper booking-form-wrapper">
-                 <form id="booking-form" method="POST" action="{{ url_for('confirm_booking') }}">
-                     {# Hidden fields to submit with the form #}
-                    <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
-                    <input type="hidden" name="doctor_name" value="{{ doctor.name }}">
-                     <input type="hidden" name="fingerprint" id="fingerprint-input"> {# FingerprintJS ID #}
-                    <input type="hidden" name="booking_date" id="selectedDateInput" required>
-                    <input type="hidden" name="booking_time" id="selectedTimeInput" required>
-
-                    <h3><i class="fas fa-calendar-check"></i> Select Appointment Date & Time</h3>
-
-                    {# Find Nearest Button #}
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <button type="button" id="findNearestBtn" class="btn btn-secondary" style="width: 100%;">
-                             <i class="fas fa-forward"></i> Find Nearest Available Slot <!-- Changed Icon -->
-                         </button>
-                         <div id="findNearestStatus" style="font-size: 0.85rem; text-align: center; margin-top: 5px; color: var(--text-medium); min-height: 1.2em;"></div> <!-- Placeholder for status msgs -->
-                    </div>
-
-                     {# Month Selection #}
-                     <div class="form-group">
-                        <label for="monthSlotsContainer">1. Select Month:</label>
-                        <div id="monthSlotsContainer" class="selection-container date-selection-grid">
-                            {# Placeholder - JS will populate #}
-                             <div class="slots-message"><i class="fas fa-spinner fa-spin"></i> Loading available months...</div>
-                        </div>
-                     </div>
-
-                     {# Day Selection - Initially hidden #}
-                    <div class="form-group" id="daySelectionGroup" style="display: none;">
-                        <label for="daySlotsContainer">2. Select Day:</label>
-                         <div id="daySlotsContainer" class="selection-container date-selection-grid">
-                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a month above first.</div>
-                         </div>
-                     </div>
-
-                     {# Time Selection - Initially hidden #}
-                    <div class="form-group" id="timeSelectionGroup" style="display: none;">
-                         <label for="timeSlotsContainer">3. Select Time Slot:</label>
-                         <div id="timeSlotsContainer" class="selection-container time-slots-grid">
-                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a day above first.</div>
-                        </div>
-                    </div>
-
-                    <hr> {# Separator before patient details #}
-
-                    <h3><i class="fas fa-user-edit"></i> Your Details for Booking</h3>
-
-                    <div class="form-group">
-                         <label for="patientName">Your Full Name:</label>
-                         <input type="text" id="patientName" name="patient_name" required autocomplete="name" placeholder="e.g. Hari Bahadur">
-                    </div>
-
-                    <div class="form-group">
-                         <label for="patientPhone">Your Phone Number:</label>
-                         <input type="tel" id="patientPhone" name="patient_phone" required pattern="[0-9]{9,15}" title="Enter 9-15 digits" autocomplete="tel" placeholder="e.g. 98XXXXXXXX">
-                    </div>
-
-                     <div class="form-group">
-                         <label for="notes">Notes for Doctor (Optional):</label>
-                         <textarea id="notes" name="notes" placeholder="e.g., Reason for visit, previous conditions..." maxlength="500"></textarea> {# Added maxlength #}
-                     </div>
-
-                    {# Submit Button - Initially disabled #}
-                    <button type="submit" id="confirmButton" class="btn btn-primary btn-block" disabled>
-                         <i class="fas fa-lock"></i> Select Month, Day & Time to Book <!-- Updated Text -->
-                    </button>
-                </form>
-            </section> {# End booking-form-wrapper #}
-             <!-- Reviews Section (Display + Form) -->
-             <section class="reviews-section">
+            <!-- Reviews Section (Display + Form) -->
+            <section class="reviews-section">
                 <h3><i class="fas fa-comments" style="margin-right: 8px; color: var(--accent-primary);"></i> Patient Reviews</h3>
 
                 <!-- Display Recent Reviews -->
@@ -487,6 +414,78 @@
             </section> {# End reviews-section #}
         </div> {# End Info Column #}
 
+
+        {# --- Right Column (Booking Form) --- #}
+        <div class="form-column">
+             <section class="form-section-wrapper booking-form-wrapper">
+                 <form id="booking-form" method="POST" action="{{ url_for('confirm_booking') }}">
+                     {# Hidden fields to submit with the form #}
+                    <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                    <input type="hidden" name="doctor_name" value="{{ doctor.name }}">
+                     <input type="hidden" name="fingerprint" id="fingerprint-input"> {# FingerprintJS ID #}
+                    <input type="hidden" name="booking_date" id="selectedDateInput" required>
+                    <input type="hidden" name="booking_time" id="selectedTimeInput" required>
+
+                    <h3><i class="fas fa-calendar-check"></i> Select Appointment Date & Time</h3>
+
+                    {# Find Nearest Button #}
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <button type="button" id="findNearestBtn" class="btn btn-secondary" style="width: 100%;">
+                             <i class="fas fa-forward"></i> Find Nearest Available Slot <!-- Changed Icon -->
+                         </button>
+                         <div id="findNearestStatus" style="font-size: 0.85rem; text-align: center; margin-top: 5px; color: var(--text-medium); min-height: 1.2em;"></div> <!-- Placeholder for status msgs -->
+                    </div>
+
+                     {# Month Selection #}
+                     <div class="form-group">
+                        <label for="monthSlotsContainer">1. Select Month:</label>
+                        <div id="monthSlotsContainer" class="selection-container date-selection-grid">
+                            {# Placeholder - JS will populate #}
+                             <div class="slots-message"><i class="fas fa-spinner fa-spin"></i> Loading available months...</div>
+                        </div>
+                     </div>
+
+                     {# Day Selection - Initially hidden #}
+                    <div class="form-group" id="daySelectionGroup" style="display: none;">
+                        <label for="daySlotsContainer">2. Select Day:</label>
+                         <div id="daySlotsContainer" class="selection-container date-selection-grid">
+                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a month above first.</div>
+                         </div>
+                     </div>
+
+                     {# Time Selection - Initially hidden #}
+                    <div class="form-group" id="timeSelectionGroup" style="display: none;">
+                         <label for="timeSlotsContainer">3. Select Time Slot:</label>
+                         <div id="timeSlotsContainer" class="selection-container time-slots-grid">
+                             <div class="slots-message"><i class="fas fa-mouse-pointer"></i> Select a day above first.</div>
+                        </div>
+                    </div>
+
+                    <hr> {# Separator before patient details #}
+
+                    <h3><i class="fas fa-user-edit"></i> Your Details for Booking</h3>
+
+                    <div class="form-group">
+                         <label for="patientName">Your Full Name:</label>
+                         <input type="text" id="patientName" name="patient_name" required autocomplete="name" placeholder="e.g. Hari Bahadur">
+                    </div>
+
+                    <div class="form-group">
+                         <label for="patientPhone">Your Phone Number:</label>
+                         <input type="tel" id="patientPhone" name="patient_phone" required pattern="[0-9]{9,15}" title="Enter 9-15 digits" autocomplete="tel" placeholder="e.g. 98XXXXXXXX">
+                    </div>
+
+                     <div class="form-group">
+                         <label for="notes">Notes for Doctor (Optional):</label>
+                         <textarea id="notes" name="notes" placeholder="e.g., Reason for visit, previous conditions..." maxlength="500"></textarea> {# Added maxlength #}
+                     </div>
+
+                    {# Submit Button - Initially disabled #}
+                    <button type="submit" id="confirmButton" class="btn btn-primary btn-block" disabled>
+                         <i class="fas fa-lock"></i> Select Month, Day & Time to Book <!-- Updated Text -->
+                    </button>
+                </form>
+            </section> {# End booking-form-wrapper #}
          </div> {# End Form Column #}
     </main>
 
@@ -622,7 +621,7 @@
 
              for (let day = 1; day <= daysInMonth; day++) {
                  const currentDate = new Date(year, month - 1, day);
-                 if (currentDate <= today) continue; // Skip past dates
+                 if (currentDate < today) continue; // Skip past dates
 
                  const currentDateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                  const dayName = getDayName(currentDate);

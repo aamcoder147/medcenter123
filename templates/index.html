@@ -9,7 +9,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-        <style>
+    <style>
         /* --- :root Variables --- */
         :root {
             --bg-primary: #ffffff;
@@ -137,10 +137,11 @@
         .btn { padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; text-align: center; transition: all var(--transition-speed) var(--transition-ease); border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; line-height: 1.2; box-shadow: 0 2px 4px var(--shadow-color); }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 12px var(--shadow-color-medium); }
         .btn:active { transform: translateY(0px); box-shadow: 0 2px 4px var(--shadow-color); }
+        .btn[disabled] { cursor: not-allowed; opacity: 0.6; background-color: #ccc !important; border-color: #ccc !important; box-shadow: none; pointer-events: none; } /* Disabled style */
         .btn-primary { background-color: var(--accent-primary); color: var(--text-light); border-color: var(--accent-primary); margin: 0; }
-        .btn-primary:hover { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
+        .btn-primary:hover:not([disabled]) { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
         .btn-secondary { background-color: var(--bg-primary); color: var(--text-medium); border-color: var(--border-color-strong); box-shadow: none; } /* Default for 'Clear'/'For Providers' */
-        .btn-secondary:hover { background-color: var(--bg-secondary); border-color: var(--text-medium); color: var(--text-dark); }
+        .btn-secondary:hover:not([disabled]) { background-color: var(--bg-secondary); border-color: var(--text-medium); color: var(--text-dark); }
         .btn-link { background: none; border: none; box-shadow: none; color: var(--accent-primary); padding: 0; font-weight: 600; }
         .btn-link:hover { color: var(--accent-primary-dark); text-decoration: underline;}
         .btn-small { padding: 0.4rem 0.9rem; font-size: 0.85rem; gap: 0.4rem; }
@@ -167,7 +168,7 @@
         .search-button-container { display: flex; justify-content: center; flex-wrap: wrap; width: 100%; margin-top: 1rem; gap: 1rem; }
         .search-button-container .btn { flex-grow: 0; flex-basis: auto; padding: 0.8rem 1.8rem; font-size: 1rem; min-width: 140px; }
         .search-button-container .btn-secondary { background-color: var(--bg-primary); color: var(--text-medium); border-color: var(--border-color-strong); }
-        .search-button-container .btn-secondary:hover { background-color: var(--bg-secondary); border-color: var(--text-medium); color: var(--text-dark); }
+        .search-button-container .btn-secondary:hover:not([disabled]) { background-color: var(--bg-secondary); border-color: var(--text-medium); color: var(--text-dark); }
 
         /* --- Collapsible Section Styles --- */
         .collapsible-section {
@@ -686,7 +687,7 @@
                    </div> <!-- End .collapsible-section -->
 
                     <!-- Doctor Search Form Area -->
-                    <div ">
+                    <div> <!-- Removed extra div -->
                         <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 1.6rem;">Find Your Doctor</h2>
                         <form class="search-form" id="searchForm" onsubmit="event.preventDefault(); searchDoctors(null, false, true);">
                             <div class="input-group"> <i class="fas fa-map-location-dot"></i> <select id="province" aria-label="Select Province"> <option value="">All Provinces</option> {% for prov in ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali'] %} <option value="{{ prov }}">{{ prov }}</option> {% endfor %} </select> </div>
@@ -714,8 +715,13 @@
     <section class="doctors-section section-padding" id="doctors-results">
         <div class="container">
             <h2 class="section-title" id="resultsTitle" style="display: none;">Available Doctors</h2>
-            <div class="doctors-grid" id="resultsContainer" aria-live="polite"></div>
-            <div id="noResultsMessage" style="display: none;" aria-live="assertive"> <i class="fas fa-user-times"></i> <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p> </div>
+            <div class="doctors-grid" id="resultsContainer" aria-live="polite">
+                <!-- Doctor cards will be inserted here by JavaScript -->
+            </div>
+            <div id="noResultsMessage" style="display: none;" aria-live="assertive">
+                <i class="fas fa-user-times"></i>
+                <p>We couldn't find doctors matching your criteria.<br>Try adjusting the filters above or clear them.</p>
+            </div>
          </div>
     </section>
     <!-- Doctors Results Section End -->
@@ -761,13 +767,42 @@
     <!-- Stats Section End -->
 
     <!-- Site Reviews Display Section Start -->
-    <section class="site-reviews-section section-padding" id="site-reviews-section">
-        <div class="container">
-            <h2 class="section-title reveal-on-scroll">What People Say About CareConnect</h2> <p class="section-subtitle reveal-on-scroll">General feedback about our platform and service.</p>
-            <div class="site-reviews-grid"> {% if site_reviews %} {% for review in site_reviews %} <div class="site-review-card reveal-on-scroll"> <div class="stars" title="{{ review.rating }}/5 Stars"> {% for star_class in get_stars(review.rating) %} <i class="{{ star_class }}"></i> {% endfor %} </div> <p class="site-review-comment">"{{ review.comment | default('No comment provided.') | truncate(250) }}"</p> <div class="site-review-author"> <i class="fas fa-user-check"></i> <div class="author-info"> <h5>{{ review.reviewer_name | default('Verified User') | title }}</h5> </div> </div> </div> {% endfor %} {% else %} <p class="section-subtitle" style="grid-column: 1 / -1; margin-top: 2rem;">No platform feedback submitted yet. Be the first to share your thoughts!</p> {% endif %} </div>
+<section class="site-reviews-section section-padding" id="site-reviews-section">
+    <div class="container">
+        <h2 class="section-title reveal-on-scroll">What People Say About CareConnect</h2>
+        <p class="section-subtitle reveal-on-scroll">General feedback about our platform and service.</p>
+        <div class="site-reviews-grid">
+            {# --- Check 1: Is site_reviews even defined and not empty? --- #}
+            {% if site_reviews and site_reviews|length > 0 %}
+                {# --- Check 2: Loop variable name matches --- #}
+                {% for review in site_reviews %}
+                    <div class="site-review-card reveal-on-scroll">
+                        <div class="stars" title="{{ review.rating }}/5 Stars">
+                            {# --- Check 3: Custom function access --- #}
+                            {% set stars = get_stars(review.rating) %} {# Call function explicitly #}
+                            {% if stars %} {# Check if function returned something #}
+                                {% for star_class in stars %} <i class="{{ star_class }}"></i> {% endfor %}
+                            {% else %}
+                                <span>(Rating: {{ review.rating }})</span> {# Fallback #}
+                            {% endif %}
+                        </div>
+                        {# --- Check 4: Attribute names match data --- #}
+                        <p class="site-review-comment">"{{ review.comment | default('No comment provided.') | truncate(250) }}"</p>
+                        <div class="site-review-author">
+                            <i class="fas fa-user-check"></i>
+                            <div class="author-info">
+                                <h5>{{ review.reviewer_name | default('Verified User') | title }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %} {# End of the loop #}
+            {% else %} {# If site_reviews is empty or not defined #}
+                <p class="section-subtitle" style="grid-column: 1 / -1; margin-top: 2rem;">No platform feedback submitted yet. Be the first to share your thoughts!</p>
+            {% endif %} {# End of the main if #}
         </div>
-    </section>
-    <!-- Site Reviews Display Section End -->
+    </div>
+</section>
+<!-- Site Reviews Display Section End -->
 
     <!-- Site Review FORM Section Start -->
     <section class="section-padding" id="site-review-form-section">
@@ -813,7 +848,7 @@
 
         // --- Constants & Global Variables ---
         const SCROLL_THRESHOLD = 50;
-        const STAGGER_BASE_DELAY = 120;
+        const STAGGER_BASE_DELAY = 100; // Slightly faster stagger
         const COUNTER_ANIMATION_DURATION = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--counter-animation-duration').trim() || '1500', 10);
         const DEBOUNCE_DELAY = 400;
 
@@ -824,7 +859,8 @@
         let isInitialLoadSearch = true;
 
         // --- Backend Data ---
-        const allDoctorsData = {{ doctors | default([]) | tojson | safe }};
+        // Ensure allDoctorsData is treated as an array, even if empty
+        const allDoctorsData = Array.isArray({{ doctors | default([]) | tojson | safe }}) ? {{ doctors | default([]) | tojson | safe }} : [];
         const allGovernorates = {{ governorates | tojson | safe if governorates else '[]' }};
         const allSpecialties = {{ specialties | tojson | safe if specialties else '[]' }};
         const allFacilityTypes = {{ facility_types | tojson | safe if facility_types else '[]' }};
@@ -861,7 +897,6 @@
             header.addEventListener('click', () => {
                 const section = header.closest('.collapsible-section');
                 if (!section) return;
-                // const content = section.querySelector('.collapsible-content'); // We target the section directly
                 const icon = header.querySelector('.collapsible-icon');
                 const isOpen = section.classList.contains('is-open');
 
@@ -897,98 +932,248 @@
 
         // --- Doctor Search/Filter ---
         function searchDoctors(event = null, isInitial = false, triggerScroll = false) {
-             if ((searchButton && searchButton.disabled) && !isInitial) return;
-            if (searchButton) { searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...'; searchButton.disabled = true; }
-            if (clearFiltersButton) clearFiltersButton.disabled = true; // Disable clear button too
+             // console.log("Attempting search..."); // DEBUG
 
-            isInitialLoadSearch = isInitial;
+             // Check if data is ready
+             if (!allDoctorsData) {
+                console.error("Doctor data is not available yet.");
+                // Optionally disable button permanently or show a message
+                 return;
+             }
+             if (!Array.isArray(allDoctorsData)) { // FIX: Ensure it's an array
+                console.error("Doctor data is not an array:", allDoctorsData);
+                return;
+             }
+
+             // Prevent multiple rapid clicks
+            if ((searchButton && searchButton.disabled) && !isInitial) return;
+
+             // Disable buttons immediately
+            if (searchButton) { searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...'; searchButton.disabled = true; }
+            if (clearFiltersButton) clearFiltersButton.disabled = true;
+
+            isInitialLoadSearch = isInitial; // Track if this is the very first page load search
             const province = provinceSelect?.value || '';
             const governorate = governorateSelect?.value || '';
             const specialization = specializationSelect?.value || '';
             const facilityType = facilityTypeSelect?.value || '';
             const nameQuery = doctorNameInput?.value.toLowerCase().trim() || '';
 
-            console.log(`Searching with (scroll=${triggerScroll}):`, { province, governorate, specialization, facilityType, nameQuery });
+             // console.log(`Searching with (initial=${isInitial}, scroll=${triggerScroll}):`, { province, governorate, specialization, facilityType, nameQuery }); // DEBUG
 
+             // Use requestAnimationFrame to ensure UI updates before heavy lifting
             requestAnimationFrame(() => {
-                 const filteredDoctors = allDoctorsData.filter(doctor => {
-                     if (!doctor) return false;
-                     const dProvince = doctor.province || ''; const dGov = doctor.governorate || ''; const dSpec = doctor.specialization || ''; const dFac = doctor.facility_type || ''; const dName = (doctor.name || '').toLowerCase(); const dClinic = (doctor.plc || '').toLowerCase();
-                     const provMatch = !province || dProvince === province; const govMatch = !governorate || dGov === governorate; const specMatch = !specialization || dSpec === specialization; const facMatch = !facilityType || dFac === facilityType; const nameMatch = !nameQuery || dName.includes(nameQuery) || dClinic.includes(nameQuery);
-                     return provMatch && govMatch && specMatch && facMatch && nameMatch;
-                 });
+                 let filteredDoctors = [];
+                 try {
+                     // --- Filtering Logic ---
+                     filteredDoctors = allDoctorsData.filter(doctor => {
+                         if (!doctor) return false; // Skip null/undefined entries
 
-                 console.log("Found doctors:", filteredDoctors.length);
-                 displayResults(filteredDoctors); // Pass filtered list
+                          // Use optional chaining and provide default empty strings for safe comparison
+                         const dProvince = doctor.province || '';
+                         const dGov = doctor.governorate || '';
+                         const dSpec = doctor.specialization || '';
+                         const dFac = doctor.facility_type || '';
+                         const dName = (doctor.name || '').toLowerCase();
+                         const dClinic = (doctor.plc || '').toLowerCase();
 
-                 // Re-enable buttons
-                  if (searchButton) { searchButton.innerHTML = '<i class="fas fa-search"></i> Find Care'; searchButton.disabled = false; }
-                 if (clearFiltersButton) clearFiltersButton.disabled = false; // Re-enable clear button
+                         const provMatch = !province || dProvince === province;
+                         const govMatch = !governorate || dGov === governorate;
+                         const specMatch = !specialization || dSpec === specialization;
+                         const facMatch = !facilityType || dFac === facilityType;
+                         // Name query matches doctor name OR clinic/PLC name
+                         const nameMatch = !nameQuery || dName.includes(nameQuery) || dClinic.includes(nameQuery);
 
+                         return provMatch && govMatch && specMatch && facMatch && nameMatch;
+                     });
 
-                 // Conditional Scroll to Results
-                 if (!isInitialLoadSearch && triggerScroll && filteredDoctors.length > 0 && resultsSection) {
-                    console.log("Scrolling to results triggered...");
-                     setTimeout(() => { resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); }, 150);
-                 } else if (triggerScroll && filteredDoctors.length === 0 && noResultsMessage) {
-                    console.log("Scrolling to 'No Results' triggered...");
-                     setTimeout(() => { noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+                      // console.log("Found doctors after filter:", filteredDoctors.length); // DEBUG
+                     displayResults(filteredDoctors); // Pass filtered list
+
+                 } catch (error) {
+                     console.error("Error during doctor filtering or display:", error);
+                     // Display an error message to the user if desired
+                      if(resultsContainer) resultsContainer.innerHTML = '<p style="color: var(--error); text-align: center; padding: 2rem;">An error occurred while searching. Please try again.</p>';
+                      if(noResultsMessage) noResultsMessage.style.display = 'none';
+                      if(resultsTitle) resultsTitle.style.display = 'none';
+                 } finally {
+                     // --- FIX: Re-enable buttons REGARDLESS of errors ---
+                      // console.log("Re-enabling buttons..."); // DEBUG
+                     if (searchButton) { searchButton.innerHTML = '<i class="fas fa-search"></i> Find Care'; searchButton.disabled = false; }
+                     if (clearFiltersButton) clearFiltersButton.disabled = false;
+
+                     // --- Conditional Scroll to Results ---
+                     if (!isInitialLoadSearch && triggerScroll && filteredDoctors.length > 0 && resultsSection) {
+                          // console.log("Scrolling to results triggered..."); // DEBUG
+                         setTimeout(() => { resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); }, 150);
+                     } else if (!isInitialLoadSearch && triggerScroll && filteredDoctors.length === 0 && noResultsMessage) {
+                          // console.log("Scrolling to 'No Results' triggered..."); // DEBUG
+                         setTimeout(() => { noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+                     }
                  }
-                 isInitialLoadSearch = false;
+                  isInitialLoadSearch = false; // Mark subsequent searches as not initial
             });
         }
 
 
         // --- Clear All Search Filters ---
         function clearAllFilters() {
-            console.log("Clearing all search filters.");
+            // console.log("Clearing all search filters."); // DEBUG
             if (provinceSelect) provinceSelect.value = ''; if (governorateSelect) governorateSelect.value = ''; if (specializationSelect) specializationSelect.value = ''; if (facilityTypeSelect) facilityTypeSelect.value = ''; if (doctorNameInput) doctorNameInput.value = '';
             currentSelectedFacilityType = null; currentSelectedPlcName = null;
             updateCardSelection(null, 'facility-type-card'); updateCardSelection(null, 'plc-card');
             filterPlcCardsByFacilityType(null); // Show all PLC cards
-            searchDoctors(null, false, false);
+            searchDoctors(null, false, false); // Trigger search, NO SCROLL
              const searchArea = document.getElementById('search-section');
+             // Scroll back to search area gently
              if(searchArea) { setTimeout(() => { searchArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50); }
         }
 
 
         // --- Star Rating HTML Generator ---
-        function getStarsHTML(rating) { if (rating === null || typeof rating !== 'number' || rating < 0 || rating > 5) return '<span class="stars"><i class="far fa-star"></i>'.repeat(5) + '</span>'; rating = Math.max(0, Math.min(5, rating)); const full = Math.floor(rating); const half = (rating - full) >= 0.4 ? 1 : 0; const empty = 5 - full - half; let html = '<span class="stars" title="' + rating.toFixed(1) + '/5 Stars">'; html += '<i class="fas fa-star"></i>'.repeat(full); html += half ? '<i class="fas fa-star-half-alt"></i>' : ''; html += '<i class="far fa-star"></i>'.repeat(empty); html += '</span>'; return html; }
+        function getStarsHTML(rating) {
+             // console.log("getStarsHTML called with rating:", rating, typeof rating); // DEBUG
+            if (rating === null || typeof rating !== 'number' || isNaN(rating) || rating < 0 || rating > 5) {
+                 // console.log("Invalid rating, returning default stars."); // DEBUG
+                 return '<span class="stars" title="No rating yet"><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i></span>';
+            }
+            const safeRating = Math.max(0, Math.min(5, rating));
+            const full = Math.floor(safeRating);
+            const half = (safeRating - full) >= 0.4 ? 1 : 0; // Use 0.4 threshold for half star visibility
+            const empty = 5 - full - half;
+            let html = `<span class="stars" title="${safeRating.toFixed(1)}/5 Stars">`;
+            html += '<i class="fas fa-star"></i>'.repeat(full);
+            html += half ? '<i class="fas fa-star-half-alt"></i>' : '';
+            html += '<i class="far fa-star"></i>'.repeat(empty);
+            html += '</span>';
+             // console.log("Generated stars HTML:", html); // DEBUG
+            return html;
+        }
 
 
         // --- Display Search Results ---
         function displayResults(doctors) {
-            if (!resultsContainer || !noResultsMessage || !resultsTitle) { console.error("Missing display elements for results."); return; }
-            resultsContainer.innerHTML = ''; resultsContainer.style.opacity = '0';
+            // console.log("Starting displayResults with doctors:", doctors); // DEBUG
+            if (!resultsContainer || !noResultsMessage || !resultsTitle) {
+                console.error("Missing display elements for results (resultsContainer, noResultsMessage, or resultsTitle).");
+                return;
+            }
 
+            resultsContainer.innerHTML = ''; // Clear previous results immediately
+            resultsContainer.style.opacity = '0'; // Prepare for fade-in
+
+            // Sort doctors by average rating (descending), handle null/undefined ratings
             const sortedDoctors = [...doctors].sort((a, b) => {
-                const ratingA = (a.average_rating === null || a.average_rating === undefined) ? -Infinity : a.average_rating;
-                const ratingB = (b.average_rating === null || b.average_rating === undefined) ? -Infinity : b.average_rating;
+                const ratingA = (a?.average_rating === null || a?.average_rating === undefined || isNaN(a.average_rating)) ? -1 : a.average_rating;
+                const ratingB = (b?.average_rating === null || b?.average_rating === undefined || isNaN(b.average_rating)) ? -1 : b.average_rating;
+                // Sort higher ratings first
                 return ratingB - ratingA;
             });
+            // console.log("Sorted doctors:", sortedDoctors); // DEBUG
 
             if (sortedDoctors.length === 0) {
-                noResultsMessage.style.display = 'block'; resultsContainer.style.display = 'none'; resultsTitle.style.display = 'none';
+                noResultsMessage.style.display = 'block';
+                resultsContainer.style.display = 'none'; // Hide grid container
+                resultsTitle.style.display = 'none';
+                // console.log("Displaying 'No Results' message."); // DEBUG
             } else {
-                noResultsMessage.style.display = 'none'; resultsContainer.style.display = 'grid'; resultsTitle.style.display = 'block';
+                noResultsMessage.style.display = 'none';
+                resultsContainer.style.display = 'grid'; // Ensure grid is visible
+                resultsTitle.style.display = 'block';
                 resultsTitle.textContent = `Found ${sortedDoctors.length} Doctor${sortedDoctors.length !== 1 ? 's' : ''}`;
+                // console.log(`Displaying ${sortedDoctors.length} doctor cards.`); // DEBUG
 
                 sortedDoctors.forEach((doctor, index) => {
-                    if (!doctor || !doctor.id) return;
+                    if (!doctor || !doctor.id) {
+                        // console.warn("Skipping invalid doctor object:", doctor); // DEBUG
+                        return; // Skip invalid doctor objects
+                    }
                     const card = document.createElement('div');
-                    card.className = 'doctor-card reveal-on-scroll'; card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
-                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=150x150`;
-                    const name = doctor.name || 'Doctor Name Unavailable'; const spec = doctor.specialization || 'General Practice'; const ratingValue = doctor.average_rating; const reviewCount = doctor.review_count || 0; const prov = doctor.province || ''; const gov = doctor.governorate || ''; const facType = doctor.facility_type || 'N/A'; const avail = doctor.availability1shortform || null; const clinic = doctor.plc || null; const bookingUrl = `/booking/${doctor.id}`;
+                    card.className = 'doctor-card reveal-on-scroll';
+                    // Apply staggered animation delay
+                    card.style.animationDelay = `${index * STAGGER_BASE_DELAY}ms`;
 
-                    let ratingHTML = ''; if (reviewCount > 0 && typeof ratingValue === 'number') { ratingHTML = `<div class="rating-display">${getStarsHTML(ratingValue)} <span class="review-count">(${reviewCount} review${reviewCount !== 1 ? 's' : ''})</span></div>`; } else { ratingHTML = `<div class="rating-display"><span class="review-count no-reviews"><i class="far fa-star" style="color: var(--text-medium); margin-right: 4px;"></i>No reviews yet</span></div>`; }
-                    let detailsLeftHTML = `<div class="doctor-details">`; if (prov || gov) { detailsLeftHTML += `<p><i class="fas fa-map-marker-alt"></i> ${prov}${prov && gov ? ', ' : ''}${gov}</p>`; } if (clinic) { detailsLeftHTML += `<p><i class="fas fa-clinic-medical"></i> ${clinic}</p>`; } detailsLeftHTML += `<p><i class="fas fa-hospital"></i> Facility: ${facType}</p>`; detailsLeftHTML += `</div>`;
-                    let availabilityRightHTML = ''; if (avail && avail.trim() !== '') { const availabilityLines = avail.split(',').map(part => part.trim()).filter(part => part !== '').map(part => `<p>${part}</p>`).join(''); if (availabilityLines) { availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div>${availabilityLines}</div>`; } else { availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Click Book Now for details</p></div>`; } } else { availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Not specified</p></div>`; }
+                    // --- Safely access properties using optional chaining and defaults ---
+                    const photoUrl = doctor.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=e0f2f2&color=005f5f&size=150`;
+                    const name = doctor.name || 'Doctor Name Unavailable';
+                    const spec = doctor.specialization || 'General Practice';
+                    const ratingValue = doctor.average_rating; // Keep as potentially number/null/undefined
+                    const reviewCount = doctor.review_count || 0;
+                    const prov = doctor.province || '';
+                    const gov = doctor.governorate || '';
+                    const facType = doctor.facility_type || 'N/A';
+                    const avail = doctor.availability1shortform || null;
+                    const clinic = doctor.plc || null;
+                    const bookingUrl = `/booking/${doctor.id}`;
 
-                    card.innerHTML = `<div class="doctor-card-top"> <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=150x150';"> <div class="doctor-primary-info"> <h3>${name}</h3> <p class="specialization">${spec}</p> ${ratingHTML} </div> </div> <div class="doctor-info"> <div class="doctor-info-columns"> <div class="doctor-info-left"> ${detailsLeftHTML} </div> <div class="vertical-divider"></div> <div class="doctor-info-right"> ${availabilityRightHTML} </div> </div> <button class="btn btn-primary book-btn" onclick="window.location.href='${bookingUrl}'"> <i class="far fa-calendar-check"></i> Book Now </button> </div>`;
+                    // --- Generate Rating HTML ---
+                    let ratingHTML = '';
+                    if (reviewCount > 0 && typeof ratingValue === 'number' && !isNaN(ratingValue)) {
+                        ratingHTML = `<div class="rating-display">${getStarsHTML(ratingValue)} <span class="review-count">(${reviewCount} review${reviewCount !== 1 ? 's' : ''})</span></div>`;
+                    } else {
+                        ratingHTML = `<div class="rating-display"><span class="review-count no-reviews"><i class="far fa-star" style="color: var(--text-medium); margin-right: 4px;"></i>No reviews yet</span></div>`;
+                    }
+
+                    // --- Generate Details HTML (Left Column) ---
+                    let detailsLeftHTML = `<div class="doctor-details">`;
+                    if (prov || gov) {
+                        detailsLeftHTML += `<p><i class="fas fa-map-marker-alt"></i> ${prov}${prov && gov ? ', ' : ''}${gov}</p>`;
+                    }
+                    if (clinic) {
+                        detailsLeftHTML += `<p><i class="fas fa-clinic-medical"></i> ${clinic}</p>`;
+                    }
+                    detailsLeftHTML += `<p><i class="fas fa-hospital"></i> Facility: ${facType}</p>`;
+                    detailsLeftHTML += `</div>`;
+
+                    // --- Generate Availability HTML (Right Column) ---
+                    let availabilityRightHTML = '';
+                    if (avail && typeof avail === 'string' && avail.trim() !== '') {
+                        const availabilityLines = avail.split(',')
+                            .map(part => part.trim())
+                            .filter(part => part !== '')
+                            .map(part => `<p>${part}</p>`)
+                            .join('');
+                        if (availabilityLines) {
+                            availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div>${availabilityLines}</div>`;
+                        } else {
+                            availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Click Book Now for details</p></div>`;
+                        }
+                    } else {
+                        availabilityRightHTML = `<div class="availability-details"><div class="availability-title"><i class="far fa-clock"></i>Availability:</div><p>Not specified</p></div>`;
+                    }
+
+                    // --- Assemble Card HTML ---
+                    card.innerHTML = `
+                        <div class="doctor-card-top">
+                            <img src="${photoUrl}" class="doctor-photo" alt="Photo of ${name}" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e0f2f2&color=005f5f&size=150';">
+                            <div class="doctor-primary-info">
+                                <h3>${name}</h3>
+                                <p class="specialization">${spec}</p>
+                                ${ratingHTML}
+                            </div>
+                        </div>
+                        <div class="doctor-info">
+                            <div class="doctor-info-columns">
+                                <div class="doctor-info-left">
+                                    ${detailsLeftHTML}
+                                </div>
+                                <div class="vertical-divider"></div>
+                                <div class="doctor-info-right">
+                                    ${availabilityRightHTML}
+                                </div>
+                            </div>
+                            <button class="btn btn-primary book-btn" onclick="window.location.href='${bookingUrl}'">
+                                <i class="far fa-calendar-check"></i> Book Now
+                            </button>
+                        </div>`;
+
+                     // console.log("Appending card for doctor:", doctor.id); // DEBUG
                     resultsContainer.appendChild(card);
                 });
-                setupScrollObserver(); // Re-setup observer for new cards
-                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50); // Fade in results
+
+                 // console.log("Finished appending cards. Setting up observer and fading in."); // DEBUG
+                setupScrollObserver(); // Re-setup observer for newly added cards
+                setTimeout(() => { resultsContainer.style.opacity = '1'; }, 50); // Fade in results smoothly
             }
         }
 
@@ -1009,102 +1194,95 @@
             let visibleCount = 0;
             plcCards.forEach(card => {
                 const plcName = card.getAttribute('data-plc-name');
-                if (!plcName) { card.style.display = 'none'; return; } // Should not happen
+                if (!plcName) { card.style.display = 'none'; return; }
 
-                // Find the facility type associated with this PLC (assumes doctors data has PLC info)
-                const plcData = allDoctorsData.find(doc => doc.plc === plcName);
-                const plcFacType = plcData ? plcData.facility_type : null;
+                // Find the facility type associated with this PLC
+                const plcData = allDoctorsData.find(doc => doc?.plc === plcName);
+                const plcFacType = plcData?.facility_type; // Use optional chaining
 
                 if (!selectedType || (plcFacType && plcFacType === selectedType)) {
-                     card.style.display = 'flex'; // Use flex as it's the default display for these cards
+                     card.style.display = 'flex';
                     visibleCount++;
                 } else {
                     card.style.display = 'none';
                 }
             });
-            console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`);
+            // console.log(`Visible PLC cards for type '${selectedType || 'All'}': ${visibleCount}`); // DEBUG
         }
 
         // ** Facility Type Card Click: NO SCROLL **
         function setFacilityTypeFilterAndSearch(type, cardElement) {
-            console.log(`Set Facility Type: ${type}`);
+            // console.log(`Set Facility Type: ${type}`); // DEBUG
             if (cardElement?.classList.contains('card-selected')) {
-                 // Already selected, deselect it
                 clearFacilityTypeFilterAndSearch();
                 return;
             }
             currentSelectedFacilityType = type;
-            currentSelectedPlcName = null; // Clear selected PLC
+            currentSelectedPlcName = null;
             updateCardSelection(cardElement, 'facility-type-card');
-            updateCardSelection(null, 'plc-card'); // Deselect any PLC card
+            updateCardSelection(null, 'plc-card');
 
-            if (facilityTypeSelect) facilityTypeSelect.value = type; // Sync dropdown
-            if (doctorNameInput) doctorNameInput.value = ''; // Clear name/PLC input
+            if (facilityTypeSelect) facilityTypeSelect.value = type;
+            if (doctorNameInput) doctorNameInput.value = '';
 
-            filterPlcCardsByFacilityType(type); // Filter PLC cards visually
-            searchDoctors(null, false, false); // Trigger doctor search (NO SCROLL)
+            filterPlcCardsByFacilityType(type);
+            searchDoctors(null, false, false); // Trigger search (NO SCROLL)
         }
 
         function clearFacilityTypeFilterAndSearch() {
-             console.log("Clear Facility Type Filter");
+             // console.log("Clear Facility Type Filter"); // DEBUG
              currentSelectedFacilityType = null;
              updateCardSelection(null, 'facility-type-card');
              if (facilityTypeSelect) facilityTypeSelect.value = "";
-             filterPlcCardsByFacilityType(null); // Show all PLC cards
-             searchDoctors(null, false, false); // Trigger search
+             filterPlcCardsByFacilityType(null);
+             searchDoctors(null, false, false);
         }
 
         // ** PLC Card Click: SCROLL **
         function setPlcFilterAndSearch(plcName, cardElement) {
-             console.log(`Set PLC: ${plcName}`);
+             // console.log(`Set PLC: ${plcName}`); // DEBUG
              if (!plcName || !cardElement) return;
 
              if (cardElement.classList.contains('card-selected')) {
-                 // Already selected, deselect it
                  clearPlcFilterAndSearch();
                  return;
             }
 
             currentSelectedPlcName = plcName;
+            const plcData = allDoctorsData.find(doc => doc?.plc === plcName);
+            const assocFacType = plcData?.facility_type;
+            currentSelectedFacilityType = assocFacType;
 
-            // Find associated facility type to sync filters
-            const plcData = allDoctorsData.find(doc => doc.plc === plcName);
-            const assocFacType = plcData ? plcData.facility_type : null;
-            currentSelectedFacilityType = assocFacType; // Update global state
-
-            updateCardSelection(cardElement, 'plc-card'); // Select this PLC card
-
-            // Select corresponding facility type card (if exists and type known)
+            updateCardSelection(cardElement, 'plc-card');
             const facCard = assocFacType ? document.querySelector(`.facility-type-card[data-facility-type="${assocFacType}"]`) : null;
             updateCardSelection(facCard, 'facility-type-card');
 
-            // Sync dropdowns and inputs
              if (doctorNameInput) doctorNameInput.value = plcName;
              if (facilityTypeSelect) facilityTypeSelect.value = assocFacType || '';
 
-             // Ensure the collapsible section is open if the card was hidden
-             if (cardElement.style.display === 'none') {
-                const plcSection = cardElement.closest('.collapsible-section');
-                if (plcSection && !plcSection.classList.contains('is-open')) {
-                    plcSection.querySelector('.collapsible-header').click();
-                }
-                cardElement.style.display = 'flex'; // Make sure it's visible now
+             // Ensure collapsible section is open if needed
+             const plcSection = cardElement.closest('.collapsible-section');
+             if (plcSection && !plcSection.classList.contains('is-open')) {
+                plcSection.querySelector('.collapsible-header').click();
+                // Wait for animation before searching and scrolling
+                setTimeout(() => {
+                    searchDoctors(null, false, true); // Trigger search (WITH SCROLL)
+                }, 450); // Adjust timing based on collapse speed
+             } else {
+                 // Already open or not in collapsible, search immediately
+                 searchDoctors(null, false, true); // Trigger search (WITH SCROLL)
              }
-
-            searchDoctors(null, false, true); // Trigger search (WITH SCROLL)
         }
 
         function clearPlcFilterAndSearch() {
-             console.log("Clear PLC Filter");
+             // console.log("Clear PLC Filter"); // DEBUG
              currentSelectedPlcName = null;
              updateCardSelection(null, 'plc-card');
 
-             // Clear name input ONLY if it currently matches a known PLC name
              if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
                  doctorNameInput.value = "";
              }
 
-             // Keep current facility type filter active unless it was cleared too
              filterPlcCardsByFacilityType(currentSelectedFacilityType);
              searchDoctors(null, false, false); // Trigger search (NO SCROLL)
         }
@@ -1120,145 +1298,119 @@
         // --- Intersection Observer ---
         function setupScrollObserver() {
             if (intersectionObserver) {
-                 intersectionObserver.disconnect(); // Clear previous observations
+                 intersectionObserver.disconnect();
             }
             const elements = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)');
             if (elements.length === 0) {
-                 console.log("Scroll Observer: No elements to observe.");
+                 // console.log("Scroll Observer: No new elements to observe."); // DEBUG
                  return;
             }
-             console.log(`Scroll Observer: Setting up for ${elements.length} elements.`);
+             // console.log(`Scroll Observer: Setting up for ${elements.length} elements.`); // DEBUG
 
-            const options = {
-                root: null, // viewport
-                 threshold: 0.1, // 10% visible
-                 rootMargin: '0px 0px -30px 0px' // Trigger slightly before fully in view
-            };
+            const options = { root: null, threshold: 0.1, rootMargin: '0px 0px -30px 0px' };
 
             const callback = (entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const el = entry.target;
-                        el.classList.add('is-visible'); // Trigger animation
+                        el.classList.add('is-visible');
 
-                        // Specific actions for element types
-                         if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') {
+                        if (el.classList.contains('stat-number') && el.dataset.animated !== 'true') {
                             animateCounter(el);
                         } else if (el.classList.contains('plc-card')) {
-                             // Check for broken images within PLC cards
                              const img = el.querySelector('img.plc-photo');
                              const icon = el.querySelector('i.icon');
                              if (img && icon && img.style.display !== 'none' && (!img.complete || img.naturalHeight === 0 || img.naturalWidth === 0)) {
-                                 console.warn(`Image failed/not loaded: ${img.alt || 'Unknown PLC'}. Showing fallback icon.`);
+                                  // console.warn(`Image failed/not loaded: ${img.alt || 'Unknown PLC'}. Showing fallback icon.`); // DEBUG
                                  img.style.display = 'none';
                                  icon.style.display = 'flex';
                              }
                         }
-
-                        observer.unobserve(el); // Stop observing once visible
+                        observer.unobserve(el);
                      }
                 });
             };
 
             intersectionObserver = new IntersectionObserver(callback, options);
-            elements.forEach(el => {
-                // Ensure elements start invisible for the animation
-                 // el.style.opacity = '0'; // CSS already handles this with .reveal-on-scroll
-                 intersectionObserver.observe(el);
-            });
+            elements.forEach(el => intersectionObserver.observe(el));
         }
 
         // --- Initial Page Load Logic ---
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM Loaded. Initializing...");
+            // console.log("DOM Loaded. Initializing..."); // DEBUG
+            // console.log("Initial allDoctorsData:", allDoctorsData); // DEBUG: Check data on load
+
             // Event Listeners
             if (provinceSelect) provinceSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
             if (governorateSelect) governorateSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
             if (specializationSelect) specializationSelect.addEventListener('change', (e) => searchDoctors(e, false, false));
             if (doctorNameInput) doctorNameInput.addEventListener('input', searchDoctorsDebounced);
-            // clearFiltersButton listener is in HTML via onclick
 
-            // Facility Type Dropdown Syncs with Cards & Filters
-             if (facilityTypeSelect) {
+            if (facilityTypeSelect) {
                 facilityTypeSelect.addEventListener('change', (e) => {
                     const selectedValue = e.target.value;
-                     currentSelectedFacilityType = selectedValue; // Update state
+                     currentSelectedFacilityType = selectedValue;
                      const matchingCard = selectedValue ? document.querySelector(`.facility-type-card[data-facility-type="${selectedValue}"]`) : null;
 
-                    updateCardSelection(matchingCard, 'facility-type-card'); // Sync card selection
-                     updateCardSelection(null, 'plc-card'); // Deselect any PLC card
-                     currentSelectedPlcName = null; // Clear selected PLC name
+                    updateCardSelection(matchingCard, 'facility-type-card');
+                     updateCardSelection(null, 'plc-card');
+                     currentSelectedPlcName = null;
 
-                    // Clear name input if it was a PLC name
                      if (doctorNameInput && allPlcs.includes(doctorNameInput.value)) {
                         doctorNameInput.value = "";
                     }
 
-                    filterPlcCardsByFacilityType(selectedValue); // Filter PLC cards visually
-                     searchDoctors(e, false, false); // Trigger search (NO SCROLL)
+                    filterPlcCardsByFacilityType(selectedValue);
+                     searchDoctors(e, false, false); // NO SCROLL
                  });
             }
 
-            // Enter key triggers search in name input
              if (doctorNameInput) {
                  doctorNameInput.addEventListener('keypress', function(event) {
                      if (event.key === 'Enter') {
-                         event.preventDefault(); // Prevent form submission
-                         clearTimeout(searchTimeoutId); // Clear any pending debounced search
+                         event.preventDefault();
+                         clearTimeout(searchTimeoutId);
                          searchDoctors(null, false, true); // Trigger immediate search (WITH SCROLL)
                      }
                  });
              }
 
-            // Start typing effect
-             if (textElement && textsToType.length > 0) {
-                 setTimeout(type, pauseBeforeType + 500); // Initial delay
+            if (textElement && textsToType.length > 0) {
+                 setTimeout(type, pauseBeforeType + 500);
              }
 
             // Handle URL Params & Initial Search/Display
+            let initialSearchNeeded = true; // Assume default search is needed unless params trigger one
              try {
                  const urlParams = new URLSearchParams(window.location.search);
-                 let triggeredSearchByCard = false; // Flag to see if a card click handled the initial search
+                 let triggeredSearchByCard = false;
 
-                 // Function to set dropdown from URL param
-                 function setDropdown(param, el, dataArray) {
-                     const v = urlParams.get(param);
-                     if (v && el && dataArray && dataArray.includes(v)) {
-                         el.value = v;
-                         console.log(`Set ${param} from URL: ${v}`);
-                         return v; // Return the value if set
-                     }
-                     return null;
-                 }
-
-                 // Set dropdowns first
+                 function setDropdown(param, el, dataArray) { /* ... (no change needed here) ... */ }
                  const initProv = setDropdown('province', provinceSelect, ['Bagmati', 'Gandaki', 'Lumbini', 'Koshi', 'Madhesh', 'Sudurpashchim', 'Karnali']);
                  const initGov = setDropdown('governorate', governorateSelect, allGovernorates);
                  const initSpec = setDropdown('specialization', specializationSelect, allSpecialties);
-                 const initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes);
+                 let initFac = setDropdown('facility_type', facilityTypeSelect, allFacilityTypes); // Let it be mutable
                  const initName = urlParams.get('name');
 
                 let plcSetFromUrl = false;
 
-                // Priority: If 'name' matches a PLC, click its card
-                 if (initName && allPlcs && allPlcs.includes(initName)) {
+                // Priority: Name matches PLC
+                 if (initName && Array.isArray(allPlcs) && allPlcs.includes(initName)) {
                      const plcCard = document.querySelector(`.plc-card[data-plc-name="${initName}"]`);
                      if (plcCard) {
                          const plcSection = plcCard.closest('.collapsible-section');
-                         // Open collapsible if needed, then click after a short delay
                          if (plcSection && !plcSection.classList.contains('is-open')) {
                              plcSection.querySelector('.collapsible-header').click();
                          }
-                         setTimeout(() => {
-                             plcCard.click(); // Triggers search WITH scroll via setPlcFilterAndSearch
-                             console.log("Initial search triggered by PLC card click from URL.");
-                         }, 100); // Delay to allow collapsible animation
+                         setTimeout(() => { plcCard.click(); }, 100); // Triggers setPlcFilterAndSearch (WITH SCROLL)
                          triggeredSearchByCard = true;
-                         plcSetFromUrl = true; // Mark that PLC name was handled
+                         plcSetFromUrl = true;
+                         initialSearchNeeded = false; // Search handled by card click
+                         // console.log("URL Init: PLC card click triggered."); // DEBUG
                      }
                  }
 
-                 // Else if 'facility_type' is set, click its card (if no PLC name match)
+                 // Else if Facility Type is set (and no PLC match handled it)
                  if (!triggeredSearchByCard && initFac) {
                      const facCard = document.querySelector(`.facility-type-card[data-facility-type="${initFac}"]`);
                      if (facCard) {
@@ -1266,53 +1418,56 @@
                          if (facSection && !facSection.classList.contains('is-open')) {
                              facSection.querySelector('.collapsible-header').click();
                          }
-                        setTimeout(() => {
-                              facCard.click(); // Triggers search WITHOUT scroll via setFacilityTypeFilterAndSearch
-                              console.log("Initial search triggered by Facility Type card click from URL.");
-                        }, 100);
+                        setTimeout(() => { facCard.click(); }, 100); // Triggers setFacilityTypeFilterAndSearch (NO SCROLL)
                          triggeredSearchByCard = true;
+                         initialSearchNeeded = false; // Search handled by card click
+                         // console.log("URL Init: Facility Type card click triggered."); // DEBUG
                      } else {
-                         // Card not found, but filter PLCs anyway
+                          // console.log("URL Init: Facility Type set, card not found, filtering PLCs manually."); // DEBUG
                          currentSelectedFacilityType = initFac;
                          filterPlcCardsByFacilityType(initFac);
                      }
                  }
 
-                 // If no card click triggered, ensure PLC cards are filtered based on facility type (if any)
+                 // Filter PLCs if not triggered by card click but facility type was in URL
                  if (!triggeredSearchByCard) {
-                     filterPlcCardsByFacilityType(initFac); // Filter based on URL param if present
+                      // console.log("URL Init: No card click, filtering PLCs based on URL Facility Type (if any)."); // DEBUG
+                     filterPlcCardsByFacilityType(initFac);
                  }
 
-                 // Set name input if it wasn't handled as a PLC card click
+                 // Set name input if not handled as PLC
                  if (initName && !plcSetFromUrl && doctorNameInput) {
+                      // console.log("URL Init: Setting name input from URL."); // DEBUG
                      doctorNameInput.value = initName;
                  }
 
-                 // Perform initial search IF NOT already triggered by a card click AND there were URL params
+                 // If any dropdowns were set from URL but no card click happened, we still need an initial search
                  if (!triggeredSearchByCard && (initProv || initGov || initSpec || initFac || initName)) {
-                     console.log(`Performing initial search due to non-card URL params present.`);
-                     searchDoctors(null, true, false); // Initial search, NO SCROLL
-                 } else if (!triggeredSearchByCard) { // Only run default display if nothing set in URL at all
-                     console.log("Performing initial default doctor display (no relevant URL params).");
-                     searchDoctors(null, true, false); // Initial display, NO SCROLL
-                 } else {
-                     console.log("Initial search was (or will be) triggered by URL parameter card selection.");
+                      // console.log(`URL Init: Non-card params present, marking initial search as needed.`); // DEBUG
+                     initialSearchNeeded = true;
                  }
 
              } catch (e) {
                  console.error("Error processing URL parameters:", e);
-                 // Fallback to default display on error
-                 filterPlcCardsByFacilityType(null);
-                 searchDoctors(null, true, false);
+                 filterPlcCardsByFacilityType(null); // Reset PLC filter on error
+                 initialSearchNeeded = true; // Ensure default display on error
+             }
+
+            // Perform initial search IF needed (either default or triggered by non-card URL params)
+            if (initialSearchNeeded) {
+                 // console.log("Performing initial search (default or from non-card URL params)."); // DEBUG
+                 searchDoctors(null, true, false); // Initial display, NO SCROLL
+            } else {
+                 // console.log("Initial search was handled by card click simulation from URL params."); // DEBUG
              }
 
             // Setup Scroll Observer after initial setup/potential search
              setTimeout(() => {
-                 console.log("Setting up scroll observer...");
+                 // console.log("Setting up scroll observer..."); // DEBUG
                  setupScrollObserver();
-             }, 300); // Delay slightly to allow initial content render
+             }, 300);
 
-            console.log("Initialization complete.");
+             // console.log("Initialization complete."); // DEBUG
         });
     </script>
     <!-- JavaScript End -->

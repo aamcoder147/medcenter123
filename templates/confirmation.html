@@ -192,7 +192,8 @@
         }
         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 12px var(--shadow-color-medium); }
         .btn:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 2px 4px var(--shadow-color); }
-        .btn:disabled { background-color: var(--accent-disabled-bg); border-color: var(--accent-disabled-border); color: var(--accent-disabled-text); cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
+        .btn:disabled { background-color: #d1d5db; border-color: #d1d5db; color: #6b7280; cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; } /* Updated disabled style */
+
 
         .btn-primary { background-color: var(--accent-primary); color: var(--text-light); border-color: var(--accent-primary); font-size: 1rem; padding: 0.8rem 1.8rem; }
         .btn-primary:hover:not(:disabled) { background-color: var(--accent-primary-dark); border-color: var(--accent-primary-dark); }
@@ -259,7 +260,6 @@
                 {% for category, message in messages %}
                     {% set category_class = category if category in ['success', 'error', 'info', 'warning'] else 'info' %}
                     <div class="flash-message {{ category_class }}">
-                         {# Message content is implicitly placed here by CSS gap #}
                          <span>{{ message }}</span> {# Wrap message text #}
                     </div>
                 {% endfor %}
@@ -282,25 +282,30 @@
             <p><strong>Patient Name:</strong> {{ patient_name | default('N/A') }}</p>
             <p><strong>Date:</strong> {{ booking_date | default('N/A') }}</p>
             <p><strong>Time:</strong> {{ booking_time | default('N/A') }}</p>
-            {# You could add Booking ID here if desired #}
-            {# <p><strong>Booking ID:</strong> {{ booking_id }}</p> #}
+            {# Optionally display Booking ID if needed for reference #}
+            <p><strong>Booking ID:</strong> {{ booking_id | default('N/A') }}</p>
         </div>
 
+        <p style="margin-bottom: 1.5rem; color: var(--text-medium);">You will receive a reminder before your appointment. If you need to cancel, please do so as early as possible.</p>
+
         <div class="button-container">
-            <!-- Delete Booking Button Form -->
+            <!-- Cancel Booking Button Form -->
+             {# Ensure the form submits correctly to the delete route #}
             <form action="{{ url_for('delete_booking', booking_id=booking_id) }}" method="POST" style="margin:0; padding:0; display: contents;">
-                <input type="hidden" name="source" value="confirmation_page"> {# Updated source #}
-                {# Add patient_identifier if needed for redirection after delete #}
-                {# <input type="hidden" name="patient_identifier" value="{{ patient_name or patient_phone }}"> #}
-                <button type="submit" class="btn btn-danger btn-block">
+                 {# Add hidden input to tell backend where cancel came from #}
+                <input type="hidden" name="source" value="confirmation_page">
+                {# Optionally add identifier if needed for redirect logic, but likely not needed here #}
+                {# <input type="hidden" name="patient_identifier" value="{{ patient_name }}"> #}
+                <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to cancel this booking?');">
                     <i class="fas fa-trash-alt"></i> Cancel My Booking
                 </button>
             </form>
 
             <!-- Back to Home Button -->
-            <button type="button" class="btn btn-primary btn-block" onclick="window.location.href='{{ url_for('home') }}'">
-                <i class="fas fa-home"></i> Back to Home
-            </button>
+            {# Use a simple link/button for navigation #}
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-block">
+                <i class="fas fa-home"></i> Back to Home Page
+            </a>
         </div>
     </div>
 
@@ -313,8 +318,7 @@
                 // Add click-to-hide functionality
                 message.addEventListener('click', () => {
                     message.style.opacity = '0';
-                    // Optional: Adjust transform for a different hide animation on click
-                    message.style.transform = 'scale(0.9)';
+                    message.style.transform = 'scale(0.9)'; // Optional shrink effect
                     setTimeout(() => message.remove(), 300); // Remove after transition
                 });
             });
