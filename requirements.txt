@@ -1,2 +1,5 @@
 Flask==3.1.0
-flask_login
+Flask-Login>=0.6
+supabase>=1.0,<2.0 # Use <2.0 for potentially breaking changes in v2
+python-dotenv>=0.19
+requests
