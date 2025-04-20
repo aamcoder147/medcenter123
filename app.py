@@ -628,9 +628,10 @@ def get_available_slots(doctor_id, date_str):
 
 
 # --- confirm_booking route (Already Fixed with two-query approach) ---
+# --- START OF FULLY REVISED /confirm-booking ROUTE with new rules ---
+
 @app.route('/confirm-booking', methods=['POST'])
 def confirm_booking():
-    # (Keep the CORRECTED version from the previous message using the two-query check for CHECK 2)
     print("\n--- Received POST to /confirm-booking ---")
     # --- Get Data ---
     doctor_id_str = request.form.get('doctor_id')
@@ -642,9 +643,15 @@ def confirm_booking():
     fingerprint = request.form.get('fingerprint')
     cookie_id = request.cookies.get('device_id')
     ip_address = request.remote_addr
-    print(f"DEBUG: Form Data - DrID: {doctor_id_str}, Name: {patient_name}, Phone: {patient_phone}, Date: {booking_date}, Time: {booking_time}, FP: {fingerprint}, IP: {ip_address}")
+
+    print(f"DEBUG: Form Data - DrID: {doctor_id_str}, Name: {patient_name}, Phone: {patient_phone}, Date: {booking_date}, Time: {booking_time}")
+
     # --- Basic Validation ---
-    errors = []; doctor_id = None; booking_date_obj = None; slot_start_time = None
+    errors = []
+    doctor_id = None
+    booking_date_obj = None
+    slot_start_time = None
+
     if not doctor_id_str or not doctor_id_str.isdigit(): errors.append('Invalid Doctor ID.')
     else: doctor_id = int(doctor_id_str)
     if not patient_name: errors.append('Patient name is required.')
@@ -652,90 +659,215 @@ def confirm_booking():
     if not patient_phone.isdigit() or not (9 <= len(patient_phone) <= 15): errors.append('Valid phone number (9-15 digits) required.')
     if not booking_date: errors.append('Booking date is required.')
     if not booking_time: errors.append('Booking time slot is required.')
+
+    # Validate Date Format and Past Date/Time
     if not errors:
         try:
             booking_date_obj = datetime.strptime(booking_date, '%Y-%m-%d').date()
-            if booking_date_obj < date.today(): errors.append('Cannot book an appointment in the past date.')
+            if booking_date_obj < date.today(): errors.append('Cannot book an appointment on a past date.')
             if booking_time and '-' in booking_time and ':' in booking_time:
                  slot_start_str = booking_time.split('-')[0].strip()
                  slot_start_time = datetime.strptime(slot_start_str, '%H:%M').time()
-                 if booking_date_obj == date.today() and slot_start_time <= datetime.now().time(): errors.append('Cannot book a time slot that has already passed today.')
-            else: errors.append('Invalid booking time format selected.')
+                 if booking_date_obj == date.today() and slot_start_time <= datetime.now().time(): errors.append('Cannot book a time slot that has passed today.')
+            else: errors.append('Invalid booking time format.')
         except ValueError: errors.append('Invalid date or time format.')
+
     if errors:
         print(f"DEBUG: Validation Errors on Confirm: {errors}")
         for error in errors: flash(f'⛔ {error}', 'error')
         redir_url = url_for('booking_page', doctor_id=doctor_id) if doctor_id else url_for('home')
         return redirect(request.referrer or redir_url)
-    # --- CRITICAL Validation: Refetch Schedule ---
-    fetched_doctor_name = None; is_slot_valid = False
+    # --- End Basic Validation ---
+
+    # --- Slot Availability & Doctor Name Validation ---
+    fetched_doctor_name = None
+    is_slot_valid = False
     try:
-        print(f"DEBUG: /confirm-booking - Fetching current schedule Dr {doctor_id}")
+        print(f"DEBUG: Validating Slot Availability for Dr {doctor_id} on {booking_date} at {booking_time}")
         doc_response = supabase.table('doctors').select('availability, name').eq('id', doctor_id).maybe_single().execute()
         if not doc_response.data: flash(f'⛔ Doctor {doctor_id} not found.', 'error'); return redirect(url_for('home'))
         fetched_doctor_name = doc_response.data.get('name', 'Doctor')
-        current_doctor_schedule = parse_availability(doc_response.data.get('availability'), doctor_id)
-        print(f"DEBUG: /confirm-booking - Current schedule: {current_doctor_schedule}")
+        current_schedule = parse_availability(doc_response.data.get('availability'), doctor_id)
         selected_day_name = booking_date_obj.strftime('%A')
-        day_schedule_raw = current_doctor_schedule.get(selected_day_name, [])
-        if not isinstance(day_schedule_raw, list):
-            print(f"ERROR: Schedule format invalid for {selected_day_name}.")
-            flash('⛔ Error validating schedule format.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-        valid_general_slots = { s for s in day_schedule_raw if isinstance(s, str) and '-' in s and ':' in s and s.strip().lower() != 'unavailable'}
-        print(f"DEBUG: Validating '{booking_time}' against CURRENT {selected_day_name} slots: {valid_general_slots}")
-        if booking_time in valid_general_slots: is_slot_valid = True; print("DEBUG: Slot Validation PASSED.")
-        else: print(f"ERROR: Slot '{booking_time}' NOT valid now."); flash('⛔ Slot no longer available/valid.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-    except Exception as e: print(f"ERROR: Exception validating availability: {e}"); traceback.print_exc(); flash(f'⛔ Server error validating slot: {getattr(e, "message", str(e))}.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-    if not is_slot_valid: print("ERROR: Slot validation check failed."); flash('⛔ Slot validation failed.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-    # --- DB Interaction ---
+        day_schedule = current_schedule.get(selected_day_name, [])
+        if not isinstance(day_schedule, list): raise TypeError("Schedule format error")
+        valid_slots = {s for s in day_schedule if isinstance(s, str) and '-' in s and ':' in s and s.strip().lower() != 'unavailable'}
+        if booking_time in valid_slots: is_slot_valid = True; print("DEBUG: Slot is currently valid in schedule.")
+        else: flash('⛔ Selected time slot is not valid or available. Please refresh.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
+    except Exception as e: print(f"ERROR: Slot validation error: {e}"); traceback.print_exc(); flash(f'⛔ Server error validating slot.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
+    if not is_slot_valid: flash('⛔ Slot validation failed.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
+    # --- End Slot Validation ---
+
+    # --- Booking Logic and Checks ---
     try:
-        # ** CHECK 1: Slot booked? **
-        print(f"DEBUG: DB Check 1 - Slot booked? {booking_time} {booking_date} Dr {doctor_id}")
-        check_slot_res = supabase.table('bookings').select('id', count='exact').eq('doctor_id', doctor_id).eq('booking_date', booking_date).eq('booking_time', booking_time).neq('status', 'Cancelled').execute()
-        print(f"DEBUG: DB Check 1 Resp: {check_slot_res}")
-        if hasattr(check_slot_res, 'count') and check_slot_res.count > 0: flash('⛔ Slot just booked.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-        # ** CHECK 2: Patient conflict? (TWO queries) **
-        print(f"DEBUG: DB Check 2 - Conflict for {patient_name}/{patient_phone} on {booking_date}?")
-        name_conflict = False; phone_conflict = False; existing_time = None
+        # *** NEW CHECK 1: 10-Day Cooldown for SAME Doctor ***
+        print(f"DEBUG: CHECK 1 (10-Day Cooldown) - Checking recent bookings for Dr {doctor_id} by Phone:{patient_phone} OR Name:{patient_name}")
+        ten_days_ago = booking_date_obj - timedelta(days=10)
+        most_recent_booking_date = None
         try:
-            check_name_res = supabase.table('bookings').select('booking_time', count='exact').eq('doctor_id', doctor_id).eq('booking_date', booking_date).neq('status', 'Cancelled').eq('patient_name', patient_name).execute()
-            print(f"DEBUG: Check 2a (Name) Resp: {check_name_res}")
-            if hasattr(check_name_res, 'count') and check_name_res.count > 0: name_conflict = True;
-            if check_name_res.data: existing_time = check_name_res.data[0].get('booking_time')
-            if not name_conflict:
-                 check_phone_res = supabase.table('bookings').select('booking_time', count='exact').eq('doctor_id', doctor_id).eq('booking_date', booking_date).neq('status', 'Cancelled').eq('patient_phone', patient_phone).execute()
-                 print(f"DEBUG: Check 2b (Phone) Resp: {check_phone_res}")
-                 if hasattr(check_phone_res, 'count') and check_phone_res.count > 0: phone_conflict = True;
-                 if check_phone_res.data and not existing_time: existing_time = check_phone_res.data[0].get('booking_time')
-            if name_conflict or phone_conflict: existing_time_str = existing_time or "another time"; flash(f'ℹ️ You already have booking with Dr. {fetched_doctor_name} on {booking_date} at {existing_time_str}.', 'info'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-            else: print("DEBUG: DB Check 2 PASSED - No conflict.")
-        except Exception as check2_err: print(f"ERROR: Exception Check 2: {check2_err}"); traceback.print_exc(); flash(f'⛔ Error checking existing bookings: {getattr(check2_err, "message", str(check2_err))}.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-        # --- Insert Booking ---
-        print("DEBUG: All checks passed. Inserting...")
-        insert_data = {'doctor_id': doctor_id, 'doctor_name': fetched_doctor_name, 'patient_name': patient_name, 'patient_phone': patient_phone, 'booking_date': booking_date, 'booking_time': booking_time, 'notes': notes, 'status': 'Pending', 'ip_address': ip_address, 'cookie_id': cookie_id, 'fingerprint': fingerprint}
+            # Check by phone first
+            res_phone = supabase.table('bookings') \
+                .select('booking_date') \
+                .eq('doctor_id', doctor_id) \
+                .eq('patient_phone', patient_phone) \
+                .gte('booking_date', ten_days_ago.strftime('%Y-%m-%d')) \
+                .lt('booking_date', booking_date_obj.strftime('%Y-%m-%d')) \
+                .order('booking_date', desc=True).limit(1).execute()
+
+            if res_phone.data:
+                most_recent_booking_date = res_phone.data[0]['booking_date']
+            else:
+                 # Check by name if not found by phone
+                 res_name = supabase.table('bookings') \
+                    .select('booking_date') \
+                    .eq('doctor_id', doctor_id) \
+                    .eq('patient_name', patient_name) \
+                    .gte('booking_date', ten_days_ago.strftime('%Y-%m-%d')) \
+                    .lt('booking_date', booking_date_obj.strftime('%Y-%m-%d')) \
+                    .order('booking_date', desc=True).limit(1).execute()
+                 if res_name.data:
+                    most_recent_booking_date = res_name.data[0]['booking_date']
+
+            if most_recent_booking_date:
+                 print(f"DEBUG: Found recent booking on {most_recent_booking_date} for Dr {doctor_id}")
+                 flash(f'⛔ You have a recent booking with Dr. {fetched_doctor_name} on {most_recent_booking_date}. Please wait at least 10 days between bookings with the same doctor.', 'error')
+                 return redirect(url_for('booking_page', doctor_id=doctor_id))
+            else:
+                 print("DEBUG: CHECK 1 (10-Day Cooldown) PASSED.")
+
+        except Exception as cooldown_check_err:
+            print(f"ERROR checking 10-day cooldown: {cooldown_check_err}"); traceback.print_exc()
+            flash('⛔ Error checking booking history. Please try again.', 'error')
+            return redirect(url_for('booking_page', doctor_id=doctor_id))
+        # --- END CHECK 1 ---
+
+        # *** CORRECTED CHECK 2: Daily Limit (Max 1 Booking Total) ***
+        print(f"DEBUG: CHECK 2 (Daily Limit) - Checking total bookings for Phone:{patient_phone} OR Name:{patient_name} on {booking_date}")
+        total_bookings_on_day = 0
+        try:
+            booked_ids_on_day = set() # Use set for unique IDs
+
+            # Query 2a: Check by phone (across all doctors on that date)
+            res_phone_daily = supabase.table('bookings') \
+                 .select('id') \
+                 .eq('patient_phone', patient_phone) \
+                 .eq('booking_date', booking_date) \
+                 .neq('status', 'Cancelled') \
+                 .execute()
+            if res_phone_daily.data:
+                for booking in res_phone_daily.data: booked_ids_on_day.add(booking['id'])
+
+            # Query 2b: Check by name (across all doctors on that date)
+            res_name_daily = supabase.table('bookings') \
+                 .select('id') \
+                 .eq('patient_name', patient_name) \
+                 .eq('booking_date', booking_date) \
+                 .neq('status', 'Cancelled') \
+                 .execute()
+            if res_name_daily.data:
+                 for booking in res_name_daily.data: booked_ids_on_day.add(booking['id'])
+
+            total_bookings_on_day = len(booked_ids_on_day)
+            print(f"DEBUG: Found {total_bookings_on_day} existing unique non-cancelled bookings for this patient on {booking_date}")
+
+            # --- CHANGE HERE: Check if count is 1 or more ---
+            if total_bookings_on_day >= 1:
+                 # --- CHANGE FLASH MESSAGE ---
+                 flash(f'⛔ You already have a booking scheduled for {booking_date}. You can only book one appointment per day across all doctors.', 'error')
+                 return redirect(url_for('booking_page', doctor_id=doctor_id))
+            else:
+                print("DEBUG: CHECK 2 (Daily Limit of 1) PASSED.")
+
+        except Exception as daily_limit_err:
+             print(f"ERROR checking daily booking limit: {daily_limit_err}"); traceback.print_exc()
+             flash('⛔ Error checking your daily booking limit. Please try again.', 'error')
+             return redirect(url_for('booking_page', doctor_id=doctor_id))
+        # --- END CORRECTED CHECK 2 ---
+
+        # *** CHECK 3: Slot already booked? (Race condition) *** (Was CHECK 1 before)
+        print(f"DEBUG: CHECK 3 (Race Condition) - Is slot {booking_time} on {booking_date} for Dr {doctor_id} booked?")
+        check_slot_response = supabase.table('bookings').select('id', count='exact') \
+            .eq('doctor_id', doctor_id) \
+            .eq('booking_date', booking_date) \
+            .eq('booking_time', booking_time) \
+            .neq('status', 'Cancelled') \
+            .execute()
+        print(f"DEBUG: Check 3 Resp: {check_slot_response}")
+        if hasattr(check_slot_response, 'count') and check_slot_response.count > 0:
+             flash('⛔ Sorry, that specific time slot was just booked. Please select another.', 'error')
+             return redirect(url_for('booking_page', doctor_id=doctor_id))
+        else:
+            print("DEBUG: CHECK 3 (Race Condition) PASSED.")
+        # --- END CHECK 3 ---
+
+        # *** CHECK 4: Patient SAME DAY/SAME DOCTOR conflict? *** (Was CHECK 2 before, now redundant due to Check 1/2 but good explicit safety)
+        # Note: This check is now somewhat redundant given Check 1 (10-day) and Check 2 (daily limit),
+        # but leaving it as a final safeguard specifically against exact same dr/day bookings using different contact info tricks
+        # This uses the TWO QUERY workaround.
+        print(f"DEBUG: CHECK 4 (Same Dr/Day Check) - Patient {patient_name}/{patient_phone} on {booking_date}?")
+        try:
+            booked_ids_same_dr_day = set()
+            res_phone_sdd = supabase.table('bookings').select('id').eq('doctor_id', doctor_id).eq('patient_phone', patient_phone).eq('booking_date', booking_date).neq('status', 'Cancelled').execute()
+            if res_phone_sdd.data: booked_ids_same_dr_day.update(b['id'] for b in res_phone_sdd.data)
+            res_name_sdd = supabase.table('bookings').select('id').eq('doctor_id', doctor_id).eq('patient_name', patient_name).eq('booking_date', booking_date).neq('status', 'Cancelled').execute()
+            if res_name_sdd.data: booked_ids_same_dr_day.update(b['id'] for b in res_name_sdd.data)
+
+            if len(booked_ids_same_dr_day) > 0:
+                print(f"DEBUG: CHECK 4 FAILED - Explicit conflict found ({len(booked_ids_same_dr_day)} existing).")
+                flash(f'ℹ️ You already have a booking with Dr. {fetched_doctor_name} on {booking_date}. Only one booking per day with the same doctor allowed.', 'info')
+                return redirect(url_for('booking_page', doctor_id=doctor_id))
+            else:
+                 print("DEBUG: CHECK 4 (Same Dr/Day Check) PASSED.")
+
+        except Exception as check4_err:
+             print(f"ERROR during Check 4 (Same Dr/Day): {check4_err}"); traceback.print_exc()
+             flash('⛔ Error checking for same-day bookings with this doctor.', 'error')
+             return redirect(url_for('booking_page', doctor_id=doctor_id))
+        # --- END CHECK 4 ---
+
+        # --- Insert the Booking ---
+        print("DEBUG: All checks passed! Proceeding to insert booking.")
+        insert_data = {
+            'doctor_id': doctor_id, 'doctor_name': fetched_doctor_name,
+            'patient_name': patient_name, 'patient_phone': patient_phone,
+            'booking_date': booking_date, 'booking_time': booking_time, 'notes': notes,
+            'status': 'Pending', 'ip_address': ip_address, 'cookie_id': cookie_id,
+            'fingerprint': fingerprint
+        }
         insert_data_clean = {k: v for k, v in insert_data.items() if v is not None}
-        print(f"DEBUG: Insert payload: {insert_data_clean}")
+        print(f"DEBUG: Booking insert payload: {insert_data_clean}")
         response_insert = supabase.table('bookings').insert(insert_data_clean).execute()
-        print(f"DEBUG: Insert response: {response_insert}")
-        # Handle insert response
+        print(f"DEBUG: Booking insert response: {response_insert}")
+
+        # Handle insert response (Keep the detailed error handling from previous version)
         if response_insert.data and isinstance(response_insert.data, list) and len(response_insert.data) > 0 and 'id' in response_insert.data[0]:
             booking_id = response_insert.data[0]['id']
-            print(f"SUCCESS: Booking confirmed: ID {booking_id}")
-            flash('✅ Booking confirmed!', 'success')
+            print(f"SUCCESS: Booking confirmed (Supabase): ID {booking_id}")
+            flash('✅ Booking confirmed successfully!', 'success')
             return redirect(url_for('confirmation', booking_id=booking_id, doctor_name=fetched_doctor_name, patient_name=patient_name, booking_date=booking_date, booking_time=booking_time))
-        else: # Insert failed
-            error_message = "Booking failed (database issue)."
-            error_info = getattr(response_insert, 'error', None); error_dict = {};
+        else:
+            # Handle insertion failure (Keep detailed error handling)
+            error_message = "Booking failed due to an unexpected database issue."
+            error_info = None; error_dict = {};
+            if hasattr(response_insert, 'error'): error_info = response_insert.error;
             if hasattr(error_info, '__dict__'): error_dict = error_info.__dict__
             elif isinstance(error_info, dict): error_dict = error_info
-            error_code = error_dict.get('code'); error_msg = error_dict.get('message', 'Unknown DB Error')
-            print(f"ERROR: Insert failed: Code={error_code}, Msg={error_msg}, Details={error_dict.get('details')}")
-            if error_code == '23505': error_message = "Booking failed: Time slot likely taken."
-            elif error_code: error_message = f"Booking failed: {error_msg}"
-            flash(f'⛔ {error_message}', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-    # Outer exception
-    except Exception as e: print(f"Outer ERROR confirm_booking Dr {doctor_id}:"); traceback.print_exc(); flash(f'⛔ Server error: {getattr(e, "message", str(e))}.', 'error'); return redirect(url_for('booking_page', doctor_id=doctor_id))
-# --- END OF /confirm-booking ---
+            error_code = error_dict.get('code'); error_msg = error_dict.get('message', 'Unknown DB Error'); error_details = error_dict.get('details', '')
+            print(f"ERROR: Supabase insert failed: Code={error_code}, Msg={error_msg}, Details={error_details}")
+            if error_code == '23505': error_message = "Booking failed: This time slot may have just been taken."
+            elif error_code: error_message = f"Booking failed: [{error_code}] {error_msg}"
+            else: error_message = f"Booking failed: {error_msg}"
+            flash(f'⛔ {error_message}', 'error')
+            return redirect(url_for('booking_page', doctor_id=doctor_id))
+
+    # Outer exception handler for unexpected errors
+    except Exception as e:
+        print(f"Outer ERROR: Unhandled Exception in /confirm-booking:")
+        traceback.print_exc()
+        flash(f'⛔ A server error occurred: {getattr(e, "message", str(e))}.', 'error')
+        return redirect(url_for('booking_page', doctor_id=doctor_id) if 'doctor_id' in locals() and doctor_id else url_for('home'))
+
+# --- END OF FULLY REVISED /confirm-booking ROUTE ---
 
 # --- Confirmation route (Should be OK) ---
 @app.route('/confirmation')

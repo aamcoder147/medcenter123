@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Doctor Dashboard - Simplified</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ensure viewport is set -->
+    <title>Doctor Dashboard - {{ doctor.name if doctor else 'N/A' }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Chart.js script tag removed -->
     <style>
-        :root {
+        :root { /* ... (Root variables unchanged) ... */
             --bg-primary: #ffffff;
             --bg-secondary: #f8f9fa;
             --border-color: #dee2e6;
@@ -17,7 +18,7 @@
             --text-light: #ffffff;
             --accent: #007bff;
             --accent-hover: #0056b3;
-            --accent-light: #e6f2ff; /* Lighter accent for hover/backgrounds */
+            --accent-light: #e6f2ff;
             --success: #28a745;
             --success-hover: #218838;
             --warning: #ffc107;
@@ -25,149 +26,234 @@
             --error: #dc3545;
             --error-bg: #f8d7da;
             --info-bg: #d1ecf1;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.05); /* Reduced shadow intensity slightly */
+            --shadow-color-medium: rgba(0, 0, 0, 0.1);
             --transition-speed: 0.3s;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html { scroll-behavior: smooth; }
+
         body {
             background-color: var(--bg-secondary);
             color: var(--text-dark);
             font-family: 'Open Sans', 'Lato', sans-serif;
-            padding: 1.5rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
+            padding: 1rem; /* Reduced padding on body */
+            font-size: 15px; /* Base font size */
+            line-height: 1.6;
         }
 
         .dashboard-wrapper {
-             max-width: 1400px;
-             margin: 0 auto;
-             background: var(--bg-primary);
-             padding: 2rem;
-             border-radius: 0.5rem;
-             border: 1px solid var(--border-color);
-             box-shadow: 0 4px 15px var(--shadow-color);
+             max-width: 1400px; margin: 0 auto; background: var(--bg-primary); padding: 1.5rem; /* Reduced padding */
+             border-radius: 0.5rem; border: 1px solid var(--border-color); box-shadow: 0 3px 12px var(--shadow-color-medium);
          }
 
         h1 {
-            color: var(--accent); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 2rem; font-family: 'Lato', sans-serif; font-weight: 700; display: flex; align-items: center; gap: 0.75rem;
+            color: var(--accent); margin-bottom: 1.2rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 1.8rem; /* Adjusted */ font-family: 'Lato', sans-serif; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; /* Allow wrap on small */
         }
-        h1 i { font-size: 1.8rem; }
+        h1 i { font-size: 1.6rem; }
+        h1 span { color: var(--text-dark); font-weight: 400; font-size: 1.3rem; margin-left: 8px;}
 
         /* Stats Section */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background-color: var(--bg-primary); padding: 1.25rem; border-radius: 0.4rem; border: 1px solid var(--border-color); box-shadow: 0 2px 5px var(--shadow-color); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform var(--transition-speed), box-shadow var(--transition-speed); }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 12px rgba(0,0,0,0.12); }
-        .stat-card .icon { font-size: 2rem; margin-bottom: 0.75rem; color: var(--accent); }
-        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); line-height: 1.2; }
-        .stat-card .label { font-size: 0.9rem; color: var(--text-medium); margin-top: 0.25rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; } /* Adjusted */
+        .stat-card { background-color: var(--bg-primary); padding: 1rem; /* Adjusted */ border-radius: 0.4rem; border: 1px solid var(--border-color); box-shadow: 0 2px 4px var(--shadow-color); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform var(--transition-speed), box-shadow var(--transition-speed); }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px var(--shadow-color-medium); }
+        .stat-card .icon { font-size: 1.8rem; /* Adjusted */ margin-bottom: 0.6rem; color: var(--accent); }
+        .stat-card .value { font-size: 1.6rem; /* Adjusted */ font-weight: 700; color: var(--text-dark); line-height: 1.1; }
+        .stat-card .label { font-size: 0.8rem; /* Adjusted */ color: var(--text-medium); margin-top: 0.2rem; }
         .stat-card.today .icon { color: var(--success); }
         .stat-card.week .icon { color: var(--info); }
-        .stat-card.pending .icon { color: var(--warning); }
-
-        /* Charts Section - Fix Applied */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: minmax(300px, 1fr); /* Single column */
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-        .chart-container {
-            background-color: var(--bg-primary);
-            padding: 1.5rem;
-            border-radius: 0.4rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 5px var(--shadow-color);
-            /* --- FIX: Define aspect ratio --- */
-            aspect-ratio: 2 / 1; /* Common ratio for bar charts, adjust 2/1 or 16/9 if needed */
-            /* Optional: Set a max-height to prevent extreme vertical stretching on very narrow screens */
-             /* max-height: 400px; */
-            /* Ensure canvas can fill container height now */
-            display: flex; /* Allow canvas to potentially grow */
-            flex-direction: column;
-        }
-         .chart-container canvas {
-            /* Ensure canvas doesn't overflow its container (important with aspect-ratio) */
-             max-width: 100%;
-             height: auto !important; /* Override any inline Chart.js height to respect aspect ratio */
-         }
-
-        .chart-container h3 { margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-dark); font-weight: 600; text-align: center; }
+        .stat-card.pending .icon { color: var(--warning);}
+        .stat-card.patients .icon { color: var(--accent);}
 
         /* Filter/Action Bar */
-        .controls-bar { background: var(--bg-secondary); padding: 1rem 1.5rem; border-radius: 0.4rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border: 1px solid var(--border-color); }
-        .controls-bar .filter-group { display: flex; align-items: center; gap: 0.5rem; flex-grow: 1; min-width: 250px; }
-        .controls-bar label { font-weight: 600; color: var(--text-dark); font-size: 0.95rem; white-space: nowrap; }
-        .controls-bar input[type="date"] { padding: 0.5rem 0.7rem; border: 1px solid var(--border-color); border-radius: 0.3rem; background: var(--bg-primary); color: var(--text-dark); font-size: 0.9rem; flex-grow: 1; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; }
-        .controls-bar input[type="date"]:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+        .controls-bar { background: var(--bg-secondary); padding: 1rem; /* Adjusted */ border-radius: 0.4rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; /* Adjusted */ border: 1px solid var(--border-color); border-top: 1px solid var(--border-color); }
+        .controls-bar .filter-group { display: flex; align-items: center; gap: 0.4rem; flex-grow: 1; min-width: 220px; /* Adjusted */ }
+        .controls-bar label { font-weight: 600; color: var(--text-dark); font-size: 0.9rem; /* Adjusted */ white-space: nowrap; margin-right: 5px;}
+        .controls-bar input[type="date"] { padding: 0.4rem 0.6rem; /* Adjusted */ border: 1px solid var(--border-color); border-radius: 0.3rem; background: var(--bg-primary); color: var(--text-dark); font-size: 0.85rem; flex-grow: 1; }
+        .controls-bar input[type="date"]:focus { outline: none; border-color: var(--border-color-focus); box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.2); } /* Smaller focus ring */
 
         /* Buttons */
-        .btn { padding: 0.7rem 1.2rem; border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 0.6rem 1rem; /* Adjusted */ border-radius: 0.3rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; /* Adjusted */ text-align: center; transition: all var(--transition-speed) ease-in-out; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         .btn-primary { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
         .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); }
         .btn-outline-primary { border-color: var(--accent); color: var(--accent); background: transparent;}
         .btn-outline-primary:hover { background-color: var(--accent); color: var(--text-light);}
         .btn-success { background-color: var(--success); color: var(--text-light); border-color: var(--success); }
         .btn-success:hover { background-color: var(--success-hover); border-color: var(--success-hover); }
-        .btn-controls { padding: 0.5rem 1rem; font-size: 0.85rem; margin: 0; }
-        .btn-action { padding: 0.3rem 0.6rem; font-size: 0.75rem; margin-right: 0.3rem; line-height: 1; }
-        .btn-action i { margin-right: 3px; }
-        .btn-action-view { background-color: var(--info); color: var(--text-light); border-color: var(--info); }
-        .btn-action-view:hover { background-color: #138496; border-color: #117a8b;}
+        .btn-controls { padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 0; } /* Adjusted */
+        .btn-action { padding: 0.3rem 0.6rem; font-size: 0.75rem; margin-right: 0.3rem; line-height: 1; white-space: nowrap; /* Prevent wrap */ }
+        .btn-action i { margin-right: 3px; font-size: 0.9em; } /* Slightly smaller icon */
         .btn-action-complete { background-color: var(--success); color: var(--text-light); border-color: var(--success); }
-        .btn-action-complete:hover { background-color: var(--success-hover); border-color: var(--success-hover); }
-        .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none;} /* Improve disabled style */
+        .btn-action-complete:hover:not(:disabled) { background-color: var(--success-hover); border-color: var(--success-hover); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;} /* Slightly different disabled */
 
-        /* Table Styling */
-        .month-header { margin-top: 2rem; }
-        .month-header h2 { color: var(--accent); font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; font-family: 'Lato', sans-serif; }
-        .day-section { margin-bottom: 1.5rem; border: 1px solid var(--border-color); border-radius: 0.4rem; overflow: hidden; }
-        .day-section h3 { color: var(--text-dark); background-color: var(--bg-secondary); padding: 0.8rem 1rem; font-size: 1.1rem; font-weight: 600; border-bottom: 1px solid var(--border-color); margin: 0; }
+        /* Table Styling (Desktop - Mostly Unchanged) */
+        .month-header { margin-top: 1.5rem; } /* Adjusted */
+        .month-header h2 { color: var(--accent); font-size: 1.3rem; /* Adjusted */ font-weight: 600; margin-bottom: 0.8rem; font-family: 'Lato', sans-serif; }
+        .day-section { margin-bottom: 1.2rem; /* Adjusted */ border: 1px solid var(--border-color); border-radius: 0.4rem; overflow: hidden; }
+        .day-section h3 { color: var(--text-dark); background-color: var(--bg-secondary); padding: 0.7rem 1rem; font-size: 1rem; /* Adjusted */ font-weight: 600; border-bottom: 1px solid var(--border-color); margin: 0; }
 
-        table { width: 100%; border-collapse: collapse; background-color: var(--bg-primary); table-layout: fixed; /* Help stabilize columns */}
-        th, td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: middle; overflow-wrap: break-word; /* Prevent long notes breaking layout */ }
+        table { width: 100%; border-collapse: collapse; background-color: var(--bg-primary); table-layout: fixed; }
+        thead { /* Desktop header styles */ }
+        th, td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: middle; overflow-wrap: break-word; font-size: 0.85rem; }
         td { color: var(--text-medium); }
-        td:first-child { color: var(--text-dark); font-weight: 500; width: 25%; /* Example width */}
-        td:nth-child(2) { width: 15%; /* Example width */}
-        td:nth-child(3) { width: 10%; /* Example width */}
-        /* Notes column can take remaining space */
-        .notes-cell { width: auto; }
-        .actions-cell { width: 130px; /* Fixed width for actions */}
-
-
-        th { background: var(--bg-secondary); color: var(--text-dark); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom-width: 2px; }
+        /* Desktop Column widths (apply only >768px) */
+         @media (min-width: 769px) {
+             th:nth-child(1), td:nth-child(1) { width: 25%; }
+             th:nth-child(2), td:nth-child(2) { width: 15%; }
+             th:nth-child(3), td:nth-child(3) { width: 12%; }
+             th:nth-child(4), td:nth-child(4) { width: 30%; }
+             th:nth-child(5), td:nth-child(5) { width: 18%; text-align: right;}
+        }
+        th { background: var(--bg-secondary); color: var(--text-dark); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom-width: 2px; }
+        tbody tr { border-top: 1px solid var(--border-color); }
+        tbody tr:first-child { border-top: none; }
         tbody tr:nth-child(odd) { background-color: var(--bg-secondary); }
-        tbody tr:not(.completed-appointment):hover { background-color: var(--accent-light); } /* Don't highlight completed rows on hover */
+        tbody tr:nth-child(even) { background-color: var(--bg-primary); }
+        tbody tr:not(.completed-appointment):hover { background-color: var(--accent-light); }
+        .past-appointment td { opacity: 0.8; }
+        .completed-appointment { opacity: 0.7; } /* Slightly increased */
+        .completed-appointment td { color: var(--text-medium); font-style: italic;} /* Add italic */
+        .completed-appointment:hover { background-color: inherit; }
+        .notes-cell { white-space: pre-wrap; min-width: 100px; line-height: 1.45; padding: 0.6rem 1rem; transition: background-color var(--transition-speed), box-shadow var(--transition-speed); color: var(--text-dark); outline-color: var(--accent); font-size: 0.85rem; vertical-align: top; }
+        .notes-cell[contenteditable="true"] { background-color: #fdfdfe; cursor: text; }
+        .notes-cell[contenteditable="true"]:focus { background-color: #e9f5ff; box-shadow: inset 0 1px 2px rgba(0,123,255,0.1); outline: 1px solid var(--border-color-focus); }
+        .notes-cell[contenteditable="false"] { background-color: transparent !important; color: var(--text-medium); font-style: italic; cursor: default; }
+        .notes-cell:empty::before { content: "Add notes..."; color: var(--text-medium); font-style: italic; opacity: 0.6; pointer-events: none; display: inline-block; }
+        .notes-cell:focus::before, .notes-cell[contenteditable="false"]:empty::before { content: ""; display: none;}
+        .actions-cell { text-align: right; } /* Default right align */
 
-        .past-appointment td { color: var(--text-medium); opacity: 0.8; }
-        .past-appointment .notes-cell { opacity: 0.9; }
-        .completed-appointment { opacity: 0.65; /* Slightly increased opacity for readability */ }
-        .completed-appointment td { color: var(--text-medium); background-color: var(--bg-secondary); /* Subtle background */ }
-
-        .notes-cell { white-space: pre-wrap; min-width: 150px; /* Min width for notes */ line-height: 1.4; padding: 0.6rem 1rem; border: 1px dashed transparent; transition: background-color var(--transition-speed), border-color var(--transition-speed); color: var(--text-dark); outline-color: var(--accent); }
-        .notes-cell[contenteditable="true"]:focus { background-color: #e0f7ff; border-color: var(--border-color-focus); }
-        .notes-cell[contenteditable="false"] { background-color: transparent; /* Ensure non-editable look normal */ color: var(--text-medium); font-style: italic; }
-
-        .actions-cell { white-space: nowrap; text-align: right; }
-
-
-        /* Flash Messages */
+        /* Flash Messages */ /* ... (Unchanged) ... */
         .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
-        .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; }
-        .flash-message.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .flash-message.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .flash-message.info { background-color: var(--info-bg); border-color: #bee5eb; color: #0c5460; }
+        .flash-message { padding: 0.8rem 1.2rem; margin-bottom: 1rem; border-radius: 0.3rem; font-weight: 500; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); opacity: 0; transform: translateX(100%); animation: slideInFadeOut 5s ease-in-out forwards; border: 1px solid transparent; border-left-width: 4px;}
+        .flash-message.success { background-color: #d4edda; border-color: var(--success); color: #155724; }
+        .flash-message.error { background-color: #f8d7da; border-color: var(--error); color: #721c24; }
+        .flash-message.info { background-color: var(--info-bg); border-color: var(--info); color: #0c5460; }
+        .flash-message.warning { background-color: #fff3cd; border-color: var(--warning); color: #856404; }
         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
 
-        /* Responsive */
-        @media (max-width: 992px) { /* No change needed for single chart */ }
-        @media (max-width: 768px) { .controls-bar { flex-direction: column; align-items: stretch; } .controls-bar .filter-group { width: 100%;} .btn-controls { width: 100%; } body { padding: 0.5rem; } .dashboard-wrapper { padding: 1rem;} h1 { font-size: 1.6rem; } .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; } .stat-card .value { font-size: 1.5rem; } .stat-card .icon { font-size: 1.8rem; } th, td { padding: 0.6rem 0.8rem; font-size: 0.85rem; } .actions-cell { min-width: auto; white-space: normal; text-align: left; width: auto;} .btn-action { margin-bottom: 0.3rem; } table { table-layout: auto; /* Allow table to adjust more freely on small screens */} td:first-child, td:nth-child(2), td:nth-child(3), .actions-cell { width: auto; /* Remove fixed widths */ } }
-        @media (max-width: 576px) { h1 { font-size: 1.4rem; gap: 0.5rem;} h1 i { font-size: 1.3rem; } .stats-grid { grid-template-columns: 1fr 1fr; } .notes-cell { min-width: 80px; /* Adjust min width */} }
+
+        /* ------------------------------------ */
+        /* --- MOBILE RESPONSIVE TABLE CSS --- */
+        /* ------------------------------------ */
+        @media (max-width: 768px) {
+            /* --- General Mobile Adjustments --- */
+            .controls-bar { flex-direction: column; align-items: stretch; }
+            .controls-bar .filter-group { width: 100%; }
+            .controls-bar .btn-controls { width: 100%; margin-top: 0.5rem; }
+            body { padding: 0.5rem; }
+            .dashboard-wrapper { padding: 1rem;}
+            h1 { font-size: 1.5rem; gap: 0.5rem; } /* Adjusted */
+            h1 span { font-size: 1.2rem;}
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.8rem;} /* 2 columns */
+            .stat-card .value { font-size: 1.4rem; }
+            .stat-card .icon { font-size: 1.6rem; }
+
+            /* --- Hide Desktop Table Head --- */
+            table thead { display: none; }
+
+            /* --- Style Rows as Cards --- */
+            table, tbody, tr, td { display: block; width: 100%; }
+            tbody tr {
+                margin-bottom: 1rem; /* Space between cards */
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 0.8rem 1rem; /* Inner padding for card */
+                background-color: var(--bg-primary); /* White background for cards */
+                box-shadow: 0 1px 3px var(--shadow-color);
+                position: relative; /* For pseudo-elements if needed */
+            }
+             /* Remove alternating background for cards */
+             tbody tr:nth-child(odd), tbody tr:nth-child(even) {
+                background-color: var(--bg-primary);
+            }
+
+            /* --- Style Cells within Cards --- */
+            td {
+                padding: 0.5rem 0; /* Vertical padding within card cell */
+                border-bottom: none; /* Remove inner borders */
+                display: flex; /* Use flex for label + value */
+                align-items: center; /* Align items vertically */
+                flex-wrap: wrap; /* Allow wrapping if needed */
+                gap: 0.5rem; /* Space between label and value */
+                text-align: left !important; /* Override any centering */
+            }
+             /* Ensure last td in a card doesn't have extra space */
+            tr td:last-child { padding-bottom: 0; }
+
+            /* --- Add Labels using ::before --- */
+            td::before {
+                content: attr(data-label); /* Get label from data-label attribute */
+                font-weight: 600;
+                color: var(--text-dark);
+                min-width: 80px; /* Fixed width for labels */
+                display: inline-block; /* Or block */
+                margin-right: 0.5rem; /* Space after label */
+                font-size: 0.8rem; /* Smaller label */
+            }
+
+            /* --- Specific Cell Handling on Mobile --- */
+            .notes-cell {
+                /* Ensure it flows naturally in the card */
+                padding: 0.5rem 0; /* Adjust padding */
+                min-width: 0; /* Override desktop min-width */
+                margin-top: 0.3rem;
+                flex-basis: 100%; /* Take full width below label */
+            }
+            .notes-cell::before {
+                 /* Show label, but maybe less width needed */
+                 min-width: 60px;
+                 margin-bottom: 0.3rem; /* Space before notes text */
+            }
+            .notes-cell:empty::before { /* Adjust placeholder style if needed */
+                margin-left: 65px; /* Align placeholder */
+            }
+
+            .actions-cell {
+                padding: 0.6rem 0 0 0; /* Adjust padding */
+                text-align: left !important; /* Override right align */
+                flex-basis: 100%; /* Take full width */
+                display: flex; /* Arrange buttons side-by-side */
+                flex-wrap: wrap;
+                gap: 0.5rem; /* Space between buttons */
+                margin-top: 0.5rem; /* Space above buttons */
+                border-top: 1px dashed var(--border-color); /* Separator */
+                 justify-content: flex-start; /* Align buttons left */
+            }
+            .actions-cell::before { display: none; /* Don't show "Actions" label */ }
+            .actions-cell .btn-action {
+                 margin-right: 0; /* Remove default margin */
+                 flex-grow: 1; /* Allow buttons to grow if space available */
+                 min-width: 100px; /* Minimum width for tap target */
+                 text-align: center; /* Center button text */
+                 padding: 0.5rem; /* Slightly more padding */
+             }
+
+            /* Completed/Past state for Cards */
+             tbody tr.completed-appointment {
+                 opacity: 0.8;
+                 background-color: var(--bg-secondary); /* Different background */
+             }
+            tbody tr.past-appointment {
+                 opacity: 0.9; /* Slightly less dimmed than completed */
+             }
+
+        } /* End @media max-width: 768px */
+
+
+        @media (max-width: 400px) {
+            /* Minor tweaks for very small screens */
+            .stats-grid { grid-template-columns: 1fr; } /* Stack stats */
+            .stat-card { padding: 0.8rem; }
+            h1 { font-size: 1.3rem; }
+            tbody tr { padding: 0.6rem 0.8rem; }
+            td { gap: 0.3rem; }
+            td::before { min-width: 70px; }
+             .btn-action { flex-basis: 100%; /* Stack action buttons fully */ text-align: center;}
+        }
 
     </style>
 </head>
@@ -177,263 +263,106 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    {% set category_class = category if category in ['success', 'error', 'info'] else 'info' %}
-                    <div class="flash-message {{ category_class }}">{{ message }}</div>
+                    {% set category_class = category if category in ['success', 'error', 'info', 'warning'] else 'info' %}
+                    <div class="flash-message {{ category_class }}">
+                       <span>{{ message }}</span>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
     </div>
 
     <div class="dashboard-wrapper">
-        <h1><i class="fas fa-tachometer-alt"></i> Doctor Dashboard</h1>
+        <h1><i class="fas fa-tachometer-alt"></i> Doctor Dashboard
+            {% if doctor and doctor.name %}
+                <span> - Dr. {{ doctor.name }}</span>
+            {% endif %}
+        </h1>
 
         <!-- Summary Stats -->
         <div class="stats-grid">
              <div class="stat-card today"><div class="icon"><i class="fas fa-calendar-day"></i></div><div class="value" id="stat-today-count">0</div><div class="label">Appointments Today</div></div>
-             <div class="stat-card week"><div class="icon"><i class="fas fa-calendar-week"></i></div><div class="value" id="stat-week-count">0</div><div class="label">Appointments This Week</div></div>
+             <div class="stat-card week"><div class="icon"><i class="fas fa-calendar-week"></i></div><div class="value" id="stat-week-count">0</div><div class="label">Appointments Next 7 Days</div></div>
              <div class="stat-card pending"><div class="icon"><i class="fas fa-clock"></i></div><div class="value" id="stat-pending-count">0</div><div class="label">Upcoming Pending</div></div>
+             <div class="stat-card patients"><div class="icon"><i class="fas fa-users"></i></div><div class="value" id="stat-patients-count">0</div><div class="label">Unique Patients (Month)</div></div>
         </div>
-
-         <!-- Charts Section -->
-
 
         <!-- Controls Bar -->
         <div class="controls-bar">
-             <div class="filter-group"><label for="datePicker"><i class="fas fa-calendar-alt"></i> Filter by Date:</label><input type="date" id="datePicker" onchange="filterBookingsByDate()"></div>
+             <div class="filter-group"><label for="datePicker"><i class="fas fa-calendar-alt"></i> Filter:</label><input type="date" id="datePicker" onchange="filterBookingsByDate()"></div>
              <button class="btn btn-success btn-controls" onclick="showAllBookings()"><i class="fas fa-list"></i> Show All</button>
-             <button class="btn btn-primary btn-controls" onclick="saveAllNotes()"><i class="fas fa-save"></i> Save All Notes</button>
+             <button class="btn btn-primary btn-controls" onclick="saveAllNotes()"><i class="fas fa-save"></i> Save Notes</button> <!-- Shortened Text -->
              <button class="btn btn-outline-primary btn-controls" onclick="window.location.href='{{ url_for('home') }}'"><i class="fas fa-home"></i> Home</button>
         </div>
 
         <!-- Bookings Display -->
-        {% for month_year, days in bookings_by_month.items() %}
-        <div class="month-header" data-month="{{ month_year }}">
-            <h2>{{ month_year }}</h2>
-            {% for day, bookings in days.items() %}
-            <div class="day-section" data-date="{{ day }}">
-                <h3>Appointments for <span class="appointment-date-display"></span></h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Patient Name</th><th>Phone</th><th>Time</th><th>Notes</th><th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for booking in bookings %}
-                        <tr data-time="{{ booking.booking_time | default('00:00') }}" class="{{ 'completed-appointment' if booking.status == 'Completed' else '' }}">
-                            <td>{{ booking.patient_name | default('N/A') }}</td>
-                            <td>{{ booking.patient_phone | default('N/A') }}</td>
-                            <td>{{ booking.booking_time | default('N/A') }}</td>
-                            <td class="notes-cell"
-                                contenteditable="{{ 'true' if booking.status == 'Pending' else 'false' }}"
-                                data-booking-id="{{ booking.id }}"
-                                data-original-value="{{ booking.notes or '' }}">
-                                {{ booking.notes or '' }}</td>
-                            <td class="actions-cell">
-                                <button class="btn btn-action btn-action-view" onclick="viewDetails({{ booking.id }})" title="View Details"><i class="fas fa-eye"></i> View</button>
-                                <button class="btn btn-action btn-action-complete" onclick="markComplete({{ booking.id }})" {{ 'disabled' if booking.status == 'Completed' }} title="{{ 'Mark Done' if booking.status == 'Pending' else 'Completed' }}"><i class="fas fa-check"></i> {{ 'Done' if booking.status == 'Pending' else 'Completed' }}</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% if not bookings %}
-                         <tr><td colspan="5" style="text-align:center; color: var(--text-medium); font-style:italic;">No bookings for this day.</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+        {% if bookings_by_month %}
+            {% for month_year, days in bookings_by_month.items() %}
+            <div class="month-header" data-month="{{ month_year }}">
+                <h2>{{ month_year }}</h2>
+                {% for day, bookings in days.items() %}
+                <div class="day-section" data-date="{{ day }}">
+                    <h3>Appointments for <span class="appointment-date-display">Loading date...</span></h3> <!-- Add Loading Text -->
+                    <table>
+                        <thead>
+                            <tr> <!-- These are hidden on mobile, but needed for labels -->
+                                <th>Patient Name</th><th>Phone</th><th>Time</th><th>Notes</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr data-booking-id="{{ booking.id }}" data-time="{{ booking.booking_time | default('00:00') }}" class="{{ 'completed-appointment' if booking.status == 'Completed' else '' }}">
+                                <!-- Add data-label attributes -->
+                                <td data-label="Patient">{{ booking.patient_name | default('N/A') }}</td>
+                                <td data-label="Phone">{{ booking.patient_phone | default('N/A') }}</td>
+                                <td data-label="Time">{{ booking.booking_time | default('N/A') }}</td>
+                                <td class="notes-cell"
+                                    data-label="Notes"
+                                    contenteditable="{{ 'true' if booking.status == 'Pending' else 'false' }}"
+                                    data-booking-id="{{ booking.id }}"
+                                    data-original-value="{{ booking.notes or '' }}"
+                                    aria-label="Notes for {{ booking.patient_name | default('patient') }}">
+                                    {{ booking.notes or '' }}</td>
+                                <td class="actions-cell" data-label="Actions"> <!-- Label won't show on mobile due to CSS -->
+                                    <button class="btn btn-action btn-action-complete"
+                                            onclick="markComplete({{ booking.id }}, this)"
+                                            {{ 'disabled' if booking.status == 'Completed' }}
+                                            title="{{ 'Mark as Completed' if booking.status == 'Pending' else 'Appointment Completed' }}">
+                                            <i class="fas {{ 'fa-check' if booking.status == 'Pending' else 'fa-check-double' }}"></i> {{ 'Done' if booking.status == 'Pending' else 'Completed' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+              <p style="text-align: center; color: var(--text-medium); margin-top: 2rem; font-style: italic;">You have no bookings scheduled.</p>
             {% endfor %}
-        </div>
-        {% else %}
-          <p style="text-align: center; color: var(--text-medium); margin-top: 2rem; font-style: italic;">You have no bookings scheduled.</p>
-        {% endfor %}
+        {% endif %}
+
     </div> <!-- End dashboard-wrapper -->
 
     <script>
+        // --- Existing JS Code ---
         const today = new Date();
         const todayString = today.toISOString().split('T')[0];
-
-        let appointmentsChart = null; // Keep track of the chart instance
-
-        // --- Backend Data Passed from Flask ---
-        const statsData = {{ stats | tojson | safe }};
-        const chartConfigDaily = {{ chart_config_daily | tojson | safe }};
+        const statsData = {{ stats | default({}) | tojson | safe }};
         const doctorId = {{ doctor_id | tojson | safe }};
 
-        // --- Helper Functions ---
-        function formatDateForDisplay(dateString) {
-            if (!dateString) return '';
-            try {
-                const dateObj = new Date(dateString + 'T00:00:00');
-                if (isNaN(dateObj.getTime())) return dateString;
-                return dateObj.toLocaleDateString(navigator.language || 'en-US', { weekday: 'short', month: 'long', day: 'numeric' });
-            } catch (e) { return dateString; }
-        }
-
-        function markPastAppointments() {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            const todaySection = document.querySelector(`.day-section[data-date="${todayString}"]`);
-            if (!todaySection) return;
-
-            todaySection.querySelectorAll('tbody tr[data-time]').forEach(row => {
-                if (row.classList.contains('completed-appointment')) { row.classList.remove('past-appointment'); return; }
-                if (!row.dataset.time || !row.dataset.time.includes(':')) return;
-                try {
-                    const [hour, minute] = row.dataset.time.split(':').map(Number);
-                    if (hour < currentHour || (hour === currentHour && minute < currentMinute)) { row.classList.add('past-appointment'); }
-                    else { row.classList.remove('past-appointment'); }
-                } catch (e) { console.error("Time parsing error:", row.dataset.time, e); }
-            });
-        }
-
-        // --- Update Stats Display ---
-        function updateStatsDisplay(stats) {
-            stats = stats || {};
-            document.getElementById('stat-today-count').textContent = stats.today_count ?? 0;
-            document.getElementById('stat-week-count').textContent = stats.week_count ?? 0;
-            document.getElementById('stat-pending-count').textContent = stats.pending_count ?? 0;
-            document.getElementById('stat-patients-count').textContent = stats.unique_patients_this_month ?? 0;
-        }
-
-        // --- Chart Creation Function ---
-        function createAppointmentsPerDayChart(config) {
-             const canvas = document.getElementById('appointmentsPerDayChart');
-             if (!canvas) { console.error("'appointmentsPerDayChart' canvas not found."); return; }
-             const ctx = canvas.getContext('2d');
-
-             // Check config data existence
-             if (!config || !config.labels || !config.data) {
-                 console.error("Daily chart config data missing or invalid.");
-                 ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'var(--text-medium)'; ctx.font = '14px "Open Sans"'; ctx.fillText('Chart data unavailable', canvas.width / 2, canvas.height / 2); ctx.restore();
-                 return;
-             }
-
-             // Destroy existing chart instance before creating new one
-             if (appointmentsChart) {
-                 appointmentsChart.destroy();
-                 appointmentsChart = null; // Clear the variable
-             }
-
-             appointmentsChart = new Chart(ctx, {
-                 type: 'bar',
-                 data: { labels: config.labels, datasets: [{ label: 'Appointments', data: config.data, backgroundColor: 'rgba(0, 123, 255, 0.6)', borderColor: 'rgba(0, 123, 255, 1)', borderWidth: 1, borderRadius: 4 }] },
-                 options: {
-                     responsive: true,
-                     maintainAspectRatio: false, // Keep false, container's aspect-ratio CSS handles shape
-                     scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } },
-                     plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.7)', padding: 10 } },
-                     animation: { duration: 500 }, // Re-enable modest animation
-                     // Avoid potential resize loops during initialization (advanced)
-                      onResize: null // Let Chart.js handle default resize internally based on container
-                  }
-             });
-        }
-
-
-        // --- Event Handlers ---
-        function filterBookingsByDate() {
-            const selectedDate = document.getElementById('datePicker').value;
-            document.querySelectorAll('.month-header').forEach(mh => {
-                let monthVisible = false;
-                mh.querySelectorAll('.day-section').forEach(ds => {
-                    const isVisible = !selectedDate || ds.dataset.date === selectedDate;
-                    ds.style.display = isVisible ? 'block' : 'none';
-                    if (isVisible) {
-                        monthVisible = true;
-                        if (ds.dataset.date === todayString) markPastAppointments();
-                    }
-                });
-                mh.style.display = monthVisible ? 'block' : 'none';
-            });
-        }
-
-        function showAllBookings() {
-            document.getElementById('datePicker').value = '';
-            document.querySelectorAll('.month-header, .day-section').forEach(el => el.style.display = 'block');
-            markPastAppointments(); // Check today's appointments status
-        }
-
-        function saveAllNotes() {
-            const updates = [];
-            document.querySelectorAll('.notes-cell').forEach(cell => {
-                if (cell.isContentEditable && cell.dataset.bookingId && cell.innerText.trim() !== (cell.dataset.originalValue || '')) {
-                    updates.push({ bookingId: cell.dataset.bookingId, notes: cell.innerText.trim() });
-                }
-            });
-            if (updates.length === 0) { displayFlashMessage("No note changes.", "info"); return; }
-            fetch('/update-all-notes', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ updates }) })
-                .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
-                .then(data => {
-                    if (data.success) {
-                        displayFlashMessage(data.message || 'Notes saved!', 'success');
-                        updates.forEach(upd => { const cell = document.querySelector(`.notes-cell[data-booking-id="${upd.bookingId}"]`); if (cell) cell.dataset.originalValue = upd.notes; });
-                    } else { displayFlashMessage(`Save failed: ${data.message || 'Error'}`, 'error'); }
-                })
-                .catch(error => { console.error('Save error:', error); displayFlashMessage(`Save error: ${error.message}`, 'error'); });
-        }
-
-        // --- Action Functions ---
-        function viewDetails(bookingId) { alert("Placeholder: View details " + bookingId); }
-
-        function markComplete(bookingId) {
-            const button = event?.target.closest('button') || document.querySelector(`.actions-cell button.btn-action-complete[onclick*="${bookingId}"]`);
-            if (!confirm(`Mark booking ID ${bookingId} as complete?`)) return;
-            if (button) button.disabled = true;
-
-            fetch(`/mark-complete/${bookingId}`, { method: 'POST', headers: { 'Accept': 'application/json' } })
-                .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status} ${response.statusText}`)))
-                .then(data => {
-                    if (data.success) {
-                        displayFlashMessage(data.message || 'Marked complete!', 'success');
-                        const row = document.querySelector(`.notes-cell[data-booking-id="${bookingId}"]`)?.closest('tr');
-                        if (row) {
-                            row.classList.add('completed-appointment'); row.classList.remove('past-appointment');
-                            row.querySelector('.notes-cell')?.setAttribute('contenteditable', 'false');
-                            if (button) { button.innerHTML = '<i class="fas fa-check"></i> Completed'; button.title = 'Appointment Completed'; }
-                            // Keep other buttons (like view) enabled maybe? row.querySelectorAll('.btn-action').forEach(btn => btn.disabled = true);
-                        }
-                    } else { displayFlashMessage(`Update failed: ${data.message || 'Error'}`, 'error'); if (button) button.disabled = false; }
-                })
-                .catch(error => { console.error('Mark complete error:', error); displayFlashMessage(`Update error: ${error.message}`, 'error'); if (button) button.disabled = false; });
-        }
-
-        // --- Flash Message Handling ---
-        function displayFlashMessage(message, category = 'info') {
-            const container = document.querySelector('.flash-messages'); if (!container) return;
-            const div = document.createElement('div'); div.className = `flash-message ${category}`; div.textContent = message; container.appendChild(div);
-            requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateX(0)'; });
-            setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(100%)'; setTimeout(() => div.remove(), 500); }, 4500);
-        }
-
-        function hideFlashMessages() {
-            document.querySelectorAll('.flash-message:not(.fade-init)').forEach(message => {
-                message.classList.add('fade-init'); // Prevent re-animating on resize etc.
-                requestAnimationFrame(() => { message.style.opacity = '1'; message.style.transform = 'translateX(0)'; });
-                setTimeout(() => { message.style.opacity = '0'; message.style.transform = 'translateX(100%)'; setTimeout(() => message.remove(), 500); }, 4500);
-            });
-        }
-
-        // --- Initial Dashboard Update ---
-        function updateDashboardData() {
-             console.log("Initializing dashboard components...");
-             if (typeof statsData === 'undefined' || typeof chartConfigDaily === 'undefined') { console.error("Backend data (stats or chart) not found in JS scope!"); return; }
-             updateStatsDisplay(statsData);
-             createAppointmentsPerDayChart(chartConfigDaily);
-             markPastAppointments();
-             // Format date display
-             document.querySelectorAll('.day-section').forEach(section => {
-                 const span = section.querySelector('h3 .appointment-date-display'); if(span) span.textContent = formatDateForDisplay(section.dataset.date);
-             });
-         }
-
-        // --- On Load ---
-        window.onload = () => {
-            hideFlashMessages(); // Show&fade backend messages
-            document.querySelectorAll('.notes-cell').forEach(cell => { cell.dataset.originalValue = cell.innerText.trim(); }); // Store original notes
-            updateDashboardData(); // Initialize stats, chart, dates
-            setInterval(markPastAppointments, 10 * 60 * 1000); // Periodically check time
-        };
+        function formatDateForDisplay(dateString) { if (!dateString) return 'Invalid Date'; try { const parts = dateString.split('-'); if (parts.length !== 3) throw new Error("Invalid date format"); const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); const dateObj = new Date(year, month, day); if (isNaN(dateObj.getTime()) || dateObj.getDate() !== day || dateObj.getMonth() !== month || dateObj.getFullYear() !== year) { throw new Error("Invalid date construction"); } return dateObj.toLocaleDateString(navigator.language || 'en-US', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { console.error(`Error formatting date "${dateString}":`, e); return dateString; } }
+        function markPastAppointments() { const now = new Date(); const currentHour = now.getHours(); const currentMinute = now.getMinutes(); const todaySection = document.querySelector(`.day-section[data-date="${todayString}"]`); if (!todaySection) return; todaySection.querySelectorAll('tbody tr[data-time]').forEach(row => { if (row.classList.contains('completed-appointment')) { row.classList.remove('past-appointment'); return; } const timeString = row.dataset.time.split('-')[0].trim(); if (!timeString || !timeString.includes(':')) return; try { const [hour, minute] = timeString.split(':').map(Number); if (isNaN(hour) || isNaN(minute)) return; if (hour < currentHour || (hour === currentHour && minute < currentMinute)) { row.classList.add('past-appointment'); } else { row.classList.remove('past-appointment'); } } catch (e) { console.error("Time parsing error marking past appts:", timeString, e); } }); }
+        function updateStatsDisplay(stats) { console.log("Updating stats:", stats); stats = stats || {}; document.getElementById('stat-today-count').textContent = stats.all_today_count ?? 0; document.getElementById('stat-week-count').textContent = stats.all_next_7_days_count ?? 0; document.getElementById('stat-pending-count').textContent = stats.pending_upcoming_count ?? 0; document.getElementById('stat-patients-count').textContent = stats.unique_patients_this_month ?? 0; }
+        function filterBookingsByDate() { const selectedDate = document.getElementById('datePicker').value; console.log("Filtering by date:", selectedDate); document.querySelectorAll('.month-header').forEach(mh => { let monthHasVisibleDays = false; mh.querySelectorAll('.day-section').forEach(ds => { const isVisible = !selectedDate || ds.dataset.date === selectedDate; ds.style.display = isVisible ? 'block' : 'none'; if (isVisible) { monthHasVisibleDays = true; if (ds.dataset.date === todayString) markPastAppointments(); } }); mh.style.display = monthHasVisibleDays ? 'block' : 'none'; }); }
+        function showAllBookings() { console.log("Showing all bookings."); document.getElementById('datePicker').value = ''; document.querySelectorAll('.month-header, .day-section').forEach(el => { el.style.display = 'block'; }); markPastAppointments(); }
+        function saveAllNotes() { console.log("Saving notes..."); const updates = []; let changeDetected = false; document.querySelectorAll('.notes-cell[contenteditable="true"]').forEach(cell => { const bookingId = cell.dataset.bookingId; const originalValue = cell.dataset.originalValue || ''; const currentValue = cell.innerText.trim(); if (currentValue !== originalValue) { updates.push({ bookingId: bookingId, notes: currentValue }); changeDetected = true; } }); if (!changeDetected) { displayFlashMessage("No notes changes.", "info"); return; } fetch('/update-all-notes', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ updates: updates }) }) .then(response => response.json()) .then(data => { console.log("Save response:", data); if (data && data.success !== undefined) { const message = data.message || (data.success ? 'Notes saved!' : 'Save failed.'); displayFlashMessage(message, data.success ? 'success' : 'warning'); if (data.success || data.updated_count > 0) { updates.forEach(upd => { const cell = document.querySelector(`.notes-cell[data-booking-id="${upd.bookingId}"]`); if (cell && !data.message?.includes(String(upd.bookingId))) { cell.dataset.originalValue = upd.notes; } }); } } else { throw new Error("Invalid response."); } }) .catch(error => { console.error('Save error:', error); displayFlashMessage(`Error saving: ${error.message || 'Network Error'}`, 'error'); }); }
+        function markComplete(bookingId, buttonElement) { if (!buttonElement || buttonElement.disabled) return; if (!confirm(`Mark booking ID ${bookingId} as complete?`)) return; buttonElement.disabled = true; const originalHtml = buttonElement.innerHTML; buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Working...'; fetch(`/mark-complete/${bookingId}`, { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }}) .then(response => { const contentType = response.headers.get("content-type"); if (contentType && contentType.indexOf("application/json") !== -1) { return response.json().then(data => ({ ok: response.ok, status: response.status, data })); } else { return response.text().then(text => ({ ok: response.ok, status: response.status, data: { message: text || `Server error ${response.status}` }})); } }) .then(result => { const data = result.data; console.log("Mark complete resp:", result); if (result.ok && data.success) { displayFlashMessage(data.message || 'Marked complete!', 'success'); const row = document.querySelector(`tr[data-booking-id="${bookingId}"]`); if (row) { row.classList.add('completed-appointment'); row.classList.remove('past-appointment'); row.querySelector('.notes-cell')?.setAttribute('contenteditable', 'false'); buttonElement.innerHTML = '<i class="fas fa-check-double"></i> Completed'; buttonElement.title = 'Completed'; } else { buttonElement.innerHTML = originalHtml; buttonElement.disabled = false;} } else { const errorMessage = data?.message || `Error (HTTP ${result.status})`; displayFlashMessage(`Failed: ${errorMessage}`, 'error'); buttonElement.innerHTML = originalHtml; buttonElement.disabled = false; } }) .catch(error => { console.error('Mark complete fetch error:', error); displayFlashMessage(`Error: ${error.message || 'Network problem'}`, 'error'); buttonElement.innerHTML = originalHtml; buttonElement.disabled = false; }); }
+        function displayFlashMessage(message, category = 'info') { const container = document.querySelector('.flash-messages'); if (!container) return; const div = document.createElement('div'); const category_class = ['success', 'error', 'info', 'warning'].includes(category) ? category : 'info'; div.className = `flash-message ${category_class}`; const span = document.createElement('span'); span.textContent = message; div.appendChild(span); container.appendChild(div); requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateX(0)'; }); const timer = setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(100%)'; setTimeout(() => div.remove(), 500); }, 4500); div.addEventListener('click', () => { clearTimeout(timer); div.style.opacity = '0'; div.style.transform = 'translateX(100%)'; setTimeout(() => div.remove(), 500); }); }
+        function hideFlashMessages() { document.querySelectorAll('.flash-message:not(.fade-init)').forEach(message => { message.classList.add('fade-init'); requestAnimationFrame(() => { message.style.opacity = '1'; message.style.transform = 'translateX(0)'; }); const timer = setTimeout(() => { message.style.opacity = '0'; message.style.transform = 'translateX(100%)'; setTimeout(() => message.remove(), 500); }, 4500); message.addEventListener('click', () => { clearTimeout(timer); message.style.opacity = '0'; message.style.transform = 'translateX(100%)'; setTimeout(() => message.remove(), 500); }); }); }
+        function initializeDashboard() { console.log("Initializing dashboard..."); if (typeof statsData === 'undefined') { console.error("statsData missing!"); displayFlashMessage("Failed to load data.", "error"); return; } updateStatsDisplay(statsData); document.querySelectorAll('.day-section').forEach(section => { const span = section.querySelector('h3 .appointment-date-display'); if (span && section.dataset.date) { span.textContent = formatDateForDisplay(section.dataset.date); } else if (span) { span.textContent = "Invalid date"; } }); markPastAppointments(); console.log("Dashboard initialized."); }
+        window.onload = () => { console.log("Window loaded."); hideFlashMessages(); document.querySelectorAll('.notes-cell[contenteditable="true"]').forEach(cell => { cell.dataset.originalValue = cell.innerText.trim(); }); initializeDashboard(); };
     </script>
 
 </body>
