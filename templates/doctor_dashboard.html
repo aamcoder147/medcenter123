@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ensure viewport is set -->
@@ -190,13 +190,12 @@
         @media (max-width: 400px) {
              .stats-grid { grid-template-columns: 1fr; } /* Stack stats fully */
              .day-section h3 { font-size: 0.9rem;}
-             tr { padding: 0.6rem 0.8rem;}
-             td { padding: 0.4rem 0; }
+             tr { padding: 1rem 1rem;}
+             td { padding: 1rem 1rem; }
              td::before { font-size: 0.75rem; }
              td > *:not(style):not(script), .notes-cell { font-size: 0.8rem;}
              .notes-cell { padding-top: 0.4rem;}
          }
-
 
         /* Flash Messages */ /* ... (Unchanged from last version) ... */
         .flash-messages { position: fixed; top: 20px; right: 20px; z-index: 1050; width: clamp(280px, 90%, 400px); }
@@ -206,6 +205,80 @@
         .flash-message.info { background-color: var(--info-bg); border-color: var(--info); color: #0c5460; }
         .flash-message.warning { background-color: #fff3cd; border-color: var(--warning); color: #856404; }
         @keyframes slideInFadeOut { 0% { opacity: 0; transform: translateX(100%); } 10% { opacity: 1; transform: translateX(0); } 90% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100%); } }
+
+/* --- RTL Specific Adjustments --- */
+
+/* Desktop Table Alignment (min-width: 769px) */
+html[dir="rtl"] @media (min-width: 769px) {
+    /* Override default text-align for table headers and cells */
+    th, td {
+        text-align: right; /* Align text to the right in RTL */
+    }
+    /* Adjust notes cell if specific alignment needed beyond text-align */
+    /* .notes-cell might need specific overrides if using internal divs */
+}
+
+/* Mobile Card View Alignment (max-width: 768px) */
+html[dir="rtl"] @media (max-width: 768px) {
+    /* Align the flex container (td acting as row) */
+    td {
+        /* Ensure space-between still pushes value left, but base align is right */
+        text-align: right; /* Align the block to the right */
+    }
+    /* Align the label (pseudo-element) */
+    td::before {
+        text-align: right;     /* Align label text right */
+        margin-left: 0.5rem;   /* Add space to the *left* of the label (RTL) */
+        margin-right: 0;       /* Remove right margin */
+    }
+    /* Explicitly align value content to the right (if it wasn't inheriting correctly) */
+    td > *:not(style):not(script):not(.label-override) {
+        /* This selector might not target plain text nodes effectively */
+         text-align: right; /* Align actual value text to the right */
+         /* flex-grow: 1; still helps push it left via space-between */
+    }
+
+    /* Notes cell label alignment */
+     .notes-cell::before {
+        text-align: right;
+     }
+    /* Notes cell content alignment */
+    .notes-cell {
+         text-align: right; /* Align the actual notes text to the right */
+     }
+     .notes-cell:empty::before {
+          text-align: right; /* Align placeholder right */
+     }
+     /* Fix date picker filter label margin */
+     .controls-bar label {
+          margin-left: 5px; /* Space to the left in RTL */
+          margin-right: 0;
+     }
+     /* Fix save/cancel/mark button text alignment if needed */
+     .booking-actions .btn span { /* If button text isn't centering right */
+          /* text-align: center; Probably not needed as flex aligns */
+     }
+}
+
+/* Fix for filter icon margin in RTL */
+html[dir="rtl"] .controls-bar .filter-group label i {
+    margin-left: 5px;  /* Space LEFT of icon in RTL */
+    margin-right: 0;
+}
+
+/* Fix H1 Span Margin for RTL */
+html[dir="rtl"] h1 span {
+    margin-right: 8px; /* Add space to the RIGHT of the icon/text */
+    margin-left: 0; /* Remove left margin */
+}
+
+/* General fix for FontAwesome icons needing margin */
+html[dir="rtl"] i.fas[style*="margin-right"],
+html[dir="rtl"] i.fab[style*="margin-right"] {
+     /* Example - Add specific overrides if inline styles cause issues */
+     /* margin-left: 0.5rem !important; */
+     /* margin-right: 0 !important; */
+}
 
     </style>
 </head>
@@ -225,28 +298,28 @@
     </div>
 
     <div class="dashboard-wrapper">
-        <h1><i class="fas fa-tachometer-alt"></i> Doctor Dashboard
+        <h1><i class="fas fa-tachometer-alt"></i> حجوزات
             {% if doctor and doctor.name %}
-                <span> - Dr. {{ doctor.name }}</span>
+                <span> {{ doctor.name }}</span>
             {% endif %}
         </h1>
-
+        
         <!-- Summary Stats -->
         <div class="stats-grid">
-             <div class="stat-card today"><div class="icon"><i class="fas fa-calendar-day"></i></div><div class="value" id="stat-today-count">0</div><div class="label">Appointments Today</div></div>
-             <div class="stat-card week"><div class="icon"><i class="fas fa-calendar-week"></i></div><div class="value" id="stat-week-count">0</div><div class="label">Appointments Next 7 Days</div></div>
-             <div class="stat-card pending"><div class="icon"><i class="fas fa-clock"></i></div><div class="value" id="stat-pending-count">0</div><div class="label">Upcoming Pending</div></div>
-             <div class="stat-card patients"><div class="icon"><i class="fas fa-users"></i></div><div class="value" id="stat-patients-count">0</div><div class="label">Unique Patients (Month)</div></div>
+             <div class="stat-card today"><div class="icon"><i class="fas fa-calendar-day"></i></div><div class="value" id="stat-today-count">0</div><div class="label">المواعيد اليوم</div></div>
+             <div class="stat-card week"><div class="icon"><i class="fas fa-calendar-week"></i></div><div class="value" id="stat-week-count">0</div><div class="label">المواعيد خلال ٧ أيام</div></div>
+             <div class="stat-card pending"><div class="icon"><i class="fas fa-clock"></i></div><div class="value" id="stat-pending-count">0</div><div class="label">المواعيد القادمة (قيد الانتظار)</div></div>
+             <div class="stat-card patients"><div class="icon"><i class="fas fa-users"></i></div><div class="value" id="stat-patients-count">0</div><div class="label">المرضى الفريدون (الشهر)</div></div>
         </div>
-
+        
         <!-- Controls Bar -->
         <div class="controls-bar">
-             <div class="filter-group"><label for="datePicker"><i class="fas fa-calendar-alt"></i> Filter:</label><input type="date" id="datePicker" onchange="filterBookingsByDate()"></div>
-             <button class="btn btn-success btn-controls" onclick="showAllBookings()"><i class="fas fa-list"></i> Show All</button>
-             <button class="btn btn-primary btn-controls" onclick="saveAllNotes()"><i class="fas fa-save"></i> Save Notes</button>
-             <button class="btn btn-outline-primary btn-controls" onclick="window.location.href='{{ url_for('home') }}'"><i class="fas fa-home"></i> Home</button>
+             <div class="filter-group"><label for="datePicker"><i class="fas fa-calendar-alt"></i> تصفية:</label><input type="date" id="datePicker" onchange="filterBookingsByDate()"></div>
+             <button class="btn btn-success btn-controls" onclick="showAllBookings()"><i class="fas fa-list"></i> عرض الكل</button>
+             <button class="btn btn-primary btn-controls" onclick="saveAllNotes()"><i class="fas fa-save"></i> حفظ الملاحظات</button>
+             <button class="btn btn-outline-primary btn-controls" onclick="window.location.href='{{ url_for('home') }}'"><i class="fas fa-home"></i> الرئيسية</button>
         </div>
-
+        
         <!-- Bookings Display -->
         {% if bookings_by_month %}
             {% for month_year, days in bookings_by_month.items() %}
@@ -254,30 +327,26 @@
                 <h2>{{ month_year }}</h2>
                 {% for day, bookings in days.items() %}
                 <div class="day-section" data-date="{{ day }}">
-                    <h3>Appointments for <span class="appointment-date-display">Loading date...</span></h3>
+                    <h3>المواعيد لـ <span class="appointment-date-display">جاري تحميل التاريخ...</span></h3>
                     <table>
                         <thead>
-                            <tr> <!-- These are hidden on mobile, BUT used for data-labels -->
-                                <th>Patient Name</th><th>Phone</th><th>Time</th><th>Notes</th>
-                                <!-- Actions Header Removed -->
+                            <tr>
+                                <th>اسم المريض</th><th>الهاتف</th><th>الوقت</th><th>ملاحظات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for booking in bookings %}
                             <tr data-booking-id="{{ booking.id }}" data-time="{{ booking.booking_time | default('00:00') }}" class="{{ 'completed-appointment' if booking.status == 'Completed' else '' }}">
-                                <!-- Add data-label attributes -->
-                                <td data-label="Patient">{{ booking.patient_name | default('N/A') }}</td>
-                                <td data-label="Phone">{{ booking.patient_phone | default('N/A') }}</td>
-                                <td data-label="Time">{{ booking.booking_time | default('N/A') }}</td>
+                                <td data-label="Patient">{{ booking.patient_name | default('غير متوفر') }}</td>
+                                <td data-label="Phone">{{ booking.patient_phone | default('غير متوفر') }}</td>
+                                <td data-label="Time">{{ booking.booking_time | default('غير متوفر') }}</td>
                                 <td class="notes-cell"
                                     data-label="Notes"
                                     contenteditable="{{ 'true' if booking.status == 'Pending' else 'false' }}"
                                     data-booking-id="{{ booking.id }}"
                                     data-original-value="{{ booking.notes or '' }}"
-                                    aria-label="Notes for {{ booking.patient_name | default('patient') }}">
+                                    aria-label="ملاحظات لـ {{ booking.patient_name | default('مريض') }}">
                                     {{ booking.notes or '' }}</td>
-                                <!-- Actions Cell REMOVED -->
-                                <!-- <td class="actions-cell" data-label="Actions"> ... button removed ... </td> -->
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -286,10 +355,9 @@
                 {% endfor %}
             </div>
             {% else %}
-              <p style="text-align: center; color: var(--text-medium); margin-top: 2rem; font-style: italic;">You have no bookings scheduled.</p>
+              <p style="text-align: center; color: var(--text-medium); margin-top: 2rem; font-style: italic;">لا توجد لديك مواعيد مجدولة.</p>
             {% endfor %}
         {% endif %}
-
     </div> <!-- End dashboard-wrapper -->
 
     <script>
